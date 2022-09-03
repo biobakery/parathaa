@@ -25,6 +25,11 @@ workflow.add_argument(
     desc="Database for taxonomy [default: input/silva.seed_v138_1/silva.seed_v138_1.align]",
     default="input/silva.seed_v138_1/silva.seed_v138_1.align")
 
+workflow.add_argument(
+    name="query",
+    desc="Reads to be taxonomically classified [default: none]",
+    default=none)
+
 # Parsing the workflow arguments
 args = workflow.parse_args()
 
@@ -32,24 +37,17 @@ args = workflow.parse_args()
 args.config = 'etc/config.ini'
 
 
-# AnADAMA2 example workflow.do
-#workflow.do("ls /usr/bin/ | sort > [t:output/global_exe.txt]")        #Command 
-#workflow.do("ls $HOME/.local/bin/ | sort > [t:output/local_exe.txt]") #Command 
-
-# Task0 sample python analysis module  - src/trim.py
-#workflow.add_task(
-#    "src/trim.py --lines [args[0]] --output [targets[0]] --input "+args.input, #Command 
-#    depends=[TrackedExecutable("src/trim.py")],                                #Tracking executable dependencies
-#    targets=args.output,                                                       #Output target directory
-#    args=[args.lines])                                                         #Additional arguments 
+# Download taxonomy file from SILVA
+workflow.do("curl https://www.arb-silva.de/fileadmin/silva_databases/current/Exports/taxonomy/taxmap_slv_ssu_ref_138.1.txt.gz -o [t:input/taxmap_slv_ssu_ref_138.1.txt.gz]")
+workflow.do("gunzip -fk [d:input/taxmap_slv_ssu_ref_138.1.txt.gz] > [t:input/taxmap_slv_ssu_ref_138.1.txt]")
 
 # Adding name of trimmed Seqs
 dbname = args.database
 args.trimmedDatabase = dbname[:dbname.find(".align")] + '.pcr.align'
-args.tree = "region_specific.tree"
+args.tree = os.path.join(args.output, "region_specific.tree")
 
 ## Trim database
-workflow.add_task("/Applications/mothur/mothur '#pcr.seqs(fasta = [depends[0]], oligos=[depends[1]], pdiffs=0, rdiffs=0)'",
+workflow.add_task("/Applications/mothur/mothur '#pcr.seqs(fasta = [depends[0]], oligos=[depends[1]], pdiffs=0, rdiffs=0, keepdots=f)'",
                   depends=[args.database, args.primers],
                   targets=args.trimmedDatabase,
                   name="trim database")
@@ -59,6 +57,45 @@ workflow.add_task("/Users/mis696/anaconda3/lib/python3.8/site-packages/apples/to
 	   -nt [depends[0]] > [targets[0]]",
                   depends=args.trimmedDatabase,
                   targets=args.tree)
+
+## Find best thresholds
+workflow.add_task(
+    "src/make.taxonomy.trees.R   -d [depends[1]] -o [depends[2]] -t 'find_cutoffs' -n [depends[3]]",
+    depends=[TrackedExecutable("src/analysis.R"), "input/taxmap_slv_ssu_ref_138.1.txt", args.output, args.tree],
+    targets= args.output+"/optimal_scores.png",
+    name="finding thresholds"
+)
+
+## Assign taxonomy to nodes 
+workflow.add_task(
+    "src/make.taxonomy.trees.R   -d [depends[1]] -o [depends[2]] -t 'assign_Tax' -n [depends[3]]",
+    depends=[TrackedExecutable("src/analysis.R"), "input/taxmap_slv_ssu_ref_138.1.txt", args.output, args.tree,
+             args.output+"/optimal_scores.png"],
+    targets= args.output+"/resultTree_bestThresholds.RData",
+    name="Assigning taxonomy to internal nodes of ref tree"
+    )
+
+## Align query reads to trimmed seed alignment ***PICK UP HERE
+workflow.add_task(
+    "/Applications/mothur/mothur '#align.seqs(candidate=[depends[0]], template=[depends[1]])'",
+    depends=[args.trimmedDatabase,args.query]
+    )
+
+## Replace end gap characters ('.') with '-'
+workflow.do("sed  '/^>/! s/\./-/g' [d:test_reads_V4.align] > [t:test_reads_V4_sub.align]")
+
+## Merge Files
+cat test_reads_V4_sub.align /Users/mis696/proj/16s-region-checker/input/silva.seed_v138/silva.seed_v138.pcr.filter.fasta > V4_merged_aligned_noend.fasta
+
+## Create reference package for placements
+taxit create -l 16S_V4 -P V4_20220818_notderep.refpkg \
+      --aln-fasta V4_merged_aligned_noend.fasta \
+      --tree-stats SILVA_seed_V4_log.txt \
+      --tree-file  SILVA_seed_V4.tree
+
+## run pplacer
+/Users/mis696/Downloads/pplacer-Darwin-v1.1.alpha17-6-g5cecf99/pplacer -c  V4_20220818_notderep.refpkg  V4_merged_aligned_noend.fasta
+
 
 
 # Task2 sample R module  - src/analysis_example.r

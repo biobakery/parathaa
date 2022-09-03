@@ -1,28 +1,21 @@
 #!/usr/bin/env Rscript
 require(docopt)
 'Usage:
-   analysis.R [-d <naming file> -o <output> -b <blast result>]
+   analysis.R [-d <naming file> -o <output> -t <task> -n <tree>]
 
 Options:
-   -d naming file [default: ~/Downloads/silvaCodes.txt]
-   -o model output [default: results.csv]
-   -b blast output [default: output/vsearch_results.txt]
+   -d naming file [default: input/taxmap_slv_ssu_ref_138.1.txt]
+   -o model output directory [default: output]
+   -t task: assign_Tax or find_cutoffs [default: assign_Tax]
+   -n tree 
 
  ]' -> doc
+
+#To add as arguments: binom error params
 
 opts <- docopt(doc)
 
 library(logging)
-library(reshape2)
-library(tidyverse)
-library(RColorBrewer)
-library(overlapping)
-library(gplots)
-library(data.table)
-source("src/plot.within.between.R")
-source("src/heatmap.clade.R")
-separateNames <- TRUE ## For Lea this should be FALSE, there is no separate naming file
-taxonomySource <- "GTDB"
 
 # R logging example 
 loginfo("Performing analysis data", logger="")
@@ -37,15 +30,11 @@ library(TDbook)
 
 ##Input and output files:
 
-## GTDB IDs with 16S count > 1 and rep of species
-#GTDBkeeps <- read.csv(inFileGTDBkeeps)
-#GTDB4$GTDBcode <- substring(GTDB4$Query, 4)
-#test <- GTDB4 %>% filter(GTDBcode %in% GTDBkeeps$organism_name)
-
 LOCAL <- TRUE
 if(LOCAL==TRUE){
 inFileNR99 <- "/Users/mis696/proj/16s-region-checker/input/SSURefNR99_1200_slv_138_1_nds.ntree"
-inFileTaxdata <- "/Users/mis696/proj/16s-region-checker/input/taxmap_slv_ssu_ref_138.1.txt"
+#inFileTaxdata <- "/Users/mis696/proj/16s-region-checker/input/taxmap_slv_ssu_ref_138.1.txt"
+inFileTaxdata <- opts$d
 inFileGTDB4 <- "/Users/mis696/proj/16s-region-checker/output/SILVA_NR99_GTDB_taxonomy.RData"
 }
 if(LOCAL==FALSE){
@@ -55,19 +44,12 @@ if(LOCAL==FALSE){
   inFileGTDB4 <- "/n/home05/mishort/16s-region-checker/input/SILVA_NR99_GTDB_taxonomy.RData"
 }
 
-## NR99 tree from online ARB file converted to Newick format (ARB IDs only)
-##NR99 <- read.newick("/Users/mis696/proj/16s-region-checker/input/SSURefNR99_1200_slv_138_1_edit.tree")
-##NR99 <- read.newick(inFileNR99)
+## Tree made from database trimmed to region
+#in.tree <- read.newick("/Users/mis696/proj/Phylogeny_Taxonomy/SILVA_seed_V4.tree")
+in.tree <- read.newick(opts$n)
 
-
-## FastTree output from Seed database (combined IDs)
-seed.tree1 <- read.newick("/Users/mis696/proj/Phylogeny_Taxonomy/SILVA_seed.tree")
-## FastTree output from seed database trimmed to V4 region (combined IDs)
-seed.treev4 <- read.newick("/Users/mis696/proj/Phylogeny_Taxonomy/SILVA_seed_V4.tree")
-
-##seed.treev4 <- tree_subset(seed.treev4, node=5195)
-v4treedata <- as_tibble(seed.treev4)
-v4treedata <- v4treedata %>%
+in.tree.data <- as_tibble(in.tree)
+in.tree.data <- in.tree.data %>%
   separate(col=label, into=c("primaryAccession", "arbID"), remove=F)
 
 ## Taxonomy of NR99 database from SILVA (primary accession, start, stop)
@@ -79,21 +61,13 @@ taxdata <- taxdata %>%
   rename(Species = organism_name) %>%
   filter(Kingdom=="Bacteria") 
 
-v4treedata <- left_join(v4treedata, taxdata, by="primaryAccession") %>%
+in.tree.data <- left_join(in.tree.data, taxdata, by="primaryAccession") %>%
   distinct(node, .keep_all=T) 
 
-class(v4treedata) <- c("tbl_tree", class(v4treedata))
-v4treedata$isTip <- isTip(v4treedata, v4treedata$node)
-#v4treedata <- v4treedata %>%
-#  mutate(Kingdom = replace(Kingdom, is.na(Kingdom) & isTip, ""),
-#         Phylum = replace(Phylum, is.na(Phylum)& isTip, ""),
-#         Class = replace(Class, is.na(Class)& isTip, ""),
-#         Order = replace(Order, is.na(Order)& isTip, ""),
-#         Family = replace(Family, is.na(Family)& isTip, ""),
-#         Genus = replace(Genus, is.na(Genus)& isTip, ""),
-#         Species = replace(Species, is.na(Species)& isTip, ""),
-#  )
-v4treedata <- v4treedata %>% mutate(Kingdom = na_if(Kingdom, ""),
+class(in.tree.data) <- c("tbl_tree", class(in.tree.data))
+in.tree.data$isTip <- isTip(in.tree.data, in.tree.data$node)
+
+in.tree.data <- in.tree.data %>% mutate(Kingdom = na_if(Kingdom, ""),
                                 Phylum = na_if(Phylum, ""),
                                 Class = na_if(Class, ""),
                                 Order = na_if(Order, ""),
@@ -102,23 +76,8 @@ v4treedata <- v4treedata %>% mutate(Kingdom = na_if(Kingdom, ""),
                                 Species = na_if(Species, ""))  
 
 
-if(FALSE){
-## Results from vsearch of GTDB 16S sequences against NR99 db--~13k hits (primaryAccession.start.stop)
-##load(file="~/proj/16s-region-checker/output/SILVA_GTDB_taxonomy.R") # GTDB4
-load(inFileGTDB4) # GTDB4
-## Separating out IDs
-GTDB4 <- GTDB4 %>%
-  separate(col=Match, into=c("primaryAccession", "start", "stop"), remove=F)## %>%
-  ##distinct(Match, .keep_all=T)
 
-taxdata <-  left_join(taxdata, GTDB4, by=c("AccID"="Match")) 
-taxdata <- taxdata %>% mutate("GTDBmapped"=!is.na(Kingdom_GTDB))
-taxdata <- taxdata %>% select(!primaryAccession.y) %>%
-  rename(primaryAccession=primaryAccession.x)
-}
-
-
-Task <- "assign_Tax" # "assign_Tax" "find_cutoffs"
+Task <- opts$t #"assign_Tax" "find_cutoffs"
 binomErrModel <- TRUE
 falseNegRate <- 0.05
 acceptableProb <- 0.20
@@ -127,9 +86,14 @@ acceptableProb <- 0.20
 #Broad range of cutoffs:
 if(Task=="find_cutoffs")
   cutoffs<-c(seq(0.01, 0.5, by=0.01), seq(0.55, 0.9, 0.05))
-#"Best" cutoffs:
-if(Task=="assign_Tax")
-  cutoffs<-c("Species"=0.01, "Genus"=0.04, "Family"=0.11, "Order"=0.17,  "Class"=0.3, "Phylum"=0.37)
+#"Best" cutoffs loaded from previous step:
+if(Task=="assign_Tax"){
+  load(file.path(opts$o, "optimal_scores.RData"))
+  bestThresh <- plotData2 %>% group_by(Level) %>% summarise(minThreshold = mean(minThreshold))
+  cutoffs <- bestThresh$minThreshold
+  names(cutoffs) <- bestThresh$Level
+  #cutoffs<-c("Species"=0.01, "Genus"=0.04, "Family"=0.11, "Order"=0.17,  "Class"=0.3, "Phylum"=0.37)
+}
 
 #Initialize
 outputScores <- list()
@@ -137,7 +101,7 @@ outputNs <- list()
 outputCounts <- list()
 
 resultData <- list()
-inputData <- v4treedata
+inputData <- in.tree.data
 #inputData <- test
 inputData$maxDists <- NA
 
@@ -441,55 +405,13 @@ for(cut1 in cutoffs){
   }
 }
 
-Sys.time()
+if(Task=="find_cutoffs")
+  save(resultData, file = file.path(opts$o, "resultTree_allThresholds.RData"))
+if(Task=="assign_Tax")
+  save(resultData, file = file.path(opts$o, "resultTree_bestThresholds.RData"))
 
-#Example tree
-test1 <- tree_subset(as.treedata(resultData$tax_bestcuts), 7104, levels_back = 7)
-ggtree(test1) + geom_tippoint(aes(color=Phylum, size=1.5)) + geom_nodepoint(aes(color=Phylum, shape=isPhylumNode, size=1.5))
-ggsave(filename = "~/proj/16s-region-checker/output/sampleAmbigTree_20220510.png" , height=10, width=8, units="in")
+print(Sys.time())
 
-
-test1 <- tree_subset(as.treedata(resultData$tax_bestcuts), 7269, levels_back = 2)
-ggtree(test1) + geom_tippoint(aes(color=Family, size=1.5)) + geom_nodepoint(aes(color=Family, shape=isFamilyNode, size=1.5))+ geom_text(aes(label=label), hjust=-.1)
-ggtree(test1) + geom_tippoint(aes(color=Genus, size=1.5)) + geom_nodepoint(aes(color=Genus, shape=isGenusNode, size=1.5))
-
-
-test1 <- tree_subset(as.treedata(resultData$tax_bestcuts), 7104, levels_back = 1)
-ggtree(test1) + geom_tippoint(aes(color=Phylum, size=1.5)) + geom_nodepoint(aes(color=Phylum, shape=isPhylumNode, size=1.5))
-
-# Bacteroides
-test1 <- tree_subset(as.treedata(resultData$tax_bestcuts), 6119, levels_back =15)
-ggtree(test1) + geom_tippoint(aes(color=Phylum, size=1.5)) + geom_nodepoint(aes(color=Phylum, shape=isPhylumNode, size=1.5))
-test1 <- tree_subset(as.treedata(resultDataBin$tax_bestcuts), 6119, levels_back = 15)
-ggtree(test1) + geom_tippoint(aes(color=Phylum, size=1.5)) + geom_nodepoint(aes(color=Phylum, shape=isPhylumNode, size=1.5))
-
-test1 <- tree_subset(as.treedata(resultData$tax_bestcuts), 8063, levels_back = 1)
-ggtree(test1) + geom_tippoint(aes(color=Family, size=1.5)) + geom_nodepoint(aes(color=Family, shape=isFamilyNode, size=1.5))
-
-test1 <- tree_subset(as.treedata(resultData$tax_bestcuts), 4764, levels_back = 10)
-ggtree(test1) + geom_tippoint(aes(color=Order, size=1.5)) + geom_nodepoint(aes(color=Order, shape=isOrderNode, size=1.5)) 
-ggtree(test1) + geom_tippoint(aes(color=Family, size=1.5)) + geom_nodepoint(aes(color=Family, shape=isFamilyNode, size=1.5))
-
-ggtree(test1) + geom_tippoint(aes(color=Genus, size=1.5)) + geom_nodepoint(aes(color=Genus, shape=isGenusNode, size=1.5))
-
-test1 <- tree_subset(as.treedata(resultData$tax_bestcuts), 4764, levels_back = 3)
-ggtree(test1) + geom_tippoint(aes(color=Species, size=1.5)) + geom_nodepoint(aes(color=Species, shape=isSpeciesNode, size=1.5)) 
-
-test1 <- tree_subset(as.treedata(resultData$tax_bestcuts), 5811, levels_back=0)
-ggtree(test1)+ geom_tippoint(aes(color=Phylum, size=1.5)) + geom_nodepoint(aes(color=Phylum, shape=isPhylumNode, size=1.5))
-
-
-test1 <- tree_subset(as.treedata(resultData$tax_bestcuts), 6119, levels_back =1)
-ggtree(test1)+ geom_tippoint(aes(color=Species, size=1.5)) + geom_nodepoint(aes(color=Species, shape=isSpeciesNode, size=1.5)) + geom_text(aes(label=node), hjust=-.5)
-ggtree(test1)+ geom_tippoint(aes(color=Genus, size=1.5)) + geom_nodepoint(aes(color=Genus, shape=isGenusNode, size=1.5)) + geom_text(aes(label=node), hjust=-.5)
-ggtree(test1)+ geom_tippoint(aes(color=Family, size=1.5)) + geom_nodepoint(aes(color=Family, shape=isFamilyNode, size=1.5)) + geom_text(aes(label=node), hjust=-.5)
-ggtree(test1)+ geom_tippoint(aes(color=Order, size=1.5)) + geom_nodepoint(aes(color=Order, shape=isOrderNode, size=1.5)) + geom_text(aes(label=node), hjust=-.5)
-test2 <- tree_subset(seed.treev4, 6119, levels_back =1)
-test3 <- multi2di(test2)
-ape::write.tree(test3, file='~/proj/Phylogeny_Taxonomy/bacTree_small.nwk')
-as_tibble(test3) %>% View()
-write.table(as_tibble(test3)$label[isTip(test3, as_tibble(test3)$node)], quote = F, file = '~/proj/Phylogeny_Taxonomy/bacTreeNames_small.txt', row.names = F, col.names = F)
-p = ggtree(test1)+ geom_tippoint(aes(color=Genus, size=1.5)) + geom_nodepoint(aes(color=Genus, shape=isGenusNode, size=1.5)) + geom_tiplab()
 
 
 ##Run for optimal Family cutoff and plot across families:
@@ -511,32 +433,33 @@ if(FALSE){
   dev.off()
 }
 
-if(FALSE){ #temp
+if(Task=="find_cutoffs"){
 ## Optimal Thresholds Plot
-  plotData2 <- data.frame("Scores"=c(outputScores[["Kingdom"]]/nseqs,
-                                     outputScores[["Phylum"]]/nseqs,
-                                     outputScores[["Class"]]/nseqs,
-                                     outputScores[["Order"]]/nseqs,
-                                     outputScores[["Family"]]/nseqs,
-                                     outputScores[["Genus"]]/nseqs, 
-                                     outputScores[["Species"]]/nseqs),
-                          "Level"=c(rep("Kingdom", length(outputScores[["Kingdom"]])), 
-                                    rep("Phylum", length(outputScores[["Phylum"]])),
-                                    rep("Class", length(outputScores[["Class"]])),
-                                    rep("Order", length(outputScores[["Order"]])),
-                                    rep("Family", length(outputScores[["Family"]])),
-                                    rep("Genus", length(outputScores[["Genus"]])),
-                                    rep("Species", length(outputScores[["Species"]]))),
-                       "Threshold"=as.numeric(c(names(outputScores[["Kingdom"]]),
-                                                names(outputScores[["Phylum"]]),
-                                                names(outputScores[["Class"]]),
-                                                names(outputScores[["Order"]]),
-                                                names(outputScores[["Family"]]),
-                                                names(outputScores[["Genus"]]),
-                                                names(outputScores[["Species"]])))
+nseqs <- nrow(inputData %>% filter(isTip==TRUE))
+plotData2 <- data.frame("Scores"=c(outputScores[["Kingdom"]]/nseqs,
+                                   outputScores[["Phylum"]]/nseqs,
+                                   outputScores[["Class"]]/nseqs,
+                                   outputScores[["Order"]]/nseqs,
+                                   outputScores[["Family"]]/nseqs,
+                                   outputScores[["Genus"]]/nseqs, 
+                                   outputScores[["Species"]]/nseqs),
+                        "Level"=c(rep("Kingdom", length(outputScores[["Kingdom"]])), 
+                                  rep("Phylum", length(outputScores[["Phylum"]])),
+                                  rep("Class", length(outputScores[["Class"]])),
+                                  rep("Order", length(outputScores[["Order"]])),
+                                  rep("Family", length(outputScores[["Family"]])),
+                                  rep("Genus", length(outputScores[["Genus"]])),
+                                  rep("Species", length(outputScores[["Species"]]))),
+                        "Threshold"=as.numeric(c(names(outputScores[["Kingdom"]]),
+                                                 names(outputScores[["Phylum"]]),
+                                                 names(outputScores[["Class"]]),
+                                                 names(outputScores[["Order"]]),
+                                                 names(outputScores[["Family"]]),
+                                                 names(outputScores[["Genus"]]),
+                                                 names(outputScores[["Species"]])))
 )
-  plotData2$Level <- factor(plotData2$Level, levels=c("Phylum", "Class", "Order", "Family", "Genus", 
-                                                       "Species"))
+plotData2$Level <- factor(plotData2$Level, levels=c("Phylum", "Class", "Order", "Family", "Genus", 
+                                                    "Species"))
 mins<- plotData2 %>% 
   group_by(Level) %>% 
   summarize(minScores = min(Scores))
@@ -544,106 +467,28 @@ plotData2 <- plotData2 %>%
   left_join(mins) %>%
   group_by(Level) %>%
   mutate(minThreshold = Threshold[minScores==Scores])
-  
+
 ggplot(plotData2 , aes(x=Threshold, y=Scores, color=Level)) + geom_point() + 
   geom_vline(aes(xintercept = minThreshold, color=Level, linetype=Level))
 
-save(plotData2, file = "~/proj/16s-region-checker/output/scores_thresholdOnly20220315.R")
-ggsave(filename="~/proj/16s-region-checker/output/scores_thresholdOnly_20220315.png")
+save(plotData2, file = file.path(opts$o, "optimal_scores.RData"))
+ggsave(filename = file.path(opts$o, "optimal_scores.png"))
+}
 
-## Optimal Thresholds Plot--full-length 16S gene
-plotData3 <- data.frame("Scores"=c(outputScoresGeneraFull/nseqs,outputScoresFamilyFull/nseqs), 
-                        "Level"=c(rep("Genus", length(outputScoresGeneraFull)), rep("Family", length(outputScoresFamilyFull))),
-                        "Threshold"=as.numeric(c(names(outputScoresGeneraFull), names(outputScoresFamilyFull)))
-)
-ggplot(plotData3, aes(x=Threshold, y=Scores, color=Level)) + geom_point()
-#ggsave(filename="~/proj/16s-region-checker/output/scores_thresholdOnly_fullLength20211214.png")
-#save(plotData3, file = "~/proj/16s-region-checker/output/scores_thresholdOnly_fullLength20211214.R")
-
-
-ggtree(as.treedata(v4data)) + geom_tippoint(aes(color=Genus, shape=isGenusNode)) + geom_nodepoint(aes(color=Genus, shape=isGenusNode)) 
-
-#p.v4sub <- ggtree(seed.treev4.subset) %<+% taxdata + geom_tippoint(aes(color=Order))  + geom_tiplab() + geom_nodelab()
-p.v4sub <-  ggtree(as.treedata(v4data))+ geom_tippoint(aes(color=Genus)) + geom_nodepoint(aes(color=Genus)) 
-p.v4sub + layout_dendrogram()
-
-max(cophenetic(as.phylo(v4subset.wdata)))
-
-cophenetic(as.phylo(v4subset.wdata), check=T)
-
-v4Int <- v4data %>% filter(isTip==F) 
-table(is.na(v4Int$Genus))
-
-
-node292 <- tree_subset(as.treedata(v4data), node="0.988", levels_back=0)
-max(cophenetic(as.phylo(node292)))
-ggtree(node292)+ geom_tippoint(aes(color=Family)) 
-
-node292 <- tree_subset(as.treedata(v4data), node="0.292", levels_back=0)
-max(cophenetic(as.phylo(node292)))
-ggtree(node292)+ geom_tippoint(aes(color=Family)) 
-
-node560 <- tree_subset(as.treedata(v4data), node="0.560", levels_back=0)
-max(cophenetic(as.phylo(node560)))
-ggtree(node560)+ geom_tippoint(aes(color=Family)) 
- 
-
-Bac <- fNodes %>% filter(Family=="Bacillaceae")
-
-
-BacNodes <- tree_subset(as.treedata(v4data), node=1664, levels_back=8)
-ggtree(BacNodes)+ geom_tippoint(aes(color=Family, shape=isFamilyNode)) +geom_nodepoint(aes(color=Family, shape=isFamilyNode))
+if(FALSE){ #temp
 
 ## Tree of full-length sequences
 p <- 
   ggtree(seed.tree1, branch.length='none', layout='circular') %<+% taxdata[,1:12] + geom_tippoint(aes(color=Phylum)) 
 ## Tree of v4 sequences
 p.v4 <- 
-  ggtree(seed.treev4, branch.length='none', layout='circular') %<+% taxdata + geom_tippoint(aes(color=Order))
+  ggtree(in.tree, branch.length='none', layout='circular') %<+% taxdata + geom_tippoint(aes(color=Order))
 p.v4
 }#temp
 
 
 
-if(FALSE){
-## Tree of full-length SILVA sequences, indicating which mapped to GTDB
-taxdata_seed <- taxdata_mothur %>%
-  filter(!is.na(label)) %>%
-    distinct( label, .keep_all=T) %>%
-    select(c("label", "GTDBmapped", "Kingdom"))
-seed.tree2 <- left_join(as_tibble(seed.tree1),taxdata_seed)
-
-p <- 
-  ggtree(as.treedata(seed.tree2), branch.length='none', layout='circular') + geom_tippoint(aes(color=Kingdom)) 
-
-p
-
-##Of seed db, what proportion are mapped?
-seed.tree2$isTip <- isTip(seed.tree2, seed.tree2$node)
-seed.tree2Tips <- seed.tree2 %>% filter(isTip==T)
-}
-
-
-if(FALSE){
-
-t.v4 <- merge(as_tibble(seed.treev4) , taxdata, by.x="label", by.y="id") %>%
-  filter(Kingdom=="Bacteria")
-
-
-
-
-
-chry1 <- tree_subset(as.treedata(v4data), node=536, levels_back=0)
-ggtree(chry1)+ geom_tippoint(aes(color=Genus, shape=isGenusNode)) + geom_nodepoint(aes(color=Genus, shape=isGenusNode))
-chry1 <- chry1 %>% as_tibble
-
-##Bacillaceae
-p1 <- ggtree(BacNodes)+ geom_tippoint(aes(color=Family, shape=isFamilyNode, size=3)) +geom_nodepoint(aes(color=Family, shape=isFamilyNode, size=3)) 
-p1 %>% collapse(node=709)
-
-}
-
-
+if(FALSE){ # to end
 ## Look within Phyla (defined by optimal threshold) 
 ## 0.5 isn't optimal for Phyla, but is close, and doesn't result in as many split phyla
 tempData <- resultData$tax0.37
@@ -770,13 +615,8 @@ p<-ggplot(subOutputPlotLong, aes(x=Phylum, y=as.numeric(Threshold), size=Nseqs))
 p + coord_flip()
 
 
-
-test <- tree_subset(as.treedata(inputData), 6390, levels_back = 0)
-ggtree(test) + geom_tippoint(aes(color=Genus))
-
-test <- tree_subset(as.treedata(v4treedata), 9015, levels_back = 2) %>% as_tibble
-ggtree(test) + geom_tippoint(aes(color=Genus))
-
 save(resultData, file="~/proj/16s-region-checker/output/MappingBasedOnBinomialModel.RData")
 #resultDataBin <- resultData
 #load("~/proj/16s-region-checker/output/MappingBasedOnErrorScores.RData")
+
+}
