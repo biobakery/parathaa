@@ -18,13 +18,13 @@ or using the "**Clone or Download**" button.
 
 ##### Demo Run:
 ```
-python run.py --input input/data.tsv --output output --lines 10 --metadata input/metadata.tsv 
+python run.py --primers input/V4V5.oligos --database input/silva.seed_v138_1/silva.seed_v138_1.align --query input/ASVs.fasta --output output 
 ```
 ```python run.py --help```
 
 ```
-usage: run.py [-h] [--version] [--lines LINES]
-[--sample-metadata SAMPLE_METADATA] -o OUTPUT [-i INPUT]
+usage: run.py [-h] [--version] [--primers PRIMERS]
+[--database DATABASE] [--query QUERY] -o OUTPUT [-i INPUT]
 [--config CONFIG] [--local-jobs JOBS] [--grid-jobs GRID_JOBS]
 [--grid GRID] [--grid-partition GRID_PARTITION]
 [--grid-benchmark {on,off}] [--grid-options GRID_OPTIONS]

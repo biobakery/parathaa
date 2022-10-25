@@ -12,7 +12,8 @@
 ```python run.py --help```
 
 ```
-usage: run.py [-h] [--version] [--lines LINES] -o OUTPUT [-i INPUT]
+usage: run.py [-h] [--version] [--primers PRIMERS]
+              [--database DATABASE] [--query QUERY] -o OUTPUT [-i INPUT]
               [--config CONFIG] [--local-jobs JOBS] [--grid-jobs GRID_JOBS]
               [--grid GRID] [--grid-partition GRID_PARTITION]
               [--grid-benchmark {on,off}] [--grid-options GRID_OPTIONS]
@@ -24,7 +25,7 @@ usage: run.py [-h] [--version] [--lines LINES] -o OUTPUT [-i INPUT]
               [--log-level {DEBUG,INFO,WARNING,ERROR,CRITICAL}]
 ```
 ## Step 2: Running the workflow 
-The input and the output arguments are required for the workflow. 
+The query, primers, database, and output arguments are required for the workflow. 
 ```
-python run.py -i input/data.tsv -o output 
+python run.py --primers input/V4V5.oligos --database input/silva.seed_v138_1/silva.seed_v138_1.align --query input/ASVs.fasta --output output 
 ```
