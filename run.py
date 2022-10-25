@@ -14,11 +14,6 @@ workflow.add_argument(
     name="primers",
     desc="File with primer oligos [default: input/EMPV4.oligos]",
     default="input/EMPV4.oligos")
-
-workflow.add_argument(
-    name="inputSeqs",
-    desc="Optional sequences to be assigned taxonomy",
-    default=0)
     
 workflow.add_argument(
     name="database",
@@ -27,8 +22,8 @@ workflow.add_argument(
 
 workflow.add_argument(
     name="query",
-    desc="Reads to be taxonomically classified [default: none]",
-    default=none)
+    desc="Reads to be taxonomically classified [default: input/test_reads_V4.fasta]",
+    default="input/test_reads_V4.fasta")
 
 # Parsing the workflow arguments
 args = workflow.parse_args()
@@ -45,57 +40,104 @@ workflow.do("gunzip -fk [d:input/taxmap_slv_ssu_ref_138.1.txt.gz] > [t:input/tax
 dbname = args.database
 args.trimmedDatabase = dbname[:dbname.find(".align")] + '.pcr.align'
 args.tree = os.path.join(args.output, "region_specific.tree")
+args.treelog = os.path.join(args.output, 'treelog.txt')
 
 ## Trim database
-workflow.add_task("/Applications/mothur/mothur '#pcr.seqs(fasta = [depends[0]], oligos=[depends[1]], pdiffs=0, rdiffs=0, keepdots=f)'",
-                  depends=[args.database, args.primers],
-                  targets=args.trimmedDatabase,
-                  name="trim database")
+workflow.add_task(
+    "/Applications/mothur/mothur '#pcr.seqs(fasta = [depends[0]], oligos=[depends[1]], pdiffs=0, rdiffs=0, keepdots=f)'",
+    depends=[args.database, args.primers],
+    targets=args.trimmedDatabase,
+    name="Trimming database")
 
 ## Create tree from region-specific alignment, save log file for use by pplacer
-workflow.add_task("/Users/mis696/anaconda3/lib/python3.8/site-packages/apples/tools/FastTree-darwin -gtr -log SILVA_seed_V4_log.txt \
-	   -nt [depends[0]] > [targets[0]]",
-                  depends=args.trimmedDatabase,
-                  targets=args.tree)
+workflow.add_task(
+    "/Users/mis696/anaconda3/lib/python3.8/site-packages/apples/tools/FastTree-darwin -gtr -log [targets[0]] \
+    -nt [depends[0]] > [targets[1]]",
+    depends= args.trimmedDatabase,
+    targets=[args.treelog, args.tree],
+    name="Building tree from primer-trimmed database")
 
 ## Find best thresholds
 workflow.add_task(
-    "src/make.taxonomy.trees.R   -d [depends[1]] -o [depends[2]] -t 'find_cutoffs' -n [depends[3]]",
-    depends=[TrackedExecutable("src/analysis.R"), "input/taxmap_slv_ssu_ref_138.1.txt", args.output, args.tree],
-    targets= args.output+"/optimal_scores.png",
-    name="finding thresholds"
+    "src/make.taxonomy.trees.R   -d [depends[1]] -o [args[0]] -t 'find_cutoffs' -n [depends[2]]",
+    depends=[TrackedExecutable("src/analysis.R"), "input/taxmap_slv_ssu_ref_138.1.txt", args.tree],
+    targets= [args.output+"/optimal_scores.png"],
+    args=args.output,
+    name="Finding thresholds"
 )
 
 ## Assign taxonomy to nodes 
 workflow.add_task(
-    "src/make.taxonomy.trees.R   -d [depends[1]] -o [depends[2]] -t 'assign_Tax' -n [depends[3]]",
-    depends=[TrackedExecutable("src/analysis.R"), "input/taxmap_slv_ssu_ref_138.1.txt", args.output, args.tree,
+    "src/make.taxonomy.trees.R   -d [depends[1]] -o [args[0]] -t 'assign_Tax' -n [depends[2]]",
+    depends=[TrackedExecutable("src/analysis.R"), "input/taxmap_slv_ssu_ref_138.1.txt", args.tree,
              args.output+"/optimal_scores.png"],
     targets= args.output+"/resultTree_bestThresholds.RData",
+    args=args.output,
     name="Assigning taxonomy to internal nodes of ref tree"
     )
 
-## Align query reads to trimmed seed alignment ***PICK UP HERE
+queryName = args.query
+alignName = queryName[:queryName.find(".fasta")] + '.align'
+
+## Align query reads to trimmed seed alignment
 workflow.add_task(
     "/Applications/mothur/mothur '#align.seqs(candidate=[depends[0]], template=[depends[1]])'",
-    depends=[args.trimmedDatabase,args.query]
+    depends=[args.query,args.trimmedDatabase],
+    targets=alignName,
+    name="Aligning queries to trimmed db"
+    )
+
+merged = os.path.join(args.output, "merged.fasta")
+mergedSub = merged[:merged.find(".fasta")] + '.sub.fasta'
+
+## Merge Files
+workflow.add_task(
+    "cat [depends[0]]  [depends[1]]  > [targets[0]] ",
+    depends=[alignName, args.trimmedDatabase],
+    targets=[merged],
+    name="Concatenting db with queries"
     )
 
 ## Replace end gap characters ('.') with '-'
-workflow.do("sed  '/^>/! s/\./-/g' [d:test_reads_V4.align] > [t:test_reads_V4_sub.align]")
-
-## Merge Files
-cat test_reads_V4_sub.align /Users/mis696/proj/16s-region-checker/input/silva.seed_v138/silva.seed_v138.pcr.filter.fasta > V4_merged_aligned_noend.fasta
+workflow.add_task(
+    "sed  '/^>/! s/\./-/g' [depends[0]] > [targets[0]]",
+    depends=[merged],
+    targets=[mergedSub],
+    name="Replacing query end gap characters"
+)
+            
+args.ref = os.path.join(args.output, "ref.refpkg")
 
 ## Create reference package for placements
-taxit create -l 16S_V4 -P V4_20220818_notderep.refpkg \
-      --aln-fasta V4_merged_aligned_noend.fasta \
-      --tree-stats SILVA_seed_V4_log.txt \
-      --tree-file  SILVA_seed_V4.tree
+workflow.add_task(
+    "taxit create -l xxx -P [args[0]] \
+    --aln-fasta [depends[0]] \
+    --tree-stats [depends[1]] \
+    --tree-file   [depends[2]]",
+    depends=[mergedSub, args.treelog, args.tree],
+    args=[args.ref],
+    targets=[args.ref],
+    name="Making reference package for pplacer"
+    )
 
 ## run pplacer
-/Users/mis696/Downloads/pplacer-Darwin-v1.1.alpha17-6-g5cecf99/pplacer -c  V4_20220818_notderep.refpkg  V4_merged_aligned_noend.fasta
-
+workflow.add_task(
+    "/Users/mis696/Downloads/pplacer-Darwin-v1.1.alpha17-6-g5cecf99/pplacer --out-dir [args[0]] -c [depends[0]]  \
+    [depends[1]]",
+    depends=[args.ref],
+    targets=[os.path.join(args.output, "merged.sub.jplace")],
+    args=[args.output],
+    name="Placing queries in reference tree"
+    )
+    
+## Assign taxonomy to queries
+workflow.add_task(
+    "src/tax.assign.R  -j [depends[0]] -o [args[0]] -t [depends[1]]",
+    depends=[os.path.join(args.output, "merged.sub.jplace"), args.output+"/resultTree_bestThresholds.RData"],
+    targets=[os.path.join(args.output, "taxonomic_assignments.tsv")],
+    args=[args.output],
+    name="Assigning taxonomy to queries"
+    )
 
 
 # Task2 sample R module  - src/analysis_example.r
