@@ -10,18 +10,19 @@ library(lemon)
 library(vegan)
 library(microbiomeutilities)
 library(pheatmap)
+library(dada2)
 
 ## Read in data with taxonomy from Kelsey's analysis with SILVA
 kelseyDataRaw <- read.delim("~/proj/PPITAA/input/all_samples_taxonomy_closed_reference.tsv", 
                              sep='\t', fill=T, stringsAsFactors = F, header=T)
 tax_oldDADA2 <- kelseyDataRaw %>%
-  select(taxonomy) %>%
+  dplyr::select(taxonomy) %>%
   separate(taxonomy, into=c("Kingdom", "Phylum", "Class", "Order", "Family",
                             "Genus", "Species"), sep=";")
 
 ## Remove samples as instructed by Kelsey
 kelseyDataFull <- kelseyDataRaw %>%
-  select(-c(X,
+  dplyr::select(-c(X,
             CBSF036_S66_L001, 
             CBSF060_S82_L001, 
             CBSF078_S77_L001, 
@@ -46,10 +47,10 @@ rownames(otumat) <- paste0(kelseyData$taxaIDs, "a")
 colnames(otumat) <- paste0(colnames(otumat), "a")
 OTU_dada <- otu_table(otumat, taxa_are_rows = TRUE)
 
-samp_dada <- data.frame(colnames(OTU), rep("DADA2", length(colnames(OTU))))
+samp_dada <- data.frame(colnames(OTU_dada), rep("DADA2", length(colnames(OTU_dada))))
 
 colnames(samp_dada) <- c("sampleID", "Taxonomy_type")
-rownames(samp_dada) <- paste0(samp_dada$sampleID, "a")
+rownames(samp_dada) <- samp_dada$sampleID
 str(samp_dada)
 SAMP_dada <- sample_data(samp_dada)
 
@@ -179,19 +180,24 @@ ggsave(filename=paste0("~/proj/PPITAA/output/viz/AllLevels_PCoA_bray.png"), plot
 
 #Heatmap
 dat1 <- bind_cols(data.frame(tax_table(ps1_parathaa))$Genus, data.frame(tax_table(ps1_dada))$Genus)
+colnames(dat1) <- c("paratha_Genus", "dada2_Genus")
 
-topBugsDada2 <- dat1 %>% group_by(dada2_Genus) %>% count() 
+topBugsDada2 <- dat1 %>% group_by(dada2_Genus) %>% dplyr::count() 
 topBugsDada2 <- topBugsDada2 %>% arrange(desc(n)) 
 topBugsDada2Names <- data.frame(topBugsDada2[1:30,])$dada2_Genus
 
 
-colnames(dat1) <- c("paratha_Genus", "dada2_Genus")
 dat2 <- dat1 %>% 
   group_by(paratha_Genus, dada2_Genus) %>%
   replace_na(list(paratha_Genus = "Unknown", dada2_Genus = "Unknown")) %>%
-  count() %>% 
+  dplyr::count() %>% 
   filter(dada2_Genus %in% topBugsDada2Names) 
 
-  
+dat3 <- dat2 %>%
+  pivot_wider(names_from = paratha_Genus, values_from = n) %>%
+  replace(is.na(.), 0) %>%
+  column_to_rownames(var = "dada2_Genus")
 
-  
+pheatmap(dat3, scale="row")
+
+
