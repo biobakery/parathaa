@@ -5,9 +5,9 @@ require(docopt)
 
 Options:
    -d naming file [default: input/taxmap_slv_ssu_ref_138.1.txt]
-   -o model output directory [default: output]
-   -t task: assign_Tax or find_cutoffs [default: assign_Tax]
-   -n tree 
+   -o model output directory [default: output/testrun20221025]
+   -t task: assign_Tax or find_cutoffs [default: find_cutoffs]
+   -n tree [default: /Users/mis696/proj/parathaa/output/testrun20221025/region_specific.tree]
 
  ]' -> doc
 
@@ -58,7 +58,7 @@ taxdata <- taxdata %>%
   unite("AccID", c("primaryAccession", "start", "stop"), sep=".", remove=F)
 taxdata <- taxdata %>%
   separate(col=path, into=c("Kingdom", "Phylum", "Class", "Order", "Family", "Genus"), sep=";") %>%
-  rename(Species = organism_name) %>%
+  dplyr::rename(Species = organism_name) %>%
   filter(Kingdom=="Bacteria") 
 
 in.tree.data <- left_join(in.tree.data, taxdata, by="primaryAccession") %>%
@@ -245,7 +245,7 @@ for(cut1 in cutoffs){
   ## Second score to minimize: number of non-Phylum members clustered within a Phylum
   phyla <- offspring(tempData, tempData$node[which(tempData$isPhylumNode==T)], tiponly=T, self_include=T)
   phylumTables <- lapply(phyla, FUN= function(x) table(x[["Phylum"]]))
-  phylumNames <- tempData %>% filter(node %in% names(phylumTables)) %>% select(Phylum, node)
+  phylumNames <- tempData %>% filter(node %in% names(phylumTables)) %>% dplyr::select(Phylum, node)
   phylumNames$score2count <-  unlist(lapply(phylumTables, FUN=function(x) sum(x)-max(x)))
   phylumscore2s <- phylumNames %>% group_by(Phylum) %>% summarize(score2count = sum(score2count))
   phylumscore2s$score1count <- as.integer(table(pNodes$Phylum)-1)
@@ -272,7 +272,7 @@ for(cut1 in cutoffs){
   ## Second score to minimize: number of non-Class members clustered within a Class
   classes <- offspring(tempData, tempData$node[which(tempData$isClassNode==T)], tiponly=T, self_include=T)
   classTables <- lapply(classes, FUN= function(x) table(x[["Class"]]))
-  classNames <- tempData %>% filter(node %in% names(classTables)) %>% select(Class, node)
+  classNames <- tempData %>% filter(node %in% names(classTables)) %>% dplyr::select(Class, node)
   classNames$score2count <-  unlist(lapply(classTables, FUN=function(x) sum(x)-max(x)))
   classscore2s <- classNames %>% group_by(Class) %>% summarize(score2count = sum(score2count))
   classscore2s$score1count <- as.integer(table(cNodes$Class)-1)
@@ -299,7 +299,7 @@ for(cut1 in cutoffs){
   ## Second score to minimize: number of non-Order members clustered within a Order
   orders <- offspring(tempData, tempData$node[which(tempData$isOrderNode==T)], tiponly=T, self_include=T)
   orderTables <- lapply(orders, FUN= function(x) table(x[["Order"]]))
-  orderNames <- tempData %>% filter(node %in% names(orderTables)) %>% select(Order, node)
+  orderNames <- tempData %>% filter(node %in% names(orderTables)) %>% dplyr::select(Order, node)
   orderNames$score2count <-  unlist(lapply(orderTables, FUN=function(x) sum(x)-max(x)))
   orderscore2s <- orderNames %>% group_by(Order) %>% summarize(score2count = sum(score2count))
   orderscore2s$score1count <- as.integer(table(oNodes$Order)-1)
@@ -326,7 +326,7 @@ for(cut1 in cutoffs){
   ## Second score to minimize: number of non-Family members clustered within a Family
   families <- offspring(tempData, tempData$node[which(tempData$isFamilyNode==T)], tiponly=T, self_include=T)
   familyTables <- lapply(families, FUN= function(x) table(x[["Family"]]))
-  familyNames <- tempData %>% filter(node %in% names(familyTables)) %>% select(Family, node)
+  familyNames <- tempData %>% filter(node %in% names(familyTables)) %>% dplyr::select(Family, node)
   familyNames$score2count <- unlist(lapply(familyTables, FUN=function(x) sum(x)-max(x)))
   familyscore2s <- familyNames %>% group_by(Family) %>% summarize(score2count = sum(score2count))
   familyscore2s$score1count <- as.integer(table(fNodes$Family)-1)
@@ -353,7 +353,7 @@ for(cut1 in cutoffs){
   ## Second score to minimize: number of non-Genus members clustered within a Genus
   genera <- offspring(tempData, tempData$node[which(tempData$isGenusNode==T)], tiponly=T, self_include=T)
   generaTables <- lapply(genera, FUN= function(x) table(x[["Genus"]]))
-  generaNames <- tempData %>% filter(node %in% names(generaTables)) %>% select(Genus, node)
+  generaNames <- tempData %>% filter(node %in% names(generaTables)) %>% dplyr::select(Genus, node)
   generaNames$score2count <-  unlist(lapply(generaTables, FUN=function(x) sum(x)-max(x)))
   generascore2s <- generaNames %>% group_by(Genus) %>% summarize(score2count = sum(score2count))
   generascore2s$score1count <- as.integer(table(gNodes$Genus)-1)
@@ -380,7 +380,7 @@ for(cut1 in cutoffs){
   ## Second score to minimize: number of non-Species members clustered within a Species
   species <- offspring(tempData, tempData$node[which(tempData$isSpeciesNode==T)], tiponly=T, self_include=T)
   speciesTables <- lapply(species, FUN= function(x) table(x[["Species"]]))
-  speciesNames <- tempData %>% filter(node %in% names(speciesTables)) %>% select(Species, node)
+  speciesNames <- tempData %>% filter(node %in% names(speciesTables)) %>% dplyr::select(Species, node)
   speciesNames$score2count <-  unlist(lapply(speciesTables, FUN=function(x) sum(x)-max(x)))
   speciesNames$nSeqs <- unlist(lapply(species, nrow))
   speciesscore2s <- speciesNames %>% group_by(Species) %>% summarize(score2count = sum(score2count))
@@ -557,11 +557,11 @@ for(pNode in pNodes$node[which(!pNodes$isTip)]){
     genera <- offspring(tempData2, tempData2$node[which(tempData2$node %in% gNodes$node)], tiponly=T, self_include=T)
     if(is.null(genera[["Genus"]])){
       generaTables <- lapply(genera, FUN= function(x) table(x[["Genus"]]))
-      generaNames <- tempData2 %>% filter(node %in% gNodes$node) %>% select(Genus)
+      generaNames <- tempData2 %>% filter(node %in% gNodes$node) %>% dplyr::select(Genus)
       generaNames$score2count <-  unlist(lapply(generaTables, FUN=function(x) sum(x)-max(x)))
     } else {
       generaTables <- table(genera[["Genus"]])
-      generaNames <- tempData2 %>% filter(node %in% gNodes$node) %>% select(Genus)
+      generaNames <- tempData2 %>% filter(node %in% gNodes$node) %>% dplyr::select(Genus)
       generaNames$score2count <-  sum(generaTables)-max(generaTables)
       }
     

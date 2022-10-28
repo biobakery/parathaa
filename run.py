@@ -124,7 +124,7 @@ workflow.add_task(
 workflow.add_task(
     "/Users/mis696/Downloads/pplacer-Darwin-v1.1.alpha17-6-g5cecf99/pplacer --out-dir [args[0]] -c [depends[0]]  \
     [depends[1]]",
-    depends=[args.ref],
+    depends=[args.ref, mergedSub],
     targets=[os.path.join(args.output, "merged.sub.jplace")],
     args=[args.output],
     name="Placing queries in reference tree"
