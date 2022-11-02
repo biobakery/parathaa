@@ -200,4 +200,38 @@ dat3 <- dat2 %>%
 
 pheatmap(dat3, scale="row")
 
+### Mock community analysis
+## read in fasta
+taxa <- assignTaxonomy("/Users/mis696/proj/parathaa/input/SRR3225703.fasta", 
+                       "/Users/mis696/proj/PPITAA/input/silva_nr99_v138.1_train_set.fa.gz",
+                       multithread=TRUE)
+nChars <- grep("N", rownames(taxa))
+print(paste("Removing", length(nChars), "sequences with N bases"))
+taxa <- taxa[-nChars,]
+taxa.sp <- addSpecies(taxa, "/Users/mis696/proj/PPITAA/input/silva_species_assignment_v138.1.fa.gz")
 
+
+otutab <- cbind(rownames(taxa.sp), taxa.sp)
+otutab <- as_tibble(otutab) %>% dplyr::rename("ASV"="V1") %>% dplyr::count(ASV, name="SRR3225703") 
+otumat <- as.matrix(otutab$SRR3225703)
+rownames(otumat) <- otutab$ASV
+colnames(otumat) <- "SRR3225703"
+OTU_dada <- otu_table(otumat, taxa_are_rows = TRUE)
+
+taxtab <- cbind(rownames(taxa.sp), taxa.sp)
+taxtab <- as_tibble(taxtab) %>% dplyr::rename("ASV"="V1") %>% dplyr::group_by(ASV, Kingdom, Phylum, Class, Order, Family, Genus, Species) %>% dplyr::count(ASV, name="SRR3225703") 
+taxmat <- taxtab %>% as.matrix
+rownames(taxmat) <- taxtab$ASV
+taxmat <- taxmat[,c("Kingdom", "Phylum", "Class", "Order", "Family", "Genus", "Species")]  
+TAX_dada <- tax_table(taxmat)
+#One sequence has 2 possible assignments, need to reassign taxon name
+rownames(TAX_dada)[16506] <- paste0(rownames(TAX_dada)[16506], ".1")
+
+samp_dada <- data.frame(colnames(OTU_dada), rep("DADA2", length(colnames(OTU_dada))))
+
+colnames(samp_dada) <- c("sampleID", "Taxonomy_type")
+rownames(samp_dada) <- samp_dada$sampleID
+str(samp_dada)
+SAMP_dada <- sample_data(samp_dada)
+
+ps1_dada <- phyloseq(OTU_dada, TAX_dada, SAMP_dada)
