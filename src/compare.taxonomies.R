@@ -12,6 +12,7 @@ library(microbiomeutilities)
 library(pheatmap)
 library(dada2)
 library (devtools)
+suppressPackageStartupMessages(library(seqinr))
 source_url("https://raw.githubusercontent.com/lrjoshi/FastaTabular/master/fasta_and_tabular.R")
 
 ## Read in data with taxonomy from Kelsey's analysis with SILVA
@@ -33,7 +34,7 @@ kelseyDataFull <- kelseyDataRaw %>%
             taxonomy))
 
 ## Full SILVA DADA2 training set
-#taxa <- assignTaxonomy("~/proj/PPITAA/input/amplicons_fromKelsey.fasta", 
+#taxaNR99 <- assignTaxonomy("~/proj/PPITAA/input/amplicons_fromKelsey.fasta", 
 #                       "/Users/mis696/proj/PPITAA/input/silva_nr99_v138.1_train_set.fa.gz", 
 #                       multithread=TRUE)
 
@@ -52,20 +53,21 @@ TAX_dada <- tax_table(tax_dada)
 
 otumat <- as.matrix(kelseyDataFull)
 rownames(otumat) <- paste0(kelseyData$taxaIDs, "a")
+
+samp_dada <- data.frame(colnames(otumat), rep("DADA2", length(colnames(otumat))))
+
 colnames(otumat) <- paste0(colnames(otumat), "a")
 OTU_dada <- otu_table(otumat, taxa_are_rows = TRUE)
 
-samp_dada <- data.frame(colnames(OTU_dada), rep("DADA2", length(colnames(OTU_dada))))
 
 colnames(samp_dada) <- c("sampleID", "Taxonomy_type")
-rownames(samp_dada) <- samp_dada$sampleID
+rownames(samp_dada) <-  paste0(samp_dada$sampleID, "a")
 str(samp_dada)
 SAMP_dada <- sample_data(samp_dada)
 
 ps1_dada <- phyloseq(OTU_dada, TAX_dada, SAMP_dada)
 
 print(ps1_dada)
-
 
 
 ## Read in PARATHAA results
@@ -78,13 +80,6 @@ tax_paratha <- parathaData %>%
   dplyr::select(query.name, Kingdom, Phylum, Class, Order, Family, Genus, Species) %>%
   group_by(query.name) %>% 
   filter(row_number()==1)
-#tax$Kingdom[which(!is.na(tax$Kingdom))] <- paste0("k__", tax$Kingdom[which(!is.na(tax$Kingdom))])
-#tax$Phylum[which(!is.na(tax$Phylum))] <- paste0("p__", tax$Phylum[which(!is.na(tax$Phylum))])
-#tax$Class[which(!is.na(tax$Class))] <- paste0("c__", tax$Class[which(!is.na(tax$Class))])
-#tax$Order[which(!is.na(tax$Order))] <- paste0("o__", tax$Order[which(!is.na(tax$Order))])
-#tax$Family[which(!is.na(tax$Family))] <- paste0("f__", tax$Family[which(!is.na(tax$Family))])
-#tax$Genus[which(!is.na(tax$Genus))] <- paste0("g__", tax$Genus[which(!is.na(tax$Genus))])
-#tax$Species[which(!is.na(tax$Species))] <- paste0("s__", tax$Species[which(!is.na(tax$Species))])
 
 taxmat_paratha <- as.matrix(tax_paratha)
 rownames(taxmat_paratha) <- paste0(tax_paratha$query.name, "b")
@@ -92,12 +87,12 @@ taxmat_paratha <- taxmat_paratha[,-1]
 TAX_parathaa <- tax_table(taxmat_paratha)
 
 otumat_parathaa <- kelseyDataFull
+
 otumat_parathaa <- as.matrix(otumat_parathaa)
 samp_parathaa <- data.frame(colnames(otumat_parathaa), rep("parathaa", length(colnames(otumat_parathaa))))
 rownames(otumat_parathaa) <- paste0(kelseyData$taxaIDs, "b")
 colnames(otumat_parathaa) <- paste0(colnames(otumat_parathaa), "b")
 OTU_parathaa <- otu_table(otumat_parathaa, taxa_are_rows = TRUE)
-
 
 colnames(samp_parathaa) <- c("sampleID", "Taxonomy_type")
 rownames(samp_parathaa) <- paste0(samp_parathaa$sampleID, "b")
@@ -131,6 +126,8 @@ tax_table(ps1.com)[is.na(tax_table(ps1.com)[, "Family"]), "Family"] <- "f__"
 tax_table(ps1.com)[is.na(tax_table(ps1.com)[, "Genus"]), "Genus"] <- "g__"
 tax_table(ps1.com)[is.na(tax_table(ps1.com)[, "Species"]), "Species"] <- "s__"
 tax_table(ps1.com)[which(tax_table(ps1.com)[, "Species"]=="uncultured bacterium"), "Species"] <- "s__"
+tax_table(ps1.com)[which(tax_table(ps1.com)[, "Species"]=="UNCLASSIFIED"), "Species"] <- "s__"
+tax_table(ps1.com)[which(tax_table(ps1.com)[, "Species"]=="Unknown"), "Species"] <- "s__"
 
 # it would be nice to have the Taxonomic names in italics.
 # for that we set this
@@ -149,22 +146,31 @@ ps1.com@phy_tree <- NULL
 
 
 Levels <- c("Phylum", "Class", "Order", "Family", "Genus", "Species")
+#Levels <- "Species"
 
 # Taxonomy plots
 for(level in Levels){
-  ps1.com.lev <- aggregate_rare(ps1.com, level, detection = .01/100, prevalence = 10/100)
+  ps1.com.rel <- microbiome::transform(ps1.com, "compositional")
+  ps1.com.rel.lev <- aggregate_rare(ps1.com.rel, level, detection = .1/100, prevalence = 10/100)
+  ps1.com.rel.lev.agg <- aggregate_top_taxa2(ps1.com.rel.lev, 10, level)
+  
+  if(FALSE){
+  ps1.com.rel <- microbiome::transform(ps1.com, "compositional")
+  ps1.com.rel.lev <- aggregate_rare(ps1.com.rel, level, detection = .1/100, prevalence = 10/100)
+  ps1.com.rel.lev.agg <- aggregate_taxa(ps1.com.rel.lev, level)
+  }
   #ps1.com.lev <- ps1.com
-  ps1.com.lev.agg <- aggregate_top_taxa2(ps1.com.lev, 10, level)
-  #ps1.com.lev.agg <- aggregate_taxa(ps1.com.lev, level)
-  ps1.com.lev.agg.rel <- microbiome::transform(ps1.com.lev.agg, "compositional")
-  plot.composition.relAbun <- plot_composition(ps1.com.lev.agg.rel,
+
+  plot.composition.relAbun <- plot_composition(ps1.com.rel.lev.agg,
                                                #sample.sort = "sampleID",
                                                sample.sort = "Taxonomy_type",
-                                               #otu.sort = "abundance",
+                                               otu.sort = "abundance",
                                                x.label = "SampleID") 
-  xlabs <- rep("", nrow(sample_data(ps1.com.lev.agg.rel)))
-  xlabs[ceiling(nrow(sample_data(ps1.com.lev.agg.rel))/4)] <- "DADA2"
-  xlabs[ceiling(nrow(sample_data(ps1.com.lev.agg.rel))*3/4)+1] <- "parathaa"
+  xlabs <- rep("", nrow(sample_data(ps1.com.rel.lev.agg)))
+  xlabs[ceiling(nrow(sample_data(ps1.com.rel.lev.agg))/4)] <- "DADA2"
+  xlabs[ceiling(nrow(sample_data(ps1.com.rel.lev.agg))*3/4)+1] <- "parathaa"
+  #xlabs <- c("DADA2", "parathaa", "SPINGO")
+  #xlabs <- c("parathaa", "SPINGO")
   plot.composition.relAbun <- plot.composition.relAbun + theme(legend.position = "bottom") 
   plot.composition.relAbun <- plot.composition.relAbun +  theme_bw()  + scale_fill_brewer(palette="Paired")  #scale_fill_manual(level, values = glasbey()) #
   #plot.composition.relAbun <- plot.composition.relAbun + theme(axis.text.x = element_text(angle = 90)) 
@@ -179,9 +185,9 @@ for(level in Levels){
   plot.composition.relAbun <- plot.composition.relAbun +  scale_x_discrete(labels=xlabs) + theme(axis.text.x = element_text(size=14, angle=0))
   #ggsave(filename=paste0("~/proj/parathaa/output/viz/", level, "parathaa_taxonomy.png"), plot.composition.relAbun, width=10, height=6)
   if(level!="Species")
-    ggsave(filename=paste0("/Users/mis696/proj/parathaa/output/20221115_ASD_dadaseed", level, "taxonomy.png"), plot.composition.relAbun, width=10, height=6)
+    ggsave(filename=paste0("/Users/mis696/proj/parathaa/output/20221128_ASD_dadaseed", level, "taxonomy.png"), plot.composition.relAbun, width=10, height=6)
   if(level=="Species")
-    ggsave(filename=paste0("/Users/mis696/proj/parathaa/output/20221115_ASD_dadaseed", level, "taxonomy.png"), plot.composition.relAbun, width=14, height=6)
+    ggsave(filename=paste0("/Users/mis696/proj/parathaa/output/20221128_ASD_dadaseed", level, "taxonomy.png"), plot.composition.relAbun, width=14, height=6)
 }
 
 
@@ -195,16 +201,16 @@ for(level in Levels){
   #brays <- phyloseq::distance(ps1.com.lev.agg.rel, method="bray")
   #adonis2(brays ~ sample_data(ps1.com.lev.agg.rel)$Taxonomy_type)
   p1 = plot_ordination(ps1.com.lev.agg.rel, GP.ord, type="samples", color="Taxonomy_type", title=level) + 
-    geom_polygon(aes(group=sampleID), color="grey")
+    geom_polygon(aes(group=sampleID), color="grey") + theme_bw()
+    
   plotList[[level]] <- p1
 }
-legend <- g_legend(plotList[["Phylum"]] + theme(legend.position='bottom'))
-p1 <- grid.arrange(plotList[["Phylum"]]+theme(legend.position='hidden'), plotList[["Class"]]+theme(legend.position='hidden'), 
-             plotList[["Order"]]+theme(legend.position='hidden'), plotList[["Family"]]+theme(legend.position='hidden'),
-             plotList[["Genus"]]+theme(legend.position='hidden'), legend, nrow = 3)
 
-ggsave(filename=paste0("~/proj/parathaa/output/viz/AllLevels_PCoA_bray_seedDada.png"), plot=p1, height = 8, width=6, dpi=300)
+p1 <- ggarrange(plotList[["Phylum"]]+theme(legend.position='hidden'), plotList[["Class"]]+theme(legend.position='hidden'), 
+          plotList[["Order"]]+theme(legend.position='hidden'), plotList[["Family"]]+theme(legend.position='hidden'),
+          plotList[["Genus"]]+theme(legend.position='hidden'), plotList[["Species"]], ncol=2, nrow=3, common.legend = TRUE, legend="bottom") 
 
+ggsave(filename=paste0("~/proj/parathaa/output/viz/20221129_ASD_PCoA_bray_seedDada.png"), plot=p1, height = 6, width=3, dpi=300)
 
 
 #Heatmap
@@ -227,14 +233,15 @@ dat3 <- dat2 %>%
   replace(is.na(.), 0) %>%
   column_to_rownames(var = "dada2_Genus")
 
-pheatmap(dat3)#, scale="row")
+pheatmap(as.matrix(dat3))#, scale="row")
 
 
 ###############################
 ### Mock community analysis ###
 ###############################
 
-## read in fasta
+## Assign taxonomy with dada2 and full SILVA db
+if(FALSE){
 taxa <- assignTaxonomy("/Users/mis696/proj/parathaa/input/SRR3225703.fasta", 
                        "/Users/mis696/proj/PPITAA/input/silva_nr99_v138.1_train_set.fa.gz",
                        multithread=TRUE)
@@ -242,9 +249,18 @@ nChars <- grep("N", rownames(taxa))
 print(paste("Removing", length(nChars), "sequences with N bases"))
 taxa <- taxa[-nChars,]
 taxa.sp <- addSpecies(taxa, "/Users/mis696/proj/PPITAA/input/silva_species_assignment_v138.1.fa.gz")
-taxa.sp <- taxa
+}
 
-##taxa.sp2 <- taxa
+## Assign taxonomy with dada2 and seed SILVA db
+taxa <- assignTaxonomy("/Users/mis696/proj/parathaa/input/SRR3225703.fasta", 
+                       "/Users/mis696/proj/parathaa/input/silva.seed_v138_1.ng.dada.fasta",
+                       multithread=TRUE)
+nChars <- grep("N", rownames(taxa))
+print(paste("Removing", length(nChars), "sequences with N bases"))
+taxa <- taxa[-nChars,]
+taxa.sp <- addSpecies(taxa, "/Users/mis696/proj/parathaa/input/silva.seed_v138_1.ng.dada.sp.fasta")
+
+
 otutab <- cbind(rownames(taxa.sp), taxa.sp)
 otutab <- as_tibble(otutab) %>% dplyr::rename("ASV"="V1") %>% dplyr::count(ASV, name="SRR3225703") 
 otumat <- as.matrix(otutab$SRR3225703)
@@ -271,7 +287,6 @@ colnames(taxmat)[which(colnames(taxmat)=="Species2")] <- "Species"
 TAX_dada <- tax_table(taxmat)
 #One sequence has 2 possible assignments, need to reassign taxon name
 #rownames(TAX_dada)[16506] <- paste0(rownames(TAX_dada)[16506], ".1")
-
 
 samp_dada <- data.frame(colnames(OTU_dada), rep("DADA2", length(colnames(OTU_dada))))
 colnames(samp_dada) <- c("sampleID", "Taxonomy_type")
@@ -318,11 +333,45 @@ SAMP_parathaa <- sample_data(samp_parathaa)
 
 ps1_parathaa <- phyloseq(OTU_parathaa, TAX_parathaa, SAMP_parathaa)
 
-##Trying to make a dummy second sample to deal with aggregate_taxa issue
+if(FALSE){
+  ps1_all<- merge_phyloseq(ps1_spingo, ps1_parathaa)
+  ps1.com.rel <- microbiome::transform(ps1.com, "compositional")
+  ps1.com.rel.lev <- aggregate_rare(ps1.com.rel, "Species", detection = .1/100, prevalence=10/100)
+  #ps1.com.lev <- ps1.com
+  #ps1.com.lev.agg <- aggregate_top_taxa2(ps1_parathaa, 20, "Species")
+  #ps1.com.lev.agg <- aggregate_taxa(ps1.com.lev, level)
 
-ps1_all<- merge_phyloseq(ps1_dada, ps1_parathaa)
+}
 
 
+
+## Read in SPINGO results
+spingo <- read.delim("output/20221101_MiSeqV4V5Mock/SRR3225703.summary.txt",
+                     header = F, col.names = c("Species", "SRR3225703c"))
+spingo$Species <- str_replace_all(spingo$Species, "\\(", "")
+spingo$SRR3225703c <- as.numeric(str_replace_all(spingo$SRR3225703c, "\\)", ""))
+
+
+taxmat <- as.matrix(spingo$Species)
+rownames(taxmat) <- spingo$Species 
+colnames(taxmat) <- "Species"
+taxmat[,"Species"] <- str_replace_all(taxmat[,"Species"], "_", " ")
+TAX_spingo <- tax_table(taxmat)
+
+otumat <- as.matrix(spingo$SRR3225703c)
+rownames(otumat) <- spingo$Species
+colnames(otumat) <- "SRR3225703c"
+OTU_spingo <- otu_table(otumat, taxa_are_rows = TRUE)
+
+samp_spingo <- data.frame(colnames(OTU_spingo), rep("SPINGO", length(colnames(OTU_spingo))))
+colnames(samp_spingo) <- c("sampleID", "Taxonomy_type")
+rownames(samp_spingo) <- samp_spingo$sampleID
+str(samp_spingo)
+SAMP_spingo <- sample_data(samp_spingo)
+
+ps1_spingo <- phyloseq(OTU_spingo, TAX_spingo, SAMP_spingo)
+
+ps1_all<- merge_phyloseq(ps1_dada, ps1_parathaa, ps1_spingo)
 
 
 ## Heatmap ##
@@ -446,7 +495,7 @@ taxmatch2 <- taxmatch.df[nam3,]
 dim(taxmatch2)
 dim(taxmatch2[!is.na(taxmatch2$Species),])
 
-## Write seed db in training file format for DADA2 --- FIX BELOW, LENGTHS DONT MATCH
+## Write seed db in training file format for DADA2 
 seed.db.species <- seed.db[which(!is.na(taxmatch2$Species))]
 seed.db.species.names <- paste(nam3[which(!is.na(taxmatch2$Species))], taxmatch2$Species[which(!is.na(taxmatch2$Species))])
 
@@ -466,13 +515,71 @@ seed.db.bac.names <- apply(cbind(taxmatch2$Kingdom[bacRows],
 
 write.fasta(sequences = seed.db.bac , names = seed.db.bac.names, nbchar = 80, file.out = "/Users/mis696/proj/parathaa/input/silva.seed_v138_1.ng.dada.fasta")
 
+##################################
+## Synthetic community analysis ##
+##################################
 
-taxa <- assignTaxonomy("/Users/mis696/proj/parathaa/input/SRR3225703.fasta", 
-                       "/Users/mis696/proj/parathaa/input/silva.seed_v138_1.ng.dada.fasta",
+# Read in parathaa data
+## Read in parathaa data
+parathaData <- read.delim("/Users/mis696/proj/parathaa/output/20221130_Synthetic/taxonomic_assignments.tsv", 
+                          sep='\t', fill=T, stringsAsFactors = F, header=T)
+tax_paratha <- parathaData %>%
+  dplyr::select(query.name, Kingdom, Phylum, Class, Order, Family, Genus, Species) %>%
+  group_by(query.name) %>% 
+  filter(row_number()==1)
+
+taxmat <- tax_paratha %>% as.matrix
+rownames(taxmat) <- tax_paratha$query.name
+taxmat <- taxmat[,c("Kingdom", "Phylum", "Class", "Order", "Family", "Genus", "Species")]  
+TAX_parathaa <- tax_table(taxmat)
+
+otutab <- tax_paratha %>% 
+  dplyr::group_by(query.name, Kingdom, Phylum, Class, Order, Family, Genus, Species) %>% 
+  dplyr::count(query.name, name="Parathaa") 
+otumat <- as.matrix(otutab$Parathaa)
+rownames(otumat) <- otutab$query.name
+colnames(otumat) <- "Parathaa"
+OTU_parathaa <- otu_table(otumat, taxa_are_rows = TRUE)
+
+samp_parathaa <- data.frame(colnames(OTU_parathaa), rep("parathaa", length(colnames(OTU_parathaa))))
+colnames(samp_parathaa) <- c("sampleID", "Taxonomy_type")
+rownames(samp_parathaa) <- samp_parathaa$sampleID
+str(samp_parathaa)
+SAMP_parathaa <- sample_data(samp_parathaa)
+
+ps1_parathaa <- phyloseq(OTU_parathaa, TAX_parathaa, SAMP_parathaa)
+
+## Assign taxonomy with dada2
+taxa <- assignTaxonomy("/Users/mis696/proj/parathaa/input/SILVAsubsample.pcr.fasta", 
+                       "/Users/mis696/proj/parathaa/input/silva.seed_v138_1.ng.dada.fasta", 
                        multithread=TRUE)
+## Remove sequences with undefined bases
 nChars <- grep("N", rownames(taxa))
 print(paste("Removing", length(nChars), "sequences with N bases"))
 taxa <- taxa[-nChars,]
 taxa.sp <- addSpecies(taxa, "/Users/mis696/proj/parathaa/input/silva.seed_v138_1.ng.dada.sp.fasta")
 
 
+tax_dada <- as.matrix(taxa.sp)
+#Get IDs from format_amplicon_table.R "kelseyData" object
+rownames(tax_dada) <- paste0(kelseyData$taxaIDs, "a")
+
+TAX_dada <- tax_table(tax_dada)
+
+otumat <- as.matrix(kelseyDataFull)
+rownames(otumat) <- paste0(kelseyData$taxaIDs, "a")
+
+samp_dada <- data.frame(colnames(otumat), rep("DADA2", length(colnames(otumat))))
+
+colnames(otumat) <- paste0(colnames(otumat), "a")
+OTU_dada <- otu_table(otumat, taxa_are_rows = TRUE)
+
+
+colnames(samp_dada) <- c("sampleID", "Taxonomy_type")
+rownames(samp_dada) <-  paste0(samp_dada$sampleID, "a")
+str(samp_dada)
+SAMP_dada <- sample_data(samp_dada)
+
+ps1_dada <- phyloseq(OTU_dada, TAX_dada, SAMP_dada)
+
+print(ps1_dada)

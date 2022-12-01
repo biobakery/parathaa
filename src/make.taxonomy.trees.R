@@ -7,7 +7,7 @@ Options:
    -d naming file [default: input/taxmap_slv_ssu_ref_138.1.txt]
    -o model output directory [default: output/testrun20221025]
    -t task: assign_Tax or find_cutoffs [default: find_cutoffs]
-   -n tree [default: /Users/mis696/proj/parathaa/output/testrun20221025/region_specific.tree]
+   -n tree [default: /Users/mis696/proj/parathaa/20221130_Synthetic/region_specific.tree]
 
  ]' -> doc
 
@@ -466,7 +466,7 @@ mins<- plotData2 %>%
 plotData2 <- plotData2 %>% 
   left_join(mins) %>%
   group_by(Level) %>%
-  mutate(minThreshold = Threshold[minScores==Scores])
+  mutate(minThreshold = Threshold[minScores==Scores][1])
 
 ggplot(plotData2 , aes(x=Threshold, y=Scores, color=Level)) + geom_point() + 
   geom_vline(aes(xintercept = minThreshold, color=Level, linetype=Level))
