@@ -5,7 +5,7 @@ require(docopt)
 
 Options:
    -d naming file [default: input/taxmap_slv_ssu_ref_138.1.txt]
-   -o model output directory [default: output/testrun20221025]
+   -o model output directory [default: output/testrun20221213]
    -t task: assign_Tax or find_cutoffs [default: find_cutoffs]
    -n tree [default: /Users/mis696/proj/parathaa/20221130_Synthetic/region_specific.tree]
 
@@ -14,6 +14,7 @@ Options:
 #To add as arguments: binom error params
 
 opts <- docopt(doc)
+
 
 library(logging)
 
@@ -27,6 +28,11 @@ library(dplyr)
 library(ape)
 library(ggimage)
 library(TDbook)
+source("src/SILVA.species.editor.R")
+
+## Set task
+Task <- opts$t #"assign_Tax" "find_cutoffs"
+
 
 ##Input and output files:
 
@@ -67,6 +73,9 @@ in.tree.data <- left_join(in.tree.data, taxdata, by="primaryAccession") %>%
 class(in.tree.data) <- c("tbl_tree", class(in.tree.data))
 in.tree.data$isTip <- isTip(in.tree.data, in.tree.data$node)
 
+## Fix species names
+in.tree.data <- SILVA.species.editor(in.tree.data, Task=Task)
+
 in.tree.data <- in.tree.data %>% mutate(Kingdom = na_if(Kingdom, ""),
                                 Phylum = na_if(Phylum, ""),
                                 Class = na_if(Class, ""),
@@ -76,8 +85,6 @@ in.tree.data <- in.tree.data %>% mutate(Kingdom = na_if(Kingdom, ""),
                                 Species = na_if(Species, ""))  
 
 
-
-Task <- opts$t #"assign_Tax" "find_cutoffs"
 binomErrModel <- TRUE
 falseNegRate <- 0.05
 acceptableProb <- 0.20
@@ -85,7 +92,7 @@ acceptableProb <- 0.20
 
 #Broad range of cutoffs:
 if(Task=="find_cutoffs")
-  cutoffs<-c(seq(0.01, 0.5, by=0.01), seq(0.55, 0.9, 0.05))
+  cutoffs<-c(seq(0.001, 0.009, by=0.001), seq(0.01, 0.5, by=0.01), seq(0.55, 0.9, 0.05))
 #"Best" cutoffs loaded from previous step:
 if(Task=="assign_Tax"){
   load(file.path(opts$o, "optimal_scores.RData"))
