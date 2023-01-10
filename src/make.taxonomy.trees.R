@@ -58,7 +58,27 @@ in.tree.data <- as_tibble(in.tree)
 in.tree.data <- in.tree.data %>%
   separate(col=label, into=c("primaryAccession", "arbID"), remove=F)
 
-## Taxonomy of NR99 database from SILVA (primary accession, start, stop)
+if(FALSE){
+# Try new taxdata method:
+## Read in SILVA 138.1 taxonomy 
+taxdata <- read.table(inFileTaxdata , header=T, fill=TRUE,sep='\t', quote="")
+taxdata <- taxdata %>%
+  unite("AccID", c("primaryAccession", "start", "stop"), sep=".", remove=F)
+taxdata <- taxdata %>%
+  mutate(taxonomy=paste0(path, organism_name))
+taxdata <- SILVA.species.editor.DADA(taxdata, "taxonomy")
+
+taxdata <- taxdata %>%
+  select(AccID, primaryAccession, start, stop, taxonomy) %>%
+  separate(col=taxonomy, into=c("Kingdom", "Phylum", "Class", "Order", "Family", "Genus", "Species"), sep=";")
+
+## Additional changes (getting rid of subspecies)
+taxdata <- SILVA.species.editor(taxdata, Task="find_cutoffs")
+taxdata <- taxdata %>% filter(!is.na(Species))
+}
+
+
+## Taxonomy of database from SILVA (primary accession, start, stop)
 taxdata <- read.table(inFileTaxdata , header=T, fill=TRUE,sep='\t', quote="")
 taxdata <- taxdata %>%
   unite("AccID", c("primaryAccession", "start", "stop"), sep=".", remove=F)
@@ -476,10 +496,11 @@ plotData2 <- plotData2 %>%
   mutate(minThreshold = Threshold[minScores==Scores][1])
 
 ggplot(plotData2 , aes(x=Threshold, y=Scores, color=Level)) + geom_point() + 
-  geom_vline(aes(xintercept = minThreshold, color=Level, linetype=Level))
+  geom_vline(aes(xintercept = minThreshold, color=Level, linetype=Level)) + 
+  theme(text = element_text(size = 14)) 
 
 save(plotData2, file = file.path(opts$o, "optimal_scores.RData"))
-ggsave(filename = file.path(opts$o, "optimal_scores.png"))
+ggsave(filename = file.path(opts$o, "optimal_scores.png"), height = 4, width=5, units = "in")
 }
 
 if(FALSE){ #temp
