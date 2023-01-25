@@ -5,9 +5,9 @@ require(docopt)
 
 Options:
    -d naming file [default: input/taxmap_slv_ssu_ref_138.1.txt]
-   -o model output directory [default: output/testrun20221213]
+   -o model output directory [default: output/testrun20230117]
    -t task: assign_Tax or find_cutoffs [default: find_cutoffs]
-   -n tree [default: /Users/mis696/proj/parathaa/20221130_Synthetic/region_specific.tree]
+   -n tree [default: /Users/mis696/proj/parathaa/output/20230109_SyntheticV4V5_nameHarmonizing/region_specific.tree]
 
  ]' -> doc
 
@@ -112,14 +112,15 @@ acceptableProb <- 0.20
 
 #Broad range of cutoffs:
 if(Task=="find_cutoffs")
-  cutoffs<-c(seq(0.001, 0.009, by=0.001), seq(0.01, 0.5, by=0.01), seq(0.55, 0.9, 0.05))
+  cutoffs <- 0.003
+  #cutoffs<-c(seq(0.001, 0.009, by=0.001), seq(0.01, 0.5, by=0.01), seq(0.55, 0.9, 0.05))
 #"Best" cutoffs loaded from previous step:
 if(Task=="assign_Tax"){
-  load(file.path(opts$o, "optimal_scores.RData"))
-  bestThresh <- plotData2 %>% group_by(Level) %>% summarise(minThreshold = mean(minThreshold))
-  cutoffs <- bestThresh$minThreshold
-  names(cutoffs) <- bestThresh$Level
-  #cutoffs<-c("Species"=0.01, "Genus"=0.04, "Family"=0.11, "Order"=0.17,  "Class"=0.3, "Phylum"=0.37)
+  #load(file.path(opts$o, "optimal_scores.RData"))
+  #bestThresh <- plotData2 %>% group_by(Level) %>% summarise(minThreshold = mean(minThreshold))
+  #cutoffs <- bestThresh$minThreshold
+  #names(cutoffs) <- bestThresh$Level
+  cutoffs<-c("Species"=0.003, "Genus"=0.06, "Family"=0.13, "Order"=0.21,  "Class"=0.36, "Phylum"=0.46)
 }
 
 #Initialize
@@ -251,6 +252,7 @@ if(Task=="assign_Tax" & binomErrModel==T){
 elapsedTime <- Sys.time() - startTime
 print(paste("Time elapsed:", elapsedTime, "minutes"))
 
+if(Task=="find_cutoffs"){
 for(cut1 in cutoffs){
   print(cut1)
   if(Task=="find_cutoffs")
@@ -431,7 +433,8 @@ for(cut1 in cutoffs){
     break()
   }
 }
-
+}
+  
 if(Task=="find_cutoffs")
   save(resultData, file = file.path(opts$o, "resultTree_allThresholds.RData"))
 if(Task=="assign_Tax")

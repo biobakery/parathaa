@@ -27,11 +27,12 @@ library(ggtree)
 library(tidytree)
 library(treeio)
 library(dplyr)
+library(phytools)
 
 ## Inputs
-jplaceFile <- opts$j #"/Users/mis696/proj/Phylogeny_Taxonomy/V4_merged_aligned_noend.jplace"
-in.treeFile <- opts$t 
-outDir <- opts$o ##"out" ###
+jplaceFile <- opts$j #"/Users/mis696/proj/parathaa/output/20230119_SyntheticV1V2_SpThreshold0001/merged.sub.jplace" #  
+in.treeFile <- opts$t # "/Users/mis696/proj/parathaa/output/20230119_SyntheticV1V2_SpThreshold0001/resultTree_bestThresholds.RData" #
+outDir <- opts$o ## "out" ### 
 plotTree <- FALSE
 
 ## Read in jplace file, tree
@@ -43,15 +44,69 @@ in.tree <- resultData$tax_bestcuts
 ## Index through query sequences to add taxonomy
 results <- c()
 for(ind in query.names){
-  query.place.data <- in.jplace@placements %>% filter(name==ind)
+  ## Read in data, filter to most likely placement(s) and make various useful formats of it
+  query.place.data <- in.jplace@placements %>% filter(name==ind)  %>% filter(like_weight_ratio==max(like_weight_ratio))
   tree.w.placements <- left_join(in.tree, query.place.data, by="node")
-  tree.w.placements <- tree.w.placements
-  tree.w.placements$placementNODE <- NA
-  tree.w.placements$placementNODE[tree.w.placements$distal_length>=tree.w.placements$branch.length/2 & !is.na(tree.w.placements$distal_length)] <- 
-    tree.w.placements$parent[tree.w.placements$distal_length>=tree.w.placements$branch.length/2 & !is.na(tree.w.placements$distal_length)]
-  tree.w.placements$placementNODE[tree.w.placements$distal_length<tree.w.placements$branch.length/2 & !is.na(tree.w.placements$distal_length)] <- 
-    tree.w.placements$node[tree.w.placements$distal_length<tree.w.placements$branch.length/2 & !is.na(tree.w.placements$distal_length)]
+  tree.w.placements.phy <- tidytree::as.phylo(tree.w.placements)
+  tree.w.placements.tib <- as_tibble(tree.w.placements)
   
+  ## Add a column of heights for each node
+  tree.w.placements.tib$nodeHeight <- 0
+  tree.w.placements.tib$nodeHeight[tree.w.placements.phy$edge[,"node"]] <- nodeHeights(tree.w.placements.phy)[,2]
+  
+  ## Identify query placements and their offspring, extract maximum node heights
+  ind.offs <- offspring(tree.w.placements.phy, query.place.data$node, self_include=T) ## query.place.data$node might be a vector... 
+  if(length(query.place.data$node)==1){
+    maxNodeHeights <- tree.w.placements.tib %>% filter(node == query.place.data$node) %>% summarize(max(nodeHeight)) %>% as.numeric
+  } else {
+  maxNodeHeights <- sapply(ind.offs, FUN= function(x) tree.w.placements.tib %>% filter(node %in% x) %>% summarize(max(nodeHeight)) %>% as.numeric)
+  }
+  maxDistPlacements <- maxNodeHeights-tree.w.placements.tib$nodeHeight[query.place.data$node] + tree.w.placements.tib$distal_length[query.place.data$node] + tree.w.placements.tib$pendant_length[query.place.data$node]
+  if(length(maxDistPlacements)==1) ## If only one placement, maxDistPlacements isn't named, so add name
+    names(maxDistPlacements) <- query.place.data$node
+  
+  ## Load thresholds for levels
+  #load(file.path(opts$o, "optimal_scores.RData"))
+  #bestThresh <- plotData2 %>% group_by(Level) %>% summarise(minThreshold = mean(minThreshold))
+  #cutoffs <- bestThresh$minThreshold
+  #names(cutoffs) <- bestThresh$Level
+  cutoffs<-c("Species"=0.003, "Genus"=0.06, "Family"=0.13, "Order"=0.21,  "Class"=0.36, "Phylum"=0.46)
+  
+  ## Find lowest justifiable taxonomic classification of placement 
+  ## Using max of distances across placements to be conservative, for now
+  assignmentLevels <- names(which(cutoffs>max(maxDistPlacements)))
+  assignment <- tree.w.placements.tib[query.place.data$node, c("Kingdom", rev(assignmentLevels))]
+  ## Deal with multifurcation or placements at child nodes
+  if(length(unique(tree.w.placements.tib$parent[query.place.data$node]))==1 & length(query.place.data$node)>1)
+    assignment <- tree.w.placements.tib[unique(tree.w.placements.tib$parent[query.place.data$node]), c("Kingdom", rev(assignmentLevels))]
+
+  
+  
+  if(FALSE){
+  ## Find lowest justifiable taxonomic classification of placement 
+  lastMapping <- c("5"="Phylum", "4"="Class", "3"="Order", "2"="Family", "1"="Genus", "0"="Species")
+  lastVals <- tree.w.placements.tib %>% 
+    filter(node %in% query.place.data$node) %>%
+    select(Phylum, Class, Order, Family, Genus, Species)%>%
+    as.data.frame()
+  sumNA <- apply(lastVals, 1, FUN = function(x) sum(is.na(x)))
+  names(sumNA) <- query.place.data$node
+  lastLevel <- lastMapping[as.character(sumNA)]
+  names(lastLevel) <- query.place.data$node
+  
+  placementCutoffs <- cutoffs[lastLevel]
+  
+  
+
+  ## If max distance from placed sequence to offspring of placed node > threshold for last assigned level, 
+  ## then assign parent, otherwise assign node
+  tree.w.placements$placementNODE <- NA
+  tree.w.placements[names(maxDistPlacements)[which(maxDistPlacements>placementCutoffs)], "placementNODE"] <- 
+    tree.w.placements[names(maxDistPlacements)[which(maxDistPlacements>placementCutoffs)], "parent"]
+  tree.w.placements[names(maxDistPlacements)[which(maxDistPlacements<=placementCutoffs)], "placementNODE"] <- 
+    tree.w.placements[names(maxDistPlacements)[which(maxDistPlacements<=placementCutoffs)], "node"]
+
+  ## For any node with multiple possible placements, choose taxonomy from placement with greatest likelihood
   maxLRs <- tree.w.placements %>% group_by(placementNODE) %>% 
     summarize(maxLR = max(like_weight_ratio, na.rm=T)) %>%
     rename(node=placementNODE)
@@ -72,7 +127,10 @@ for(ind in query.names){
     ggsave(p, filename = file.path(outDir, ind, "_tree.png"))
   }
   
+  ## Choose node with max likelihood across multiple nodes with placements (may be >1 with max likelihood)
   assignment <- tree.w.placements %>% filter(maxLR==max(maxLR, na.rm = TRUE))
+  }
+  
   assignment$query.name <- ind
   results <- bind_rows(results, assignment)
 }

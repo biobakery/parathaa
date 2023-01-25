@@ -692,6 +692,7 @@ length(which(nam3 %in% silva.nam3))
 
 # Which seqs are in seed db but not in silva_species_assignment training file?
 excluded <- seed.db[which(!nam3 %in% silva.nam3)]
+excluded <- nam3[!nam3 %in% silva.nam3]
 
 ## Short answer: Eukaryotes, and species without names (some of which have numbers, i.e. Paenibacillus sp. Cp_S316	45277)
 ## We want some of these (the named ones that are not Eukaryotes), so we try a different approach
@@ -702,6 +703,12 @@ silva.sp.seed.names <- substring(getAnnot(silva.sp.seed), 2)
 
 write.fasta(silva.sp.seed, names=silva.sp.seed.names, nbchar=80, file.out = "/Users/mis696/proj/parathaa/input/silva_species_assignment_v138.1.seedonly.fa")
 
+### And similarly, take full training set and subset to seed db:
+silva.train <- seqinr::read.fasta("/Users/mis696/proj/parathaa/input/silva_nr99_v138.1_train_set.fa" ,forceDNAtolower = FALSE,
+                               as.string=TRUE)
+
+silva.train.seed <- silva.train[silva.train %in% silva.sp.seed]
+write.fasta(silva.train.seed, names=getName(silva.train.seed), nbchar=80, file.out = "/Users/mis696/proj/parathaa/input/silva_nr99_v138.1_train_set.seedonly.fa")
 
 
 # Read in taxonomy file from full SILVA db
@@ -717,6 +724,10 @@ taxdata <- taxdata %>%
   separate(col=path, into=c("Kingdom", "Phylum", "Class", "Order", "Family", "Genus"), sep=";") %>%
   dplyr::rename(Species = organism_name) %>%
   filter(Kingdom=="Bacteria") 
+taxdata <- taxdata %>%
+  mutate_at(vars("Kingdom", "Phylum", "Class", "Order", "Family", "Genus"), na_if, "uncultured")
+taxdata <- taxdata %>%
+  mutate_at(vars("Kingdom", "Phylum", "Class", "Order", "Family", "Genus"), na_if, "")
 
 taxdata.sp <- taxdata %>% group_by(primaryAccession, Kingdom, Phylum, Class, Order, Family, Genus, Species) %>% tally()
 
@@ -724,6 +735,7 @@ taxdata.sp <- taxdata %>% group_by(primaryAccession, Kingdom, Phylum, Class, Ord
 taxmatch <- taxdata.sp[which(taxdata.sp$primaryAccession %in% nam3),] 
 taxmatch.df <- as.data.frame(taxmatch)
 rownames(taxmatch.df) <- taxmatch.df$primaryAccession
+
 taxmatch2 <- taxmatch.df[nam3,]
 
 #Out of curiosity, find doubles in taxdata
@@ -750,9 +762,10 @@ seed.db.bac.names <- apply(cbind(taxmatch2$Kingdom[bacRows],
                    taxmatch2$Family[bacRows],
                    taxmatch2$Genus[bacRows]), 1, 
              function(x) paste(x[!is.na(x)], collapse = ";"))
+seed.db.bac.names <- paste0(seed.db.bac.names, ";")
 
 
-write.fasta(sequences = seed.db.bac , names = seed.db.bac.names, nbchar = 80, file.out = "/Users/mis696/proj/parathaa/input/silva.seed_v138_1.ng.dada.fasta")
+write.fasta(sequences = seed.db.bac , names = seed.db.bac.names, nbchar = 80, file.out = "/Users/mis696/proj/parathaa/input/20230111.silva.seed_v138_1.ng.dada.fasta")
 
 ##################################
 ## Synthetic community analysis ##
@@ -760,7 +773,9 @@ write.fasta(sequences = seed.db.bac , names = seed.db.bac.names, nbchar = 80, fi
 
 # Read in parathaa data
 ## Read in V1V2 parathaa data
-parathaData <- read.delim("/Users/mis696/proj/parathaa/output/20230103_SyntheticV1V2/taxonomic_assignments.tsv", 
+#"/Users/mis696/proj/parathaa/output/20230110_SyntheticV1V2_nameHarmonizing/taxonomic_assignments.tsv",
+parathaData <- read.delim("/Users/mis696/proj/parathaa/output/20230119_SyntheticV1V2_SpThreshold003/taxonomic_assignments.tsv",
+  #"/Users/mis696/proj/parathaa/output/20230120_SyntheticV1V2_removeUndefSp/taxonomic_assignments.tsv", 
                           sep='\t', fill=T, stringsAsFactors = F, header=T)
 tax_paratha <- parathaData %>%
   dplyr::select(query.name, Kingdom, Phylum, Class, Order, Family, Genus, Species) %>%
@@ -823,39 +838,46 @@ ps1_parathaa.V4V5 <- phyloseq(OTU_parathaa, TAX_parathaa, SAMP_parathaa)
 
 ## Assign taxonomy with dada2
 ## V4V5
+## First, get names and sequences from fasta file
+getNames <- read.fasta(file("/Users/mis696/proj/parathaa/input/SILVAsubsample_SeedGenera_V4V5.pcr.fasta"), as.string = TRUE,
+                       forceDNAtolower = FALSE, whole.header = FALSE)
+names1 <- str_split(getName(getNames), "\t", simplify=TRUE)
+names1 <- names1[,1] %>%
+  str_remove(">")
+name.df <- data.frame("sequence" = unlist(getSequence(getNames, as.string=T)), taxaIDs = names1)
+
+## Next, assign taxonomy to genus level with DADA2
+set.seed(3874)
 taxa <- assignTaxonomy("/Users/mis696/proj/parathaa/input/SILVAsubsample_SeedGenera_V4V5.pcr.fasta", 
+                       "/Users/mis696/proj/parathaa/input/20230111.silva.seed_v138_1.ng.dada.fasta",
+                        #"/Users/mis696/proj/parathaa/input/silva_nr99_v138.1_train_set.seedonly.fa",
                        #"/Users/mis696/proj/parathaa/input/silva_nr99_v138.1_train_set.fa",
-                       "/Users/mis696/proj/parathaa/input/silva.seed_v138_1.ng.dada.fasta", 
+                       #"/Users/mis696/proj/parathaa/input/silva.seed_v138_1.ng.dada.fasta", 
                        multithread=TRUE)
-## Remove sequences with undefined bases
-nChars <- grep("N", rownames(taxa))
+## Remove sequences with undefined ("N") bases, store until after species assignment
+taxa.test <- as.data.frame(taxa)
+taxa.test$taxaIDs <- names1
+nChars <- grep("N", rownames(taxa.test))
 print(paste("Removing", length(nChars), "sequences with N bases"))
-withNbases <- taxa[nChars,]
+withNbases <- taxa.test[nChars,]
 taxa <- taxa[-nChars,]
+
+## Perform species assignment with DADA2
 taxa.sp <- addSpecies(taxa, "/Users/mis696/proj/parathaa/input/silva_species_assignment_v138.1.seedonly.fa")
 #                      "/Users/mis696/proj/parathaa/input/silva.seed_v138_1.ng.dada.sp.fasta")
 
+## Add in reference IDs and taxonomy from sequences with "N" bases
 tax_dada <- as.data.frame(taxa.sp)
-#tax_dada <- bind_rows(tax_dada, as.data.frame(withNbases))
 tax_dada$sequence <- str_split(rownames(tax_dada), "\\.", simplify=TRUE)[,1]
-
-##FastaToTabular("/Users/mis696/proj/parathaa/input/SILVAsubsampleV4V5.pcr.fasta")
-FastaToTabular("/Users/mis696/proj/parathaa/input/SILVAsubsample_SeedGenera_V4V5.pcr.fasta")
-## need to rename
-
-#getnam <- read.delim("/Users/mis696/proj/parathaa/input/SILVAsubsampleV4V5.pcr.csv", sep=",")
-getnam <- read.delim("/Users/mis696/proj/parathaa/input/SILVAsubsample_SeedGenera_V4V5.pcr.csv", sep=",")
-names1 <- str_split(getnam$name, "\t", simplify=TRUE)
-names1 <- names1[,1] %>%
-  str_remove(">")
-getnam$taxaIDs <- names1
-getnamSubset <-getnam %>% filter(sequence %in% tax_dada$sequence)
-
-tax_dada2 <- cbind(tax_dada, getnamSubset)
+getnamSubset <-name.df %>% filter(sequence %in% tax_dada$sequence)
+tax_dada2 <- cbind(tax_dada, "taxaIDs" =getnamSubset$taxaIDs)
+tax_dada2 <- full_join(tax_dada2, withNbases)
 rownames(tax_dada2) <- tax_dada2[,"taxaIDs"]
+
 tax_dada3 <- tax_dada2 %>%
   select(Kingdom, Phylum, Class, Order, Family, Genus, Species) %>%
   as.matrix()
+## Rename species to include genus names
 tax_dada3 <- cbind(tax_dada3, "Species2"=NA)
 tax_dada3[which(!is.na(tax_dada3[,"Species"])), "Species2"] <-  
   paste(tax_dada3[which(!is.na(tax_dada3[,"Species"])), "Genus"], 
@@ -889,37 +911,53 @@ print(ps1_dada.V4V5)
 
 
 #V1V2
-## filtered to 100+ length seqs, removed 96 seqs
-taxa <- assignTaxonomy("/Users/mis696/proj/parathaa/input/SILVAsubsampleV1V2.pcr.good.fasta", 
-                       "/Users/mis696/proj/parathaa/input/silva.seed_v138_1.ng.dada.fasta", 
-                       multithread=TRUE)
-
-## Remove sequences with undefined bases
-nChars <- grep("N", rownames(taxa))
-print(paste("Removing", length(nChars), "sequences with N bases"))
-taxa <- taxa[-nChars,]
-taxa.sp <- addSpecies(taxa, "/Users/mis696/proj/parathaa/input/silva.seed_v138_1.ng.dada.sp.fasta")
-#taxa.sp <- addSpecies(taxa, "/Users/mis696/proj/PPITAA/input/silva_species_assignment_v138.1.fa.gz")
-
-
-tax_dada <- as.data.frame(taxa.sp)
-tax_dada$sequence <- str_split(rownames(tax_dada), "\\.", simplify=TRUE)[,1]
-
-FastaToTabular("/Users/mis696/proj/parathaa/input/SILVAsubsampleV1V2.pcr.good.fasta")
-## need to rename
-
-getnam <- read.delim("/Users/mis696/proj/parathaa/input/SILVAsubsampleV1V2.pcr.good.csv", sep=",")
-names1 <- str_split(getnam$name, "\t", simplify=TRUE)
+## First, get names and sequences from fasta file
+getNames <- read.fasta(file("/Users/mis696/proj/parathaa/input/SILVAsubsample_SeedGenera_V1V2.pcr.fasta"), as.string = TRUE,
+                       forceDNAtolower = FALSE, whole.header = FALSE)
+names1 <- str_split(getName(getNames), "\t", simplify=TRUE)
 names1 <- names1[,1] %>%
   str_remove(">")
-getnam$taxaIDs <- names1
-getnamSubset <-getnam %>% filter(sequence %in% tax_dada$sequence)
+name.df <- data.frame("sequence" = unlist(getSequence(getNames, as.string=T)), taxaIDs = names1)
 
-tax_dada2 <- cbind(tax_dada, getnamSubset)
-rownames(tax_dada2) <- tax_dada2$taxaIDs
+## Next, assign taxonomy to genus level with DADA2
+set.seed(3874)
+taxa <- assignTaxonomy("/Users/mis696/proj/parathaa/input/SILVAsubsample_SeedGenera_V1V2.pcr.fasta", 
+                       "/Users/mis696/proj/parathaa/input/20230111.silva.seed_v138_1.ng.dada.fasta",
+                       #"/Users/mis696/proj/parathaa/input/silva_nr99_v138.1_train_set.seedonly.fa",
+                       #"/Users/mis696/proj/parathaa/input/silva_nr99_v138.1_train_set.fa",
+                       #"/Users/mis696/proj/parathaa/input/silva.seed_v138_1.ng.dada.fasta", 
+                       multithread=TRUE)
+## Remove sequences with undefined ("N") bases, store until after species assignment
+taxa.test <- as.data.frame(taxa)
+taxa.test$taxaIDs <- names1
+nChars <- grep("N", rownames(taxa.test))
+print(paste("Removing", length(nChars), "sequences with N bases"))
+withNbases <- taxa.test[nChars,]
+taxa <- taxa[-nChars,]
+
+## Perform species assignment with DADA2
+taxa.sp <- addSpecies(taxa, "/Users/mis696/proj/parathaa/input/silva_species_assignment_v138.1.seedonly.fa")
+#                      "/Users/mis696/proj/parathaa/input/silva.seed_v138_1.ng.dada.sp.fasta")
+
+## Add in reference IDs and taxonomy from sequences with "N" bases
+tax_dada <- as.data.frame(taxa.sp)
+tax_dada$sequence <- str_split(rownames(tax_dada), "\\.", simplify=TRUE)[,1]
+getnamSubset <-name.df %>% filter(sequence %in% tax_dada$sequence)
+tax_dada2 <- cbind(tax_dada, "taxaIDs" =getnamSubset$taxaIDs)
+tax_dada2 <- full_join(tax_dada2, withNbases)
+rownames(tax_dada2) <- tax_dada2[,"taxaIDs"]
+
 tax_dada3 <- tax_dada2 %>%
   select(Kingdom, Phylum, Class, Order, Family, Genus, Species) %>%
   as.matrix()
+## Rename species to include genus names
+tax_dada3 <- cbind(tax_dada3, "Species2"=NA)
+tax_dada3[which(!is.na(tax_dada3[,"Species"])), "Species2"] <-  
+  paste(tax_dada3[which(!is.na(tax_dada3[,"Species"])), "Genus"], 
+        tax_dada3[which(!is.na(tax_dada3[,"Species"])), "Species"] )
+tax_dada3 <- tax_dada3[,!colnames(tax_dada3) %in% "Species"]
+colnames(tax_dada3)[which(colnames(tax_dada3)=="Species2")] <- "Species"
+
 
 TAX_dada <- tax_table(tax_dada3)
 
@@ -944,15 +982,54 @@ ps1_dada.V1V2 <- phyloseq(OTU_dada, TAX_dada, SAMP_dada)
 
 print(ps1_dada.V1V2)
 
+
 ############################################
 ### Assess performance on Synthetic Data ###
 ############################################
 
 #Get taxdata from Synthetic.Reads.R
-test1 <- as.data.frame(tax_table(ps1_parathaa.V1V2))
-test1$AccID <- rownames(test1)
+synth.parathaa<- as.data.frame(tax_table(ps1_parathaa.V1V2))
+synth.parathaa$AccID <- rownames(synth.parathaa)
 
-test2 <- left_join(test1, taxdata, by="AccID")
+synth.parathaa2 <- left_join(synth.parathaa, taxdata, by="AccID")
+synth.parathaa2 <- synth.parathaa2 %>% 
+  mutate(Species.x = unlist(lapply(str_split(Species.x, ";"), FUN=function(x) paste0(word(x,1,2), collapse = ";" ))))
+synth.parathaa2 <- synth.parathaa2 %>% 
+  mutate(Species.x = ifelse(Species.x=="NA", NA, Species.x))
+synth.parathaa3 <- synth.parathaa2 %>% 
+  dplyr::rowwise() %>%
+  mutate(Flag = ifelse(is.na(Species.x), NA, word(Species.y, 1, 2) %in% str_split(Species.x, ";", simplify = T)),
+         Flag.genus = ifelse(is.na(Genus.x), NA, Genus.y %in% str_split(Genus.x, ";", simplify = T))
+  )
+
+synth.dada <- as.data.frame(tax_table(ps1_dada.V1V2))
+synth.dada$AccID <- rownames(synth.dada)
+
+synth.dada2 <- left_join(synth.dada, taxdata, by="AccID")
+synth.dada2 <- synth.dada2 %>% mutate(Species.x = word(Species.x, 1, 2))
+synth.dada3 <- synth.dada2 %>% 
+  rowwise() %>%
+  mutate(Flag = ifelse(is.na(Species.x), 
+                       NA, 
+                       word(Species.y, 1, 2) %in% t(apply(str_split(Species.x, ";", simplify=T), 1, FUN=function(X) word(X, 1,2)))),
+         Flag.genus = ifelse(is.na(Genus.x), 
+                             NA, 
+                             Genus.y %in% (str_split(Genus.x, ";", simplify=T))
+         )
+  )
+
+compare.synth <- dplyr::full_join(synth.dada3, synth.parathaa3, by="AccID")
+compare.synth <- compare.synth %>% 
+  mutate(Species.silva = word(Species.y.y, 1, 2)) %>%
+  rename(Species.parathaa = Species.x.y,
+         Species.dada = Species.x.x,
+         Genus.dada = Genus.x.x,
+         Genus.parathaa = Genus.x.y,
+         Genus.silva = Genus.y.y)
+
+
+
+##V4V5
 
 test3 <- as.data.frame(tax_table(ps1_parathaa.V4V5))
 test3$AccID <- rownames(test3)
@@ -985,95 +1062,104 @@ test5d <- test4d %>%
          )
 )
 
-test6 <- dplyr::full_join(test5d, test5, by="AccID")
-test6 <- test6 %>% 
+compare.synth <- dplyr::full_join(test5d, test5, by="AccID")
+compare.synth <- compare.synth %>% 
   mutate(Species.silva = word(Species.y.y, 1, 2)) %>%
   rename(Species.parathaa = Species.x.y,
          Species.dada = Species.x.x,
-         Genus.silva = Genus.y.y,
          Genus.dada = Genus.x.x,
-         Genus.parathaa = Genus.x.y)
+         Genus.parathaa = Genus.x.y,
+         Genus.silva = Genus.y.y,
+         Phylum.silva = Phylum.y.y)
 
 
 
 ## Both uniquely correct:
-dim(test6 %>% filter(Genus.dada==Genus.silva & Genus.parathaa==Genus.silva) %>% select(Genus.dada, Genus.parathaa, Genus.silva, AccID))
+dim(compare.synth %>% filter(Genus.dada==Genus.silva & Genus.parathaa==Genus.silva) %>% select(Genus.dada, Genus.parathaa, Genus.silva, AccID))
 ## Paratha uniquely correct, dada2 partly correct:
-dim(test6 %>% filter(Flag.genus.x & Genus.dada!=Genus.silva & Genus.parathaa==Genus.silva) %>% select(Genus.dada, Genus.parathaa, Genus.silva, AccID))
+dim(compare.synth %>% filter(Flag.genus.x & Genus.dada!=Genus.silva & Genus.parathaa==Genus.silva) %>% select(Genus.dada, Genus.parathaa, Genus.silva, AccID))
 ## Paratha uniquely correct, dada2 incorrect:
-dim(test6 %>% filter(!Flag.genus.x & !is.na(Genus.dada)  & Genus.parathaa==Genus.silva) %>% select(Genus.dada, Genus.parathaa, Genus.silva, AccID))
+dim(compare.synth %>% filter(!Flag.genus.x & !is.na(Genus.dada)  & Genus.parathaa==Genus.silva) %>% select(Genus.dada, Genus.parathaa, Genus.silva, AccID))
 ## Paratha uniquely correct, dada2 unassigned:
-dim(test6 %>% filter(is.na(Flag.genus.x)  & Genus.parathaa==Genus.silva) %>% select(Genus.dada, Genus.parathaa, Genus.silva, AccID))
+dim(compare.synth %>% filter(is.na(Flag.genus.x)  & Genus.parathaa==Genus.silva) %>% select(Genus.dada, Genus.parathaa, Genus.silva, AccID))
 
 ##Paratha partly correct, dada2 uniquely correct:
-dim(test6 %>% filter(Genus.dada==Genus.silva & Flag.genus.y & Genus.parathaa!=Genus.silva) %>% select(Genus.dada, Genus.parathaa, Genus.silva, AccID))
+dim(compare.synth %>% filter(Genus.dada==Genus.silva & Flag.genus.y & Genus.parathaa!=Genus.silva) %>% select(Genus.dada, Genus.parathaa, Genus.silva, AccID))
 ##Both partly correct:
-dim(test6 %>% filter(Flag.genus.x & Genus.dada!=Genus.silva & Flag.genus.y & Genus.parathaa!=Genus.silva) %>% select(Genus.dada, Genus.parathaa, Genus.silva, AccID))
+dim(compare.synth %>% filter(Flag.genus.x & Genus.dada!=Genus.silva & Flag.genus.y & Genus.parathaa!=Genus.silva) %>% select(Genus.dada, Genus.parathaa, Genus.silva, AccID))
 ##Paratha partly correct, dada2 incorrect:
-dim(test6 %>% filter(!Flag.genus.x & Flag.genus.y & Genus.parathaa!=Genus.silva) %>% select(Genus.dada, Genus.parathaa, Genus.silva, AccID))
+dim(compare.synth %>% filter(!Flag.genus.x & Flag.genus.y & Genus.parathaa!=Genus.silva) %>% select(Genus.dada, Genus.parathaa, Genus.silva, AccID))
 ##Paratha partly correct, dada2 unassigned:
-dim(test6 %>% filter(is.na(Flag.genus.x) & Flag.genus.y & Genus.parathaa!=Genus.silva) %>% select(Genus.dada, Genus.parathaa, Genus.silva, AccID))
+dim(compare.synth %>% filter(is.na(Flag.genus.x) & Flag.genus.y & Genus.parathaa!=Genus.silva) %>% select(Genus.dada, Genus.parathaa, Genus.silva, AccID))
 
 ##Paratha incorrect, dada2 uniquely correct:
-dim(test6 %>% filter(Genus.dada==Genus.silva & !Flag.genus.y ) %>% select(Genus.dada, Genus.parathaa, Genus.silva, AccID))
+dim(compare.synth %>% filter(Genus.dada==Genus.silva & !Flag.genus.y ) %>% select(Genus.dada, Genus.parathaa, Genus.silva, AccID))
 ##Paratha incorrect, dada2 partly correct:
-dim(test6 %>% filter(Flag.genus.x & Genus.dada!=Genus.silva & !Flag.genus.y ) %>% select(Genus.dada, Genus.parathaa, Genus.silva, AccID))
+dim(compare.synth %>% filter(Flag.genus.x & Genus.dada!=Genus.silva & !Flag.genus.y ) %>% select(Genus.dada, Genus.parathaa, Genus.silva, AccID))
 ##Both incorrect:
-dim(test6 %>% filter(!Flag.genus.x & !Flag.genus.y ) %>% select(Genus.dada, Genus.parathaa, Genus.silva, AccID))
+dim(compare.synth %>% filter(!Flag.genus.x & !Flag.genus.y ) %>% select(Genus.dada, Genus.parathaa, Genus.silva, AccID))
 ##Paratha incorrect, dada2 unassigned:
-dim(test6 %>% filter(is.na(Flag.genus.x) & !Flag.genus.y ) %>% select(Genus.dada, Genus.parathaa, Genus.silva, AccID))
+dim(compare.synth %>% filter(is.na(Flag.genus.x) & !Flag.genus.y ) %>% select(Genus.dada, Genus.parathaa, Genus.silva, AccID))
 
 ##Paratha unassigned, dada2 uniquely correct:
-dim(test6 %>% filter(Genus.dada==Genus.silva & is.na(Flag.genus.y) ) %>% select(Genus.dada, Genus.parathaa, Genus.silva, AccID))
+dim(compare.synth %>% filter(Genus.dada==Genus.silva & is.na(Flag.genus.y) ) %>% select(Genus.dada, Genus.parathaa, Genus.silva, AccID))
 ##Paratha unassigned, dada2 partly correct:
-dim(test6 %>% filter(Flag.genus.x & Genus.dada!=Genus.silva & is.na(Flag.genus.y) ) %>% select(Genus.dada, Genus.parathaa, Genus.silva, AccID))
+dim(compare.synth %>% filter(Flag.genus.x & Genus.dada!=Genus.silva & is.na(Flag.genus.y) ) %>% select(Genus.dada, Genus.parathaa, Genus.silva, AccID))
 ##Paratha unassigned, dada2 incorrect:
-dim(test6 %>% filter(!Flag.genus.x & is.na(Flag.genus.y)) %>% select(Genus.dada, Genus.parathaa, Genus.silva, AccID))
+dim(compare.synth %>% filter(!Flag.genus.x & is.na(Flag.genus.y)) %>% select(Genus.dada, Genus.parathaa, Genus.silva, AccID))
 ##Both unassigned:
-dim(test6 %>% filter(is.na(Flag.genus.x) & is.na(Flag.genus.y) ) %>% select(Genus.dada, Genus.parathaa, Genus.silva, AccID))
+dim(compare.synth %>% filter(is.na(Flag.genus.x) & is.na(Flag.genus.y) ) %>% select(Genus.dada, Genus.parathaa, Genus.silva, AccID))
 
 ###################################
-
+compare.synth <- compare.synth %>% filter(!Species.silva %in% taxdata_SP)
 ## Both uniquely correct:
-dim(test6 %>% filter(Species.dada==Species.silva & Species.parathaa==Species.silva) %>% select(Species.dada, Species.parathaa, Species.silva, AccID))
+dim(compare.synth %>% filter(Species.dada==Species.silva & Species.parathaa==Species.silva) %>% select(Species.dada, Species.parathaa, Species.silva, AccID))
 ## Paratha uniquely correct, dada2 partly correct:
-dim(test6 %>% filter(Flag.x & Species.dada!=Species.silva & Species.parathaa==Species.silva) %>% select(Species.dada, Species.parathaa, Species.silva, AccID))
+dim(compare.synth %>% filter(Flag.x & Species.dada!=Species.silva & Species.parathaa==Species.silva) %>% select(Species.dada, Species.parathaa, Species.silva, AccID))
 ## Paratha uniquely correct, dada2 incorrect:
-dim(test6 %>% filter(!Flag.x & !is.na(Species.dada)  & Species.parathaa==Species.silva) %>% select(Species.dada, Species.parathaa, Species.silva, AccID))
+dim(compare.synth %>% filter(!Flag.x & !is.na(Species.dada)  & Species.parathaa==Species.silva) %>% select(Species.dada, Species.parathaa, Species.silva, AccID))
 ## Paratha uniquely correct, dada2 unassigned:
-dim(test6 %>% filter(is.na(Flag.x)  & Species.parathaa==Species.silva) %>% select(Species.dada, Species.parathaa, Species.silva, AccID))
+dim(compare.synth %>% filter(is.na(Flag.x)  & Species.parathaa==Species.silva) %>% select(Species.dada, Species.parathaa, Species.silva, AccID))
 
 ##Paratha partly correct, dada2 uniquely correct:
-dim(test6 %>% filter(Species.dada==Species.silva & Flag.y & Species.parathaa!=Species.silva) %>% select(Species.dada, Species.parathaa, Species.silva, AccID))
+dim(compare.synth %>% filter(Species.dada==Species.silva & Flag.y & Species.parathaa!=Species.silva) %>% select(Species.dada, Species.parathaa, Species.silva, AccID))
 ##Both partly correct:
-dim(test6 %>% filter(Flag.x & Species.dada!=Species.silva & Flag.y & Species.parathaa!=Species.silva) %>% select(Species.dada, Species.parathaa, Species.silva, AccID))
+dim(compare.synth %>% filter(Flag.x & Species.dada!=Species.silva & Flag.y & Species.parathaa!=Species.silva) %>% select(Species.dada, Species.parathaa, Species.silva, AccID))
 ##Paratha partly correct, dada2 incorrect:
-dim(test6 %>% filter(!Flag.x & Flag.y & Species.parathaa!=Species.silva) %>% select(Species.dada, Species.parathaa, Species.silva, AccID))
+dim(compare.synth %>% filter(!Flag.x & Flag.y & Species.parathaa!=Species.silva) %>% select(Species.dada, Species.parathaa, Species.silva, AccID))
 ##Paratha partly correct, dada2 unassigned:
-dim(test6 %>% filter(is.na(Flag.x) & Flag.y & Species.parathaa!=Species.silva) %>% select(Species.dada, Species.parathaa, Species.silva, AccID))
+dim(compare.synth %>% filter(is.na(Flag.x) & Flag.y & Species.parathaa!=Species.silva) %>% select(Species.dada, Species.parathaa, Species.silva, AccID))
 
 ##Paratha incorrect, dada2 uniquely correct:
-dim(test6 %>% filter(Species.dada==Species.silva & !Flag.y ) %>% select(Species.dada, Species.parathaa, Species.silva, AccID))
+dim(compare.synth %>% filter(Species.dada==Species.silva & !Flag.y ) %>% select(Species.dada, Species.parathaa, Species.silva, AccID))
 ##Paratha incorrect, dada2 partly correct:
-dim(test6 %>% filter(Flag.x & Species.dada!=Species.silva & !Flag.y ) %>% select(Species.dada, Species.parathaa, Species.silva, AccID))
+dim(compare.synth %>% filter(Flag.x & Species.dada!=Species.silva & !Flag.y ) %>% select(Species.dada, Species.parathaa, Species.silva, AccID))
 ##Both incorrect:
-dim(test6 %>% filter(!Flag.x & !Flag.y ) %>% select(Species.dada, Species.parathaa, Species.silva, AccID))
+dim(compare.synth %>% filter(!Flag.x & !Flag.y ) %>% select(Species.dada, Species.parathaa, Species.silva, AccID))
 ##Paratha incorrect, dada2 unassigned:
-dim(test6 %>% filter(is.na(Flag.x) & !Flag.y ) %>% select(Species.dada, Species.parathaa, Species.silva, AccID))
+dim(compare.synth %>% filter(is.na(Flag.x) & !Flag.y ) %>% select(Species.dada, Species.parathaa, Species.silva, AccID))
 
 ##Paratha unassigned, dada2 uniquely correct:
-dim(test6 %>% filter(Species.dada==Species.silva & is.na(Flag.y) ) %>% select(Species.dada, Species.parathaa, Species.silva, AccID))
+dim(compare.synth %>% filter(Species.dada==Species.silva & is.na(Flag.y) ) %>% select(Species.dada, Species.parathaa, Species.silva, AccID))
 ##Paratha unassigned, dada2 partly correct:
-dim(test6 %>% filter(Flag.x & Species.dada!=Species.silva & is.na(Flag.y) ) %>% select(Species.dada, Species.parathaa, Species.silva, AccID))
+dim(compare.synth %>% filter(Flag.x & Species.dada!=Species.silva & is.na(Flag.y) ) %>% select(Species.dada, Species.parathaa, Species.silva, AccID))
 ##Paratha unassigned, dada2 incorrect:
-dim(test6 %>% filter(!Flag.x & is.na(Flag.y)) %>% select(Species.dada, Species.parathaa, Species.silva, AccID))
+dim(compare.synth %>% filter(!Flag.x & is.na(Flag.y)) %>% select(Species.dada, Species.parathaa, Species.silva, AccID))
 ##Both unassigned:
-dim(test6 %>% filter(is.na(Flag.x) & is.na(Flag.y) ) %>% select(Species.dada, Species.parathaa, Species.silva, AccID))
+dim(compare.synth %>% filter(is.na(Flag.x) & is.na(Flag.y) ) %>% select(Species.dada, Species.parathaa, Species.silva, AccID))
 
-IncSp <- test6 %>% filter(is.na(Flag.x) & !Flag.y ) %>% select(Species.silva) %>% unique
+## How many assigned 1-to-Many?
+length(grep(";", compare.synth$Genus.parathaa))/length(compare.synth$Genus.parathaa)
+length(grep(";", compare.synth$Species.parathaa))/length(compare.synth$Species.parathaa)
+
+compare.synth %>% filter(AccID %in% multis$AccID) %>% select(Species.dada, Species.parathaa, Species.y.y, AccID) %>% View
+multis %>% filter(Flag.y & Species.parathaa!=Species.silva) %>% View
+
+
+IncSp <- compare.synth %>% filter(!Flag.y ) %>% select(Species.silva) %>% unique
 IncSp <- t(as.matrix(IncSp))
 taxdata_seed <- taxdata %>% 
   filter(primaryAccession %in% SeedTax$primaryAccession)
 taxdata_SP <- word(taxdata_seed$Species, 1, 2)
-## % of incorrect species (unassigned by dada2) that are in seed db
+## % of incorrect species (unassigned by dada2) that aren't in seed db
 1-sum(IncSp[1,] %in% taxdata_SP)/length(IncSp[1,] %in% taxdata_SP)
