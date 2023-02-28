@@ -18,6 +18,10 @@ library(ComplexHeatmap)
 suppressPackageStartupMessages(library(seqinr))
 source_url("https://raw.githubusercontent.com/lrjoshi/FastaTabular/master/fasta_and_tabular.R")
 
+############################
+### ASD Dataset Analysis ###
+############################
+
 ## Read in data with taxonomy from Kelsey's analysis with SILVA
 kelseyDataRaw <- read.delim("~/proj/PPITAA/input/all_samples_taxonomy_closed_reference.tsv", 
                              sep='\t', fill=T, stringsAsFactors = F, header=T)
@@ -35,11 +39,6 @@ kelseyDataFull <- kelseyDataRaw %>%
             CBSF079_S65_L001,
             Undetermined_S0_L001,
             taxonomy))
-
-## Full SILVA DADA2 training set
-#taxaNR99 <- assignTaxonomy("~/proj/PPITAA/input/amplicons_fromKelsey.fasta", 
-#                       "/Users/mis696/proj/PPITAA/input/silva_nr99_v138.1_train_set.fa.gz", 
-#                       multithread=TRUE)
 
 ## SILVA Seed-based DADA2 training set
 taxa <- assignTaxonomy("~/proj/PPITAA/input/amplicons_fromKelsey.fasta", 
@@ -171,7 +170,7 @@ for(level in Levels){
   #xlabs <- rep("", nrow(sample_data(ps1.com.rel.lev.agg)))
   #xlabs[ceiling(nrow(sample_data(ps1.com.rel.lev.agg))/4)] <- "DADA2"
   #xlabs[ceiling(nrow(sample_data(ps1.com.rel.lev.agg))*3/4)+1] <- "parathaa"
-  #xlabs <- c("DADA2", "Parathaa")
+  #xlabs <- c("DADA2 V1V2", "Parathaa V1V2", "DADA2 V4V5", "Parathaa V4V5")
   xlabs <- c("DADA2 V1V2", "Parathaa V1V2", "SPINGO V1V2", "DADA2 V4V5", "Parathaa V4V5", "SPINGO V4V5")
   plot.composition.relAbun <- plot.composition.relAbun + theme(legend.position = "bottom") 
   plot.composition.relAbun <- plot.composition.relAbun +  theme_bw()  + scale_fill_manual(level, values = stepped2())# scale_fill_brewer(palette="Paired")  #
@@ -187,9 +186,9 @@ for(level in Levels){
   plot.composition.relAbun <- plot.composition.relAbun +   theme(axis.text.x = element_text(size=12, angle=45, hjust=1)) + scale_x_discrete(labels=xlabs) 
   #ggsave(filename=paste0("~/proj/parathaa/output/viz/", level, "parathaa_taxonomy.png"), plot.composition.relAbun, width=10, height=6)
   if(level!="Species")
-    ggsave(filename=paste0("/Users/mis696/proj/parathaa/output/20221231_Mock", level, "taxonomy.png"), plot.composition.relAbun, width=6, height=6)
+    ggsave(filename=paste0("/Users/mis696/proj/parathaa/output/20230128_Mock", level, "taxonomy.png"), plot.composition.relAbun, width=6, height=6)
   if(level=="Species")
-    ggsave(filename=paste0("/Users/mis696/proj/parathaa/output/20221231_Mock", level, "taxonomy.png"), plot.composition.relAbun, width=10, height=6)
+    ggsave(filename=paste0("/Users/mis696/proj/parathaa/output/20230128_Mock", level, "taxonomy.png"), plot.composition.relAbun, width=10, height=6)
 }
 
 ## Heatmap of mock community
@@ -211,6 +210,7 @@ included <- c("Actinomyces odontolyticus",
               "Clostridium diolis"                                        ,
               "Clostridium sensu stricto 1 diolis"                        ,
               "Clostridium beijerinckii",
+              "Clostridium beijerinckii/diolis",
               "Cutibacterium acnes",
               "Deinococcus radiodurans"                                  ,
               "Enterococcus canis;Enterococcus faecalis"         ,
@@ -251,8 +251,10 @@ ra = rowAnnotation(
   annotation_legend_param = list(title = "16S Region"),
   col=list(df = c("V1V2" =  turbo(7)[2],"V4V5" = turbo(7)[4]))
 )
-png("~/proj/parathaa/output/viz/Fig_2A_MockHeatmap_20221228.png",width=10,height=5.5,units="in",res=600)
-ht1 <- Heatmap(sqrt(forHeat), name = "sqrt(Rel.\nabundance)", col=c("grey", rev(magma(100))),
+col_fun <- c("grey", "grey", "grey",  "grey", rev(magma(97)))
+
+png("~/proj/parathaa/output/viz/Fig_2A_MockHeatmap_20230128.png",width=10,height=5.5,units="in",res=600)
+ht1 <- Heatmap(sqrt(forHeat), name = "sqrt(Rel.\nabundance)", col=col_fun,
                column_names_max_height = unit(10, "cm"),
                cluster_columns = FALSE, cluster_rows=FALSE, column_names_rot = 45, 
                column_names_side = "top", column_names_gp = grid::gpar(fontsize = 10), 
@@ -334,6 +336,16 @@ print(paste("Removing", length(nChars), "sequences with N bases"))
 taxaV4V5 <- taxaV4V5[-nChars,]
 taxaV4V5.sp <- addSpecies(taxaV4V5, "/Users/mis696/proj/parathaa/input/silva.seed_v138_1.ng.dada.sp.fasta")
 
+taxaV4V5.sp <- cbind(taxaV4V5.sp, "Species2"=NA)
+taxaV4V5.sp[which(!is.na(taxaV4V5.sp[,"Species"])), "Species2"] <-  
+  paste(taxaV4V5.sp[which(!is.na(taxaV4V5.sp[,"Species"])), "Genus"], 
+        taxaV4V5.sp[which(!is.na(taxaV4V5.sp[,"Species"])), "Species"] )
+taxaV4V5.sp <- taxaV4V5.sp[,!colnames(taxaV4V5.sp) %in% "Species"]
+colnames(taxaV4V5.sp)[which(colnames(taxaV4V5.sp)=="Species2")] <- "Species"
+
+taxaV4V5.sp2 <- refine_species_names(as.tibble(taxaV4V5.sp))
+taxaV4V5.sp2 <- as.matrix(taxaV4V5.sp)
+
 otutabV4V5 <- cbind(rownames(taxaV4V5.sp), taxaV4V5.sp)
 otutabV4V5 <- as_tibble(otutabV4V5) %>% dplyr::rename("ASV"="V1") %>% dplyr::count(ASV, name="SRR3225703.V4V5") 
 otumatV4V5 <- as.matrix(otutabV4V5$SRR3225703.V4V5)
@@ -356,6 +368,7 @@ taxmatV4V5[which(!is.na(taxmatV4V5[,"Species"])), "Species2"] <-
         taxmatV4V5[which(!is.na(taxmatV4V5[,"Species"])), "Species"] )
 taxmatV4V5 <- taxmatV4V5[,!colnames(taxmatV4V5) %in% "Species"]
 colnames(taxmatV4V5)[which(colnames(taxmatV4V5)=="Species2")] <- "Species"
+
 
 TAX_dada.V4V5 <- tax_table(taxmatV4V5)
 
@@ -400,19 +413,25 @@ taxtabV1V2 <- rbind(
 taxtabV1V2 <- as_tibble(taxtabV1V2) %>% 
   dplyr::rename("ASV"="V1") %>% 
   dplyr::group_by(ASV, Kingdom, Phylum, Class, Order, Family, Genus, Species) %>% 
-  dplyr::count(ASV, name="SRR3225701.V1V2")
+  dplyr::count(ASV, name="SRR3225701.V1V2") %>%
+  ungroup()
+
+taxtabV1V2 <- cbind(taxtabV1V2, "Species2"=NA)
+taxtabV1V2[which(!is.na(taxtabV1V2[,"Species"])), "Species2"] <-  
+  paste(taxtabV1V2[which(!is.na(taxtabV1V2[,"Species"])), "Genus"], 
+        taxtabV1V2[which(!is.na(taxtabV1V2[,"Species"])), "Species"] )
+taxtabV1V2 <- taxtabV1V2[,!colnames(taxtabV1V2) %in% "Species"]
+colnames(taxtabV1V2)[which(colnames(taxtabV1V2)=="Species2")] <- "Species"
+taxtabV1V2 <- refine_species_names(taxtabV1V2)
+
 taxtabV1V2 <- taxtabV1V2 %>%
   group_by(ASV) %>% slice_max(SRR3225701.V1V2, with_ties = FALSE)
+
+
 
 taxmatV1V2 <- taxtabV1V2 %>% as.matrix
 rownames(taxmatV1V2) <- taxtabV1V2$ASV
 taxmatV1V2 <- taxmatV1V2[,c("Kingdom", "Phylum", "Class", "Order", "Family", "Genus", "Species")]  
-taxmatV1V2 <- cbind(taxmatV1V2, "Species2"=NA)
-taxmatV1V2[which(!is.na(taxmatV1V2[,"Species"])), "Species2"] <-  
-  paste(taxmatV1V2[which(!is.na(taxmatV1V2[,"Species"])), "Genus"], 
-        taxmatV1V2[which(!is.na(taxmatV1V2[,"Species"])), "Species"] )
-taxmatV1V2 <- taxmatV1V2[,!colnames(taxmatV1V2) %in% "Species"]
-colnames(taxmatV1V2)[which(colnames(taxmatV1V2)=="Species2")] <- "Species"
 
 TAX_dada.V1V2 <- tax_table(taxmatV1V2)
 
@@ -451,10 +470,18 @@ refine_species_names <-function(x){
                                      "Neisseria meningitidis alpha14;Neisseria meningitidis MC58;Neisseria meningitidis Z2491" = "Neisseria meningitidis",
                                      "Streptococcus agalactiae 18RS21" = "Streptococcus agalactiae",
                                      "Streptococcus mutans;Streptococcus mutans UA159" = "Streptococcus mutans",
-                                     "Streptococcus pneumoniae;Streptococcus pneumoniae TIGR4" = "Streptococcus pneumoniae"
+                                     "Streptococcus pneumoniae;Streptococcus pneumoniae TIGR4" = "Streptococcus pneumoniae",
+                                     "Synechococcus sp.;Synechococcus sp. PCC 7002;Synechococcus sp. PH40" = "Synechococcus sp. PCC 7002;Synechococcus sp. PH40",
+                                     "Propionibacterium acnes" = "Cutibacterium acnes",
+                                     "Clostridium beijerinckii" = "Clostridium beijerinckii/diolis",
+                                     "Clostridium diolis" = "Clostridium beijerinckii/diolis",
+                                     "Clostridium sensu stricto 1 diolis" = "Clostridium beijerinckii/diolis",
+                                     "Clostridium sensu stricto 1 beijerinckii" = "Clostridium beijerinckii/diolis",
+                                     "Streptococcus sp." = "Unknown"
   ))
   return(x)
 }
+
 
 
 parsed = seqinr::read.fasta(file('/Users/mis696/proj/parathaa/input/SRR3225703.fasta'), as.string = TRUE,
@@ -466,7 +493,7 @@ tax_paratha.V4V5 <- merge(tax_paratha.V4V5, table)  %>%
   dplyr::group_by(ASV, Kingdom, Phylum, Class, Order, Family, Genus, Species) %>% 
   dplyr::count(ASV, name="SRR3225703.V4V5") 
 
-#tax_paratha.V4V5 <- refine_species_names(tax_paratha.V4V5)
+tax_paratha.V4V5 <- refine_species_names(tax_paratha.V4V5)
 
 taxmatV4V5 <- tax_paratha.V4V5 %>% as.matrix
 rownames(taxmatV4V5) <- paste0("x", tax_paratha.V4V5$ASV )
@@ -496,23 +523,6 @@ tax_paratha.V1V2 <- parathaData.V1V2 %>%
   dplyr::select(query.name, Kingdom, Phylum, Class, Order, Family, Genus, Species) %>%
   group_by(query.name) %>% 
   filter(row_number()==1)
-
-## utility to refine species names:
-refine_species_names <-function(x){
-  x <- x %>% mutate(Species = recode(Species,
-                                     "Bacillus anthracis;Bacillus cereus;Bacillus cereus ATCC 10987;Bacillus thuringiensis" = "Bacillus anthracis;Bacillus cereus;Bacillus thuringiensis",
-                                     "Enterococcus canis;Enterococcus faecalis V583;uncultured bacterium" = "Enterococcus canis;Enterococcus faecalis;unknown",
-                                     "Lactobacillus gasseri ATCC 33323 = JCM 1131;Lactobacillus johnsonii N6.2" = "Lactobacillus gasseri;Lactobacillus johnsonii",
-                                     "Lactobacillus gasseri;Lactobacillus johnsonii N6.2" = "Lactobacillus gasseri;Lactobacillus johnsonii",
-                                     "Listeria innocua;Listeria monocytogenes;Listeria monocytogenes N53-1" = "Listeria innocua;Listeria monocytogenes",
-                                     "Neisseria meningitidis alpha14;Neisseria meningitidis MC58;Neisseria meningitidis Z2491" = "Neisseria meningitidis",
-                                     "Streptococcus agalactiae 18RS21" = "Streptococcus agalactiae",
-                                     "Streptococcus mutans;Streptococcus mutans UA159" = "Streptococcus mutans",
-                                     "Streptococcus pneumoniae;Streptococcus pneumoniae TIGR4" = "Streptococcus pneumoniae",
-                                     "Synechococcus sp.;Synechococcus sp. PCC 7002;Synechococcus sp. PH40" = "Synechococcus sp. PCC 7002;Synechococcus sp. PH40"
-  ))
-  return(x)
-}
 
 
 parsed = seqinr::read.fasta(file('/Users/mis696/proj/parathaa/input/SRR3225701.fasta'), as.string = TRUE,
@@ -554,10 +564,12 @@ spingo.V4V5 <- read.delim("/Users/mis696/proj/parathaa/output/20221101_MiSeqV4V5
 spingo.V4V5$Species <- str_replace_all(spingo.V4V5$Species, "\\(", "")
 spingo.V4V5$SRR3225703c <- as.numeric(str_replace_all(spingo.V4V5$SRR3225703c, "\\)", ""))
 
+spingo.V4V5$Species <- str_replace_all(spingo.V4V5$Species, "_", " ")
+spingo.V4V5 <- refine_species_names(spingo.V4V5)
+
 taxmat <- as.matrix(spingo.V4V5$Species)
 rownames(taxmat) <- spingo.V4V5$Species 
 colnames(taxmat) <- "Species"
-taxmat[,"Species"] <- str_replace_all(taxmat[,"Species"], "_", " ")
 TAX_spingo <- tax_table(taxmat)
 
 otumat <- as.matrix(spingo.V4V5$SRR3225703c)
@@ -579,10 +591,12 @@ spingo.V1V2 <- read.delim("/Users/mis696/proj/parathaa/output/20221219_MiSeqV1V2
 spingo.V1V2$Species <- str_replace_all(spingo.V1V2$Species, "\\(", "")
 spingo.V1V2$SRR3225701c <- as.numeric(str_replace_all(spingo.V1V2$SRR3225701c, "\\)", ""))
 
+spingo.V1V2$Species <- str_replace_all(spingo.V1V2$Species, "_", " ")
+spingo.V1V2 <- refine_species_names(spingo.V1V2)
+
 taxmat <- as.matrix(spingo.V1V2$Species)
 rownames(taxmat) <- spingo.V1V2$Species 
 colnames(taxmat) <- "Species"
-taxmat[,"Species"] <- str_replace_all(taxmat[,"Species"], "_", " ")
 TAX_spingo <- tax_table(taxmat)
 
 otumat <- as.matrix(spingo.V1V2$SRR3225701c)
@@ -598,6 +612,8 @@ str(samp_spingo)
 SAMP_spingo <- sample_data(samp_spingo)
 
 ps1_spingo.V1V2 <- phyloseq(OTU_spingo, TAX_spingo, SAMP_spingo)
+
+
 
 ps1_all<- merge_phyloseq(ps1_dada.V1V2, ps1_dada.V4V5, 
                          ps1_parathaa.V1V2, ps1_parathaa.V4V5, 
@@ -774,8 +790,9 @@ write.fasta(sequences = seed.db.bac , names = seed.db.bac.names, nbchar = 80, fi
 # Read in parathaa data
 ## Read in V1V2 parathaa data
 #"/Users/mis696/proj/parathaa/output/20230110_SyntheticV1V2_nameHarmonizing/taxonomic_assignments.tsv",
-parathaData <- read.delim("/Users/mis696/proj/parathaa/output/20230119_SyntheticV1V2_SpThreshold003/taxonomic_assignments.tsv",
-  #"/Users/mis696/proj/parathaa/output/20230120_SyntheticV1V2_removeUndefSp/taxonomic_assignments.tsv", 
+parathaData <- read.delim(#"/Users/mis696/proj/parathaa/output/20230125_SyntheticV1V2_SpThreshold00001/taxonomic_assignments.tsv",
+  #"/Users/mis696/proj/parathaa/output/20230119_SyntheticV1V2_SpThreshold003/taxonomic_assignments.tsv",
+  "/Users/mis696/proj/parathaa/output/20230120_SyntheticV1V2_removeUndefSp/taxonomic_assignments.tsv", 
                           sep='\t', fill=T, stringsAsFactors = F, header=T)
 tax_paratha <- parathaData %>%
   dplyr::select(query.name, Kingdom, Phylum, Class, Order, Family, Genus, Species) %>%
@@ -1111,7 +1128,8 @@ dim(compare.synth %>% filter(!Flag.genus.x & is.na(Flag.genus.y)) %>% select(Gen
 dim(compare.synth %>% filter(is.na(Flag.genus.x) & is.na(Flag.genus.y) ) %>% select(Genus.dada, Genus.parathaa, Genus.silva, AccID))
 
 ###################################
-compare.synth <- compare.synth %>% filter(!Species.silva %in% taxdata_SP)
+#compare.synth.full <- compare.synth
+compare.synth <- compare.synth.full %>% filter(!Species.silva %in% taxdata_SP)
 ## Both uniquely correct:
 dim(compare.synth %>% filter(Species.dada==Species.silva & Species.parathaa==Species.silva) %>% select(Species.dada, Species.parathaa, Species.silva, AccID))
 ## Paratha uniquely correct, dada2 partly correct:

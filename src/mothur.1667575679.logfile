@@ -1,0 +1,42 @@
+Mac version
+
+Using ReadLine,Boost,HDF5,GSL
+mothur v.1.45.3
+Last updated: 5/8/21
+by
+Patrick D. Schloss
+
+Department of Microbiology & Immunology
+
+University of Michigan
+http://www.mothur.org
+
+When using, please cite:
+Schloss, P.D., et al., Introducing mothur: Open-source, platform-independent, community-supported software for describing and comparing microbial communities. Appl Environ Microbiol, 2009. 75(23):7537-41.
+
+Distributed under the GNU General Public License
+
+Type 'help()' for information on the commands that are available
+
+For questions and analysis support, please visit our forum at https://forum.mothur.org
+
+Type 'quit()' to exit program
+
+[NOTE]: Setting random seed to 19760620.
+
+Interactive Mode
+
+
+
+mothur > degap.seqs(fasta = /Users/mis696/proj/parathaa/input/silva.seed_v138_1.align)
+
+Using 8 processors.
+Degapping sequences from /Users/mis696/proj/parathaa/input/silva.seed_v138_1.align ...
+It took 2 secs to degap 7641 sequences.
+
+
+Output File Names: 
+/Users/mis696/proj/parathaa/input/silva.seed_v138_1.ng.fasta
+
+
+mothur > quit
