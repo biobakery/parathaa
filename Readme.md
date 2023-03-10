@@ -7,10 +7,12 @@
 
 #### Dependencies
 To run Parathaa, you should be running linux/MacOS, and you should have installed:
+- Python >=3.7
+- R > 4.0.0
+- AnADAMA2: https://pypi.org/project/anadama2/
 - taxtastic: https://pypi.org/project/taxtastic/
 - pplacer: https://anaconda.org/bioconda/pplacer
 - fasttree: http://www.microbesonline.org/fasttree/#Install
-
 
 
 ####  Cloning Repo
