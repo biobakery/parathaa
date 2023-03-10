@@ -6,10 +6,10 @@
 > PARATHAA is a tool for taxonomic assignment while retaining information about ambiguity in placements. It is still under active development.
 
 #### Dependencies
--To run Parathaa, you should be running linux/MacOS, and you should have installed:
--taxtastic: https://pypi.org/project/taxtastic/
--pplacer: https://anaconda.org/bioconda/pplacer
--fasttree: http://www.microbesonline.org/fasttree/#Install
+- To run Parathaa, you should be running linux/MacOS, and you should have installed:
+- taxtastic: https://pypi.org/project/taxtastic/
+- pplacer: https://anaconda.org/bioconda/pplacer
+- fasttree: http://www.microbesonline.org/fasttree/#Install
 
 
 
