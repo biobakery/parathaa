@@ -44,14 +44,14 @@ args.treelog = os.path.join(args.output, 'treelog.txt')
 
 ## Trim database
 workflow.add_task(
-    "/Applications/mothur/mothur '#pcr.seqs(fasta = [depends[0]], oligos=[depends[1]], pdiffs=0, rdiffs=0, keepdots=f)'",
+    "mothur '#pcr.seqs(fasta = [depends[0]], oligos=[depends[1]], pdiffs=0, rdiffs=0, keepdots=f)'",
     depends=[args.database, args.primers],
     targets=args.trimmedDatabase,
     name="Trimming database")
 
 ## Create tree from region-specific alignment, save log file for use by pplacer
 workflow.add_task(
-    "/Users/mis696/anaconda3/lib/python3.8/site-packages/apples/tools/FastTree-darwin -gtr -log [targets[0]] \
+    "fasttree -gtr -log [targets[0]] \
     -nt [depends[0]] > [targets[1]]",
     depends= args.trimmedDatabase,
     targets=[args.treelog, args.tree],
@@ -81,7 +81,7 @@ alignName = queryName[:queryName.find(".fasta")] + '.align'
 
 ## Align query reads to trimmed seed alignment
 workflow.add_task(
-    "/Applications/mothur/mothur '#align.seqs(candidate=[depends[0]], template=[depends[1]])'",
+    "mothur '#align.seqs(candidate=[depends[0]], template=[depends[1]])'",
     depends=[args.query,args.trimmedDatabase],
     targets=alignName,
     name="Aligning queries to trimmed db"
@@ -122,7 +122,7 @@ workflow.add_task(
 
 ## run pplacer
 workflow.add_task(
-    "/Users/mis696/Downloads/pplacer-Darwin-v1.1.alpha17-6-g5cecf99/pplacer --out-dir [args[0]] -c [depends[0]]  \
+    "pplacer --out-dir [args[0]] -c [depends[0]]  \
     [depends[1]]",
     depends=[args.ref, mergedSub],
     targets=[os.path.join(args.output, "merged.sub.jplace")],
