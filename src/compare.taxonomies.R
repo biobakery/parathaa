@@ -328,13 +328,13 @@ taxa.sp <- addSpecies(taxa, "/Users/mis696/proj/PPITAA/input/silva_species_assig
 
 ## Assign taxonomy with dada2 and seed SILVA db
 ## V4V5
-taxaV4V5 <- assignTaxonomy("/Users/mis696/proj/parathaa/input/SRR3225703.fasta", 
-                           "/Users/mis696/proj/parathaa/input/silva.seed_v138_1.ng.dada.fasta",
+taxaV4V5 <- assignTaxonomy("./input/SRR3225703.fasta", 
+                           "./input/silva.seed_v138_1.ng.dada.fasta",
                        multithread=TRUE)
 nChars <- grep("N", rownames(taxaV4V5))
 print(paste("Removing", length(nChars), "sequences with N bases"))
 taxaV4V5 <- taxaV4V5[-nChars,]
-taxaV4V5.sp <- addSpecies(taxaV4V5, "/Users/mis696/proj/parathaa/input/silva.seed_v138_1.ng.dada.sp.fasta")
+taxaV4V5.sp <- addSpecies(taxaV4V5, "./input/silva.seed_v138_1.ng.dada.sp.fasta")
 
 taxaV4V5.sp <- cbind(taxaV4V5.sp, "Species2"=NA)
 taxaV4V5.sp[which(!is.na(taxaV4V5.sp[,"Species"])), "Species2"] <-  
@@ -383,18 +383,18 @@ SAMP_dada.V4V5 <- sample_data(samp_dada.V4V5)
 ps1_dada.V4V5 <- phyloseq(OTU_dada.V4V5, TAX_dada.V4V5, SAMP_dada.V4V5)
 
 ## V1V2 -- in two parts for memory reasons
-taxaV1V2.0 <- assignTaxonomy("/Users/mis696/proj/parathaa/input/SRR3225701.0.fasta", 
-                           "/Users/mis696/proj/parathaa/input/silva.seed_v138_1.ng.dada.fasta",
+taxaV1V2.0 <- assignTaxonomy("./input/SRR3225701.0.fasta", 
+                           "./input/silva.seed_v138_1.ng.dada.fasta",
                            multithread=TRUE)
 nChars <- grep("N", rownames(taxaV1V2.0))
 print(paste("Removing", length(nChars), "sequences with N bases"))
 #taxaV1V2.0 <- taxaV1V2.0[-nChars,]
-taxaV1V2.0.sp <- addSpecies(taxaV1V2.0, "/Users/mis696/proj/parathaa/input/silva.seed_v138_1.ng.dada.sp.fasta")
+taxaV1V2.0.sp <- addSpecies(taxaV1V2.0, "./input/silva.seed_v138_1.ng.dada.sp.fasta")
 
-taxaV1V2.1 <- assignTaxonomy("/Users/mis696/proj/parathaa/input/SRR3225701.1.fasta", 
-                             "/Users/mis696/proj/parathaa/input/silva.seed_v138_1.ng.dada.fasta",
+taxaV1V2.1 <- assignTaxonomy("./input/SRR3225701.1.fasta", 
+                             "./input/silva.seed_v138_1.ng.dada.fasta",
                              multithread=TRUE)
-taxaV1V2.1.sp <- addSpecies(taxaV1V2.1, "/Users/mis696/proj/parathaa/input/silva.seed_v138_1.ng.dada.sp.fasta")
+taxaV1V2.1.sp <- addSpecies(taxaV1V2.1, "./input/silva.seed_v138_1.ng.dada.sp.fasta")
 
 otutabV1V2.0 <- cbind(rownames(taxaV1V2.0.sp), taxaV1V2.0.sp)
 otutabV1V2.1 <- cbind(rownames(taxaV1V2.1.sp), taxaV1V2.1.sp)
@@ -451,7 +451,7 @@ ps1_dada.V1V2 <- phyloseq(OTU_dada.V1V2, TAX_dada.V1V2, SAMP_dada.V1V2)
 ## Read in parathaa data
 #parathaData <- read.delim("/Users/mis696/proj/parathaa/output/20221101_MiSeqV4V5Mock/taxonomic_assignments.tsv", 
 #                          sep='\t', fill=T, stringsAsFactors = F, header=T)
-parathaData.V4V5 <- read.delim("/Users/mis696/proj/parathaa/output/20221215_MiSeqV4V5Mock_Sp/taxonomic_assignments.tsv", 
+parathaData.V4V5 <- read.delim("./output/20221215_MiSeqV4V5Mock_Sp/taxonomic_assignments.tsv", 
                           sep='\t', fill=T, stringsAsFactors = F, header=T)
 
 tax_paratha.V4V5 <- parathaData.V4V5 %>%
@@ -484,7 +484,7 @@ refine_species_names <-function(x){
 
 
 
-parsed = seqinr::read.fasta(file('/Users/mis696/proj/parathaa/input/SRR3225703.fasta'), as.string = TRUE,
+parsed = seqinr::read.fasta(file('./input/SRR3225703.fasta'), as.string = TRUE,
                     forceDNAtolower = FALSE, whole.header = FALSE)
 table = data.frame("ASV"=unlist(parsed), "query.name" = sapply(parsed, attr, 'name'), row.names=NULL)
 #View(tax_paratha)
@@ -516,7 +516,7 @@ SAMP_parathaa.V4V5 <- sample_data(samp_parathaa.V4V5)
 ps1_parathaa.V4V5 <- phyloseq(OTU_parathaa.V4V5, TAX_parathaa.V4V5, SAMP_parathaa.V4V5)
 
 ## V1V2
-parathaData.V1V2 <- read.delim("/Users/mis696/proj/parathaa/output/20221219_MiSeqV1V2Mock/taxonomic_assignments.tsv", 
+parathaData.V1V2 <- read.delim("./output/20221219_MiSeqV1V2Mock/taxonomic_assignments.tsv", 
                                sep='\t', fill=T, stringsAsFactors = F, header=T)
 
 tax_paratha.V1V2 <- parathaData.V1V2 %>%

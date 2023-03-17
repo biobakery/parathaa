@@ -1,5 +1,5 @@
 ## Read in SILVA 138.1 taxonomy for subsetting
-inFileTaxdata <- "/Users/mis696/proj/16s-region-checker/input/taxmap_slv_ssu_ref_138.1.txt"
+inFileTaxdata <- "./input/taxmap_slv_ssu_ref_138.1.txt"
 
 taxdata <- read.table(inFileTaxdata , header=T, fill=TRUE,sep='\t', quote="")
 taxdata <- taxdata %>%
