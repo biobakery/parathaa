@@ -43,6 +43,7 @@ in.tree <- resultData$tax_bestcuts
 
 ## Index through query sequences to add taxonomy
 results <- c()
+# might beable to speed this up using foreach/ vectorized code
 for(ind in query.names){
   ## Read in data, filter to most likely placement(s) and make various useful formats of it
   query.place.data <- in.jplace@placements %>% filter(name==ind)  %>% filter(like_weight_ratio==max(like_weight_ratio))
@@ -52,16 +53,26 @@ for(ind in query.names){
   
   ## Add a column of heights for each node
   tree.w.placements.tib$nodeHeight <- 0
+  
+  # we want to see how close that sequence is to the children node 
+  # we could have something that all "original" children as X genus but then we place new node very far away which deosn't mean its that genus
   tree.w.placements.tib$nodeHeight[tree.w.placements.phy$edge[,"node"]] <- nodeHeights(tree.w.placements.phy)[,2]
   
   ## Identify query placements and their offspring, extract maximum node heights
   ind.offs <- offspring(tree.w.placements.phy, query.place.data$node, self_include=T) ## query.place.data$node might be a vector... 
+  
+  
+  # check for tied placements
   if(length(query.place.data$node)==1){
     maxNodeHeights <- tree.w.placements.tib %>% filter(node == query.place.data$node) %>% summarize(max(nodeHeight)) %>% as.numeric
   } else {
   maxNodeHeights <- sapply(ind.offs, FUN= function(x) tree.w.placements.tib %>% filter(node %in% x) %>% summarize(max(nodeHeight)) %>% as.numeric)
   }
+  
+  # calculate the distance from the query node to any other child node
   maxDistPlacements <- maxNodeHeights-tree.w.placements.tib$nodeHeight[query.place.data$node] + tree.w.placements.tib$distal_length[query.place.data$node] + tree.w.placements.tib$pendant_length[query.place.data$node]
+  
+  
   if(length(maxDistPlacements)==1) ## If only one placement, maxDistPlacements isn't named, so add name
     names(maxDistPlacements) <- query.place.data$node
   
@@ -77,11 +88,14 @@ for(ind in query.names){
   assignmentLevels <- names(which(cutoffs>max(maxDistPlacements)))
   assignment <- tree.w.placements.tib[query.place.data$node, c("Kingdom", rev(assignmentLevels))]
   ## Deal with multifurcation or placements at child nodes
+  #this is the case when multiple tides are below a single node?
+  #or is this dealing with a case where p placer places a sequence as a child of a placed sequence?
   if(length(unique(tree.w.placements.tib$parent[query.place.data$node]))==1 & length(query.place.data$node)>1)
     assignment <- tree.w.placements.tib[unique(tree.w.placements.tib$parent[query.place.data$node]), c("Kingdom", rev(assignmentLevels))]
 
   
-  
+  #what is this code block for? 
+  #was it used for internal analysis?
   if(FALSE){
   ## Find lowest justifiable taxonomic classification of placement 
   lastMapping <- c("5"="Phylum", "4"="Class", "3"="Order", "2"="Family", "1"="Genus", "0"="Species")

@@ -33,16 +33,27 @@ args.config = 'etc/config.ini'
 
 
 # Download taxonomy file from SILVA
+
+# *Hmmm this is probably better to be in the config file encase this link changes?
+# Also I wonder if you want to include downloading this as an optional step incase people want to use different taxonomy files?
 workflow.do("curl https://www.arb-silva.de/fileadmin/silva_databases/current/Exports/taxonomy/taxmap_slv_ssu_ref_138.1.txt.gz -o [t:input/taxmap_slv_ssu_ref_138.1.txt.gz]")
 workflow.do("gunzip -fk [d:input/taxmap_slv_ssu_ref_138.1.txt.gz] > [t:input/taxmap_slv_ssu_ref_138.1.txt]")
 
 # Adding name of trimmed Seqs
 dbname = args.database
+
+# interesting that the args.trimmedDatabase is placed in the input folder for that database... is there a way we can fix this?
+# perhaps running the mothur set.dir function before running the #pcr seqs command....
+
 args.trimmedDatabase = dbname[:dbname.find(".align")] + '.pcr.align'
 args.tree = os.path.join(args.output, "region_specific.tree")
 args.treelog = os.path.join(args.output, 'treelog.txt')
 
 ## Trim database
+
+# I wonder for this step if there could be a log file showing how many sequences in the database passed this step
+# from what I understand the database has to be a pre-aligned for input into parathaa?
+
 workflow.add_task(
     "mothur '#pcr.seqs(fasta = [depends[0]], oligos=[depends[1]], pdiffs=0, rdiffs=0, keepdots=f)'",
     depends=[args.database, args.primers],
@@ -50,6 +61,9 @@ workflow.add_task(
     name="Trimming database")
 
 ## Create tree from region-specific alignment, save log file for use by pplacer
+
+# how does this step deal with duplicate reads that are generated after primer trimming?
+
 workflow.add_task(
     "fasttree -gtr -log [targets[0]] \
     -nt [depends[0]] > [targets[1]]",
@@ -58,6 +72,9 @@ workflow.add_task(
     name="Building tree from primer-trimmed database")
 
 ## Find best thresholds
+
+# See R script for comments
+# Does this try and find optimal cutoffs for negative binomial model?
 workflow.add_task(
     "src/make.taxonomy.trees.R   -d [depends[1]] -o [args[0]] -t 'find_cutoffs' -n [depends[2]]",
     depends=[TrackedExecutable("src/analysis.R"), "input/taxmap_slv_ssu_ref_138.1.txt", args.tree],
@@ -66,7 +83,14 @@ workflow.add_task(
     name="Finding thresholds"
 )
 
+
+# See R script for comments
+
+# did my best to go through this script but still a bit unclear on some parts of it!
+
 ## Assign taxonomy to nodes 
+## it was a bit unclear to me but is the point of this to determine the taxonomy of internal nodes 
+## based on the new tree? so we can use that to assign taxonomy to the newly placed tips?
 workflow.add_task(
     "src/make.taxonomy.trees.R   -d [depends[1]] -o [args[0]] -t 'assign_Tax' -n [depends[2]]",
     depends=[TrackedExecutable("src/analysis.R"), "input/taxmap_slv_ssu_ref_138.1.txt", args.tree,
@@ -78,6 +102,8 @@ workflow.add_task(
 
 queryName = args.query
 alignName = queryName[:queryName.find(".fasta")] + '.align'
+
+
 
 ## Align query reads to trimmed seed alignment
 workflow.add_task(
@@ -129,6 +155,8 @@ workflow.add_task(
     args=[args.output],
     name="Placing queries in reference tree"
     )
+
+# See R script for comments
     
 ## Assign taxonomy to queries
 workflow.add_task(
