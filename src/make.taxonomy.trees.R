@@ -60,7 +60,7 @@ in.tree.data <- in.tree.data %>%
 # I wonder if using a data.table/tibbly/big.data (pckge) would increase performance here?
 # (below three lines run fairly slowly...)
 
-taxdata <- read.table(inFileTaxdata , header=T, fill=TRUE,sep='\t', quote="")
+taxdata <- data.table(inFileTaxdata , header=T, fill=TRUE,sep='\t', quote="")
 
 # the IDs that come with the file specific ID to the sequence but they also have start and stop for the sequence!
 taxdata <- taxdata %>%
@@ -74,10 +74,8 @@ taxdata <- taxdata %>%
 })
 
 #in.tree.data is from the FAstTree... and taxdata is the silva taxonomy database
-in.tree.data <- left_join(in.tree.data, taxdata, by="primaryAccession") %>%
+in.tree.data <- left_join(in.tree.data, taxdata, by="primaryAccession", multiple="all") %>%
   distinct(node, .keep_all=T) 
-
-# received another warning message here...
 
 #some functions won't work unless its a specific type of class of data
 class(in.tree.data) <- c("tbl_tree", class(in.tree.data))
@@ -133,6 +131,7 @@ inputData$maxDists <- NA
 ## would be nice to have that dynamically chosen for each taxonomic level rather than using the same one...
 if(Task=="find_cutoffs"){
   for(cut1 in cutoffs){
+    ## Note from Meg: This step is not currently memory-efficient, it stores a lot of the same data many times. 
     resultData[[paste0("tax",cut1)]] <- inputData
   }
 }
