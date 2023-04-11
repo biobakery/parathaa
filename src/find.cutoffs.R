@@ -4,7 +4,7 @@
 
 require(docopt)
 'Usage:
-   make.taxonomy.trees.R [-d <naming file> -o <output> -t <task> -n <tree>]
+   find.cutoffs.R [-d <naming file> -o <output> -n <tree>]
 
 Options:
    -d naming file [default: input/taxmap_slv_ssu_ref_138.1.txt]

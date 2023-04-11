@@ -5,7 +5,7 @@ from anadama2.tracked import TrackedExecutable
 
 # Setting the version of the workflow and short description
 workflow = Workflow(
-    version="0.0.1",                    #Update the version as needed
+    version="0.1.1",                    #Update the version as needed
     description="Preserving Primer-Induced Taxonomic Ambiguities for Amplicons"     #Update the description as needed
     ) 
 
@@ -76,7 +76,7 @@ workflow.add_task(
 # See R script for comments
 # Does this try and find optimal cutoffs for negative binomial model?
 workflow.add_task(
-    "src/make.taxonomy.trees.R   -d [depends[1]] -o [args[0]] -t 'find_cutoffs' -n [depends[2]]",
+    "src/find.cutoffs.R   -d [depends[1]] -o [args[0]] -n [depends[2]]",
     depends=[TrackedExecutable("src/analysis.R"), "input/taxmap_slv_ssu_ref_138.1.txt", args.tree],
     targets= [args.output+"/optimal_scores.png"],
     args=args.output,
@@ -92,7 +92,7 @@ workflow.add_task(
 ## it was a bit unclear to me but is the point of this to determine the taxonomy of internal nodes 
 ## based on the new tree? so we can use that to assign taxonomy to the newly placed tips?
 workflow.add_task(
-    "src/make.taxonomy.trees.R   -d [depends[1]] -o [args[0]] -t 'assign_Tax' -n [depends[2]]",
+    "src/assign.node.tax.R   -d [depends[1]] -o [args[0]] -n [depends[2]]",
     depends=[TrackedExecutable("src/analysis.R"), "input/taxmap_slv_ssu_ref_138.1.txt", args.tree,
              args.output+"/optimal_scores.png"],
     targets= args.output+"/resultTree_bestThresholds.RData",

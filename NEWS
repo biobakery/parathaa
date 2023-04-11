@@ -1,2 +1,5 @@
 Changes in version 0.1.0 (2023-03-16):
 + Initial tagged release.
+
+Changes in version 0.1.1 (2023-04-11):
++ Split make.taxonomy.trees.R into two scripts: find.cutoffs.R and assign.node.tax.R
