@@ -31,7 +31,7 @@ library(treeio)
 library(tidyr)
 library(dplyr)
 library(ape)
-library(ggimage)
+##library(ggimage)
 library(TDbook)
 source("src/SILVA.species.editor.R")
 
@@ -55,7 +55,7 @@ suppressWarnings({
 # I wonder if using a data.table/tibbly/big.data (pckge) would increase performance here?
 # (below three lines run fairly slowly...)
 
-taxdata <- data.table(inFileTaxdata , header=T, fill=TRUE,sep='\t', quote="")
+taxdata <- read.table(inFileTaxdata , header=T, fill=TRUE,sep='\t', quote="")
 
 # the IDs that come with the file specific ID to the sequence but they also have start and stop for the sequence!
 taxdata <- taxdata %>%
