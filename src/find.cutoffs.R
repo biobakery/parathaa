@@ -34,7 +34,7 @@ library(ape)
 ##library(ggimage)
 library(TDbook)
 source("src/SILVA.species.editor.R")
-
+source("src/calc.error.scores.R")
 
 ## Bring in taxonomy file
 inFileTaxdata <- opts$d

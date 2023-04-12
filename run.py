@@ -37,7 +37,7 @@ args.config = 'etc/config.ini'
 # *Hmmm this is probably better to be in the config file encase this link changes?
 # Also I wonder if you want to include downloading this as an optional step incase people want to use different taxonomy files?
 workflow.do("curl https://www.arb-silva.de/fileadmin/silva_databases/current/Exports/taxonomy/taxmap_slv_ssu_ref_138.1.txt.gz -o [t:input/taxmap_slv_ssu_ref_138.1.txt.gz]")
-workflow.do("gunzip -fk [d:input/taxmap_slv_ssu_ref_138.1.txt.gz] > [t:input/taxmap_slv_ssu_ref_138.1.txt]")
+workflow.do("gunzip -fc [d:input/taxmap_slv_ssu_ref_138.1.txt.gz] > [t:input/taxmap_slv_ssu_ref_138.1.txt]")
 
 # Adding name of trimmed Seqs
 dbname = args.database
@@ -65,7 +65,7 @@ workflow.add_task(
 # how does this step deal with duplicate reads that are generated after primer trimming?
 
 workflow.add_task(
-    "fasttree -gtr -log [targets[0]] \
+    "FastTree -gtr -log [targets[0]] \
     -nt [depends[0]] > [targets[1]]",
     depends= args.trimmedDatabase,
     targets=[args.treelog, args.tree],
