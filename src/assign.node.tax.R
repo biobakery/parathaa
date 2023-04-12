@@ -3,7 +3,7 @@
 
 require(docopt)
 'Usage:
-   make.taxonomy.trees.R [-d <naming file> -o <output> -n <tree>]
+   assign.node.tax.R [-d <naming file> -o <output> -n <tree>]
 
 Options:
    -d naming file [default: input/taxmap_slv_ssu_ref_138.1.txt]
@@ -29,9 +29,11 @@ library(treeio)
 library(tidyr)
 library(dplyr)
 library(ape)
-library(ggimage)
+#library(ggimage)
 library(TDbook)
 source("src/SILVA.species.editor.R")
+source("src/single.tax.R")
+
 
 ## Bring in taxonomy file
 inFileTaxdata <- opts$d
@@ -52,7 +54,7 @@ suppressWarnings({
 # I wonder if using a data.table/tibbly/big.data (pckge) would increase performance here?
 # (below three lines run fairly slowly...)
 
-taxdata <- data.table(inFileTaxdata , header=T, fill=TRUE,sep='\t', quote="")
+taxdata <- read.table(inFileTaxdata , header=T, fill=TRUE,sep='\t', quote="")
 
 # the IDs that come with the file specific ID to the sequence but they also have start and stop for the sequence!
 taxdata <- taxdata %>%
