@@ -7,8 +7,8 @@ require(docopt)
 
 Options:
    -d naming file [default: input/taxmap_slv_ssu_ref_138.1.txt]
-   -o model output directory [default: output/testrun20230117]
-   -n tree [default: /Users/mis696/proj/parathaa/output/20230109_SyntheticV4V5_nameHarmonizing/region_specific.tree]
+   -o model output directory [default: output/20230406_testrun]
+   -n tree [default: output/20230406_testrun/region_specific.tree]
 
  ]' -> doc
 
@@ -29,7 +29,7 @@ library(treeio)
 library(tidyr)
 library(dplyr)
 library(ape)
-#library(ggimage)
+library(ggimage)
 library(TDbook)
 source("src/SILVA.species.editor.R")
 source("src/single.tax.R")
@@ -154,8 +154,7 @@ for (intNode in which(inputData$isTip==F)){
                                                                cutoff=cutoff, 
                                                                nodeGroups=nodeGroups, 
                                                                falseNegRate=falseNegRate, 
-                                                               acceptableProb=acceptableProb, 
-                                                               resultData=resultData
+                                                               acceptableProb=acceptableProb
                                                                )
   
   }

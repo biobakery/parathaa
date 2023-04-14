@@ -30,9 +30,9 @@ library(dplyr)
 library(phytools)
 
 ## Inputs
-jplaceFile <-  "./output/20230406_testrun/merged.sub.jplace" #  opts$j
-in.treeFile <-   "./output/20230406_testrun/resultTree_bestThresholds.RData" #opts$t
-outDir <- "./output/20230406_testrun" ##opts$o ## 
+jplaceFile <-  opts$j
+in.treeFile <-  opts$t
+outDir <- opts$o 
 plotTree <- FALSE
 
 ## Read in jplace file, tree

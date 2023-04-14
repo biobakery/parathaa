@@ -5,9 +5,9 @@
 ## cutoff: optimal distance cutoffs for the taxonomic level
 ## nodeGroups: table of tip nodes under intNode at the given taxonomic level
 
-single.tax <- function(intNode, level, maxDist, cutoff, nodeGroups, falseNegRate, acceptableProb, resultData){
+single.tax <- function(intNode, level, maxDist, cutoff, nodeGroups, falseNegRate, acceptableProb){
   ## Initialize:
-  results <- list()
+  result <- NA
   ## if the maximum distance among the child (tip) nodes is less than the cutoff for the taxonomic level,
   ## (and if there is at least one child node; aka the node is not a tip)
   ## then 
@@ -16,13 +16,13 @@ single.tax <- function(intNode, level, maxDist, cutoff, nodeGroups, falseNegRate
               sum(nodeGroups),falseNegRate, lower.tail = F) > acceptableProb){
       
       # if that is correct we then assign the int node to that phylum
-      resultData[["tax_bestcuts"]][intNode, level] <- names(nodeGroups)[which(nodeGroups==max(nodeGroups))][[1]]
+      result <- names(nodeGroups)[which(nodeGroups==max(nodeGroups))][[1]]
     }
     # if it doesn't pass we assign multiple names to that node 
     # were names are base on the assignment that passes that error model.
-    else {resultData[["tax_bestcuts"]][intNode, level] <- paste(
+    else {result <- paste(
       names(which(nodeGroups >
                     qbinom(acceptableProb , sum(nodeGroups),falseNegRate, lower.tail = F))), collapse=";")}
   }
-    return(results)
+  return(result)
 }
