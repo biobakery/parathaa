@@ -96,6 +96,26 @@ for(ind in query.names){
   results <- bind_rows(results, assignment)
 }
 
-write.table(results, file=file.path(opts$o, "taxonomic_assignments.tsv"),sep = '\t', quote = F, row.names=F)
+pick.taxon <- function(x){
+  if(sum(!is.na(x))==0){
+    x3 <- NA
+  } else{
+    x2 <- sort(unique(unlist(strsplit(x, ";"))))
+    x3 <- paste(x2, collapse = ";")
+  }
+  return(x3)
+}
+
+tax_parathaa <- results %>%
+  group_by(query.name) %>% 
+  summarize(Kingdom  = pick.taxon(Kingdom),
+            Phylum = pick.taxon(Phylum),
+            Class = pick.taxon(Class),
+            Order = pick.taxon(Order),
+            Family = pick.taxon(Family),
+            Genus = pick.taxon(Genus),
+            Species = pick.taxon(Species))
+
+write.table(tax_parathaa, file=file.path(opts$o, "taxonomic_assignments.tsv"),sep = '\t', quote = F, row.names=F)
 
 

@@ -792,7 +792,7 @@ write.fasta(sequences = seed.db.bac , names = seed.db.bac.names, nbchar = 80, fi
 parathaData <- read.delim(#"output/20230110_SyntheticV1V2_nameHarmonizing/taxonomic_assignments.tsv",
   #"/Users/mis696/proj/parathaa/output/20230125_SyntheticV1V2_SpThreshold00001/taxonomic_assignments.tsv",
   #"/Users/mis696/proj/parathaa/output/20230119_SyntheticV1V2_SpThreshold003/taxonomic_assignments.tsv",
-  "output/20230120_SyntheticV1V2_removeUndefSp/taxonomic_assignments.tsv", 
+  "output/20230120_SyntheticV1V2_removeUndefSp/taxonomic_assignments2.tsv", 
                           sep='\t', fill=T, stringsAsFactors = F, header=T)
 tax_paratha <- parathaData %>%
   dplyr::select(query.name, Kingdom, Phylum, Class, Order, Family, Genus, Species) %>%
@@ -1012,7 +1012,8 @@ synth.parathaa2 <- left_join(synth.parathaa, taxdata, by="AccID")
 synth.parathaa2 <- synth.parathaa2 %>% 
   mutate(Species.x = unlist(lapply(str_split(Species.x, ";"), FUN=function(x) paste0(word(x,1,2), collapse = ";" ))))
 synth.parathaa2 <- synth.parathaa2 %>% 
-  mutate(Species.x = ifelse(Species.x=="NA", NA, Species.x))
+  mutate(Species.x = ifelse(Species.x=="NA", NA, Species.x),
+         Genus.x = ifelse(Genus.x=="", NA, Genus.x))
 synth.parathaa3 <- synth.parathaa2 %>% 
   dplyr::rowwise() %>%
   mutate(Flag = ifelse(is.na(Species.x), NA, word(Species.y, 1, 2) %in% str_split(Species.x, ";", simplify = T)),
@@ -1206,16 +1207,24 @@ ids <- ids$AccID
 #Dada2 unassigned, paratha wrong
 ids <- compare.synth %>% filter(is.na(Flag.x) & !Flag.y ) %>% select(AccID) %>% as.data.frame()
 ids <- ids$AccID
+# Both correct 
+ids <- compare.synth.full %>% filter(Species.dada==Species.silva & Species.parathaa==Species.silva)
+ids <- ids$AccID
 
 for(nm in ids[1:20]){
   plotTree <- tree_subset(as.treedata(in.tree.data), node = in.jplace@placements$node[which(in.jplace@placements$name==nm)][1], levels_back = 1)
   ggtree(plotTree, aes(color=Species)) + geom_tippoint() + geom_nodepoint() + geom_tiplab(aes(label=AccID))
-  ggsave(paste0("output/20230120_SyntheticV1V2_removeUndefSp/trees_dada2unassigned_novel/", nm, ".png"))
+  ggsave(paste0("output/20230120_SyntheticV1V2_removeUndefSp/trees_bothcorrect/", nm, ".png"))
   
 }
 
-in.jplace@placements %>% filter(name=="BX571859.58438.59982") %>% View
+in.jplace@placements %>% filter(name=="AB009013.1.1439") %>% View
 
+# From all seqs, consider assigned vs. unassigned @ species level
+parAssigned <- compare.synth.full %>% filter(!is.na(Species.parathaa))
+parNotAssigned <- compare.synth.full %>% filter(is.na(Species.parathaa))
 
-
-
+placements <- as.data.frame(in.jplace@placements)
+maxdists <- placements %>% 
+  group_by(name) %>% 
+  summarize(maxdist = max(pendant_length+distal_length))
