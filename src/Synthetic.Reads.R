@@ -1,3 +1,5 @@
+source("src/SILVA.species.editor.R")
+
 ## Read in SILVA 138.1 taxonomy for subsetting
 inFileTaxdata <- "./input/taxmap_slv_ssu_ref_138.1.txt"
 
@@ -20,7 +22,7 @@ taxdata <- taxdata %>% filter(!is.na(Species))
 #unique(taxdata$Species[sapply(strsplit(taxdata$Species, " ", fixed = TRUE), length)>2])
 
 ## Read in seed db for exclusion
-inFileSeedDB <- "./input/silva.seed_v138_1.tax"
+inFileSeedDB <- "input/silva.seed_v138_1.tax"
 SeedTax <- read.table(inFileSeedDB , header=F, fill=TRUE,sep='\t')
 
 SeedTax <- SeedTax %>%

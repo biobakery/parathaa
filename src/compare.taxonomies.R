@@ -789,10 +789,10 @@ write.fasta(sequences = seed.db.bac , names = seed.db.bac.names, nbchar = 80, fi
 
 # Read in parathaa data
 ## Read in V1V2 parathaa data
-#"/Users/mis696/proj/parathaa/output/20230110_SyntheticV1V2_nameHarmonizing/taxonomic_assignments.tsv",
-parathaData <- read.delim(#"/Users/mis696/proj/parathaa/output/20230125_SyntheticV1V2_SpThreshold00001/taxonomic_assignments.tsv",
+parathaData <- read.delim(#"output/20230110_SyntheticV1V2_nameHarmonizing/taxonomic_assignments.tsv",
+  #"/Users/mis696/proj/parathaa/output/20230125_SyntheticV1V2_SpThreshold00001/taxonomic_assignments.tsv",
   #"/Users/mis696/proj/parathaa/output/20230119_SyntheticV1V2_SpThreshold003/taxonomic_assignments.tsv",
-  "/Users/mis696/proj/parathaa/output/20230120_SyntheticV1V2_removeUndefSp/taxonomic_assignments.tsv", 
+  "output/20230120_SyntheticV1V2_removeUndefSp/taxonomic_assignments2.tsv", 
                           sep='\t', fill=T, stringsAsFactors = F, header=T)
 tax_paratha <- parathaData %>%
   dplyr::select(query.name, Kingdom, Phylum, Class, Order, Family, Genus, Species) %>%
@@ -822,7 +822,7 @@ SAMP_parathaa <- sample_data(samp_parathaa)
 ps1_parathaa.V1V2 <- phyloseq(OTU_parathaa, TAX_parathaa, SAMP_parathaa)
 
 ## Read in V4V5 parathaa data
-parathaData <- read.delim("/Users/mis696/proj/parathaa/output/20230109_SyntheticV4V5_nameHarmonizing/taxonomic_assignments.tsv", 
+parathaData <- read.delim("output/20230109_SyntheticV4V5_nameHarmonizing/taxonomic_assignments.tsv", 
                           sep='\t', fill=T, stringsAsFactors = F, header=T)
 tax_paratha <- parathaData %>%
   dplyr::select(query.name, Kingdom, Phylum, Class, Order, Family, Genus, Species) %>%
@@ -856,7 +856,7 @@ ps1_parathaa.V4V5 <- phyloseq(OTU_parathaa, TAX_parathaa, SAMP_parathaa)
 ## Assign taxonomy with dada2
 ## V4V5
 ## First, get names and sequences from fasta file
-getNames <- read.fasta(file("/Users/mis696/proj/parathaa/input/SILVAsubsample_SeedGenera_V4V5.pcr.fasta"), as.string = TRUE,
+getNames <- read.fasta(file("input/SILVAsubsample_SeedGenera_V4V5.pcr.fasta"), as.string = TRUE,
                        forceDNAtolower = FALSE, whole.header = FALSE)
 names1 <- str_split(getName(getNames), "\t", simplify=TRUE)
 names1 <- names1[,1] %>%
@@ -865,8 +865,8 @@ name.df <- data.frame("sequence" = unlist(getSequence(getNames, as.string=T)), t
 
 ## Next, assign taxonomy to genus level with DADA2
 set.seed(3874)
-taxa <- assignTaxonomy("/Users/mis696/proj/parathaa/input/SILVAsubsample_SeedGenera_V4V5.pcr.fasta", 
-                       "/Users/mis696/proj/parathaa/input/20230111.silva.seed_v138_1.ng.dada.fasta",
+taxa <- assignTaxonomy("input/SILVAsubsample_SeedGenera_V4V5.pcr.fasta", 
+                       "input/20230111.silva.seed_v138_1.ng.dada.fasta",
                         #"/Users/mis696/proj/parathaa/input/silva_nr99_v138.1_train_set.seedonly.fa",
                        #"/Users/mis696/proj/parathaa/input/silva_nr99_v138.1_train_set.fa",
                        #"/Users/mis696/proj/parathaa/input/silva.seed_v138_1.ng.dada.fasta", 
@@ -880,7 +880,7 @@ withNbases <- taxa.test[nChars,]
 taxa <- taxa[-nChars,]
 
 ## Perform species assignment with DADA2
-taxa.sp <- addSpecies(taxa, "/Users/mis696/proj/parathaa/input/silva_species_assignment_v138.1.seedonly.fa")
+taxa.sp <- addSpecies(taxa, "input/silva_species_assignment_v138.1.seedonly.fa")
 #                      "/Users/mis696/proj/parathaa/input/silva.seed_v138_1.ng.dada.sp.fasta")
 
 ## Add in reference IDs and taxonomy from sequences with "N" bases
@@ -929,7 +929,7 @@ print(ps1_dada.V4V5)
 
 #V1V2
 ## First, get names and sequences from fasta file
-getNames <- read.fasta(file("/Users/mis696/proj/parathaa/input/SILVAsubsample_SeedGenera_V1V2.pcr.fasta"), as.string = TRUE,
+getNames <- read.fasta(file("input/SILVAsubsample_SeedGenera_V1V2.pcr.fasta"), as.string = TRUE,
                        forceDNAtolower = FALSE, whole.header = FALSE)
 names1 <- str_split(getName(getNames), "\t", simplify=TRUE)
 names1 <- names1[,1] %>%
@@ -938,8 +938,8 @@ name.df <- data.frame("sequence" = unlist(getSequence(getNames, as.string=T)), t
 
 ## Next, assign taxonomy to genus level with DADA2
 set.seed(3874)
-taxa <- assignTaxonomy("/Users/mis696/proj/parathaa/input/SILVAsubsample_SeedGenera_V1V2.pcr.fasta", 
-                       "/Users/mis696/proj/parathaa/input/20230111.silva.seed_v138_1.ng.dada.fasta",
+taxa <- assignTaxonomy("input/SILVAsubsample_SeedGenera_V1V2.pcr.fasta", 
+                       "input/20230111.silva.seed_v138_1.ng.dada.fasta",
                        #"/Users/mis696/proj/parathaa/input/silva_nr99_v138.1_train_set.seedonly.fa",
                        #"/Users/mis696/proj/parathaa/input/silva_nr99_v138.1_train_set.fa",
                        #"/Users/mis696/proj/parathaa/input/silva.seed_v138_1.ng.dada.fasta", 
@@ -953,7 +953,7 @@ withNbases <- taxa.test[nChars,]
 taxa <- taxa[-nChars,]
 
 ## Perform species assignment with DADA2
-taxa.sp <- addSpecies(taxa, "/Users/mis696/proj/parathaa/input/silva_species_assignment_v138.1.seedonly.fa")
+taxa.sp <- addSpecies(taxa, "input/silva_species_assignment_v138.1.seedonly.fa")
 #                      "/Users/mis696/proj/parathaa/input/silva.seed_v138_1.ng.dada.sp.fasta")
 
 ## Add in reference IDs and taxonomy from sequences with "N" bases
@@ -1012,7 +1012,8 @@ synth.parathaa2 <- left_join(synth.parathaa, taxdata, by="AccID")
 synth.parathaa2 <- synth.parathaa2 %>% 
   mutate(Species.x = unlist(lapply(str_split(Species.x, ";"), FUN=function(x) paste0(word(x,1,2), collapse = ";" ))))
 synth.parathaa2 <- synth.parathaa2 %>% 
-  mutate(Species.x = ifelse(Species.x=="NA", NA, Species.x))
+  mutate(Species.x = ifelse(Species.x=="NA", NA, Species.x),
+         Genus.x = ifelse(Genus.x=="", NA, Genus.x))
 synth.parathaa3 <- synth.parathaa2 %>% 
   dplyr::rowwise() %>%
   mutate(Flag = ifelse(is.na(Species.x), NA, word(Species.y, 1, 2) %in% str_split(Species.x, ";", simplify = T)),
@@ -1181,3 +1182,49 @@ taxdata_seed <- taxdata %>%
 taxdata_SP <- word(taxdata_seed$Species, 1, 2)
 ## % of incorrect species (unassigned by dada2) that aren't in seed db
 1-sum(IncSp[1,] %in% taxdata_SP)/length(IncSp[1,] %in% taxdata_SP)
+
+
+################################
+### Examine Relevant Trees #####
+################################
+#save(compare.synth.full, file = "output/20230120_SyntheticV1V2_removeUndefSp/compare.synth.RData")
+
+## Load in Data
+load("output/20230120_SyntheticV1V2_removeUndefSp/resultTree_bestThresholds.RData")
+load("output/20230120_SyntheticV1V2_removeUndefSp/compare.synth.RData")
+in.jplace <- read.jplace("output/20230120_SyntheticV1V2_removeUndefSp/merged.sub.jplace")
+
+
+in.tree.data <- resultData$tax_bestcuts
+## Example: "KT962913.1.1234" is a short sequence (27 NT) that dada2 assigns correctly to genus level but parathaa has wrong phylum
+compare.synth %>% filter(AccID=="BX571859.58438.59982") %>% View
+plotTree <- tree_subset(as.treedata(in.tree.data), node = 7, levels_back = 10)
+ggtree(plotTree, aes(color=Genus)) + geom_tippoint() + geom_nodepoint()
+
+#Dada2 right, parathaa wrong
+ids <- compare.synth %>% filter(Species.dada==Species.silva & !Flag.y ) %>% select(AccID) %>% as.data.frame()
+ids <- ids$AccID
+#Dada2 unassigned, paratha wrong
+ids <- compare.synth %>% filter(is.na(Flag.x) & !Flag.y ) %>% select(AccID) %>% as.data.frame()
+ids <- ids$AccID
+# Both correct 
+ids <- compare.synth.full %>% filter(Species.dada==Species.silva & Species.parathaa==Species.silva)
+ids <- ids$AccID
+
+for(nm in ids[1:20]){
+  plotTree <- tree_subset(as.treedata(in.tree.data), node = in.jplace@placements$node[which(in.jplace@placements$name==nm)][1], levels_back = 1)
+  ggtree(plotTree, aes(color=Species)) + geom_tippoint() + geom_nodepoint() + geom_tiplab(aes(label=AccID))
+  ggsave(paste0("output/20230120_SyntheticV1V2_removeUndefSp/trees_bothcorrect/", nm, ".png"))
+  
+}
+
+in.jplace@placements %>% filter(name=="AB009013.1.1439") %>% View
+
+# From all seqs, consider assigned vs. unassigned @ species level
+parAssigned <- compare.synth.full %>% filter(!is.na(Species.parathaa))
+parNotAssigned <- compare.synth.full %>% filter(is.na(Species.parathaa))
+
+placements <- as.data.frame(in.jplace@placements)
+maxdists <- placements %>% 
+  group_by(name) %>% 
+  summarize(maxdist = max(pendant_length+distal_length))
