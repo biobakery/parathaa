@@ -20,7 +20,7 @@ taxdata <- taxdata %>% filter(!is.na(Species))
 #unique(taxdata$Species[sapply(strsplit(taxdata$Species, " ", fixed = TRUE), length)>2])
 
 ## Read in seed db for exclusion
-inFileSeedDB <- "/Users/mis696/proj/parathaa/input/silva.seed_v138_1.tax"
+inFileSeedDB <- "./input/silva.seed_v138_1.tax"
 SeedTax <- read.table(inFileSeedDB , header=F, fill=TRUE,sep='\t')
 
 SeedTax <- SeedTax %>%
@@ -50,7 +50,7 @@ subsample <- taxdata_seedless %>%
   map2_dfr(GenusCounts$subsetN, ~ slice_sample(.x, n = .y))
 
 ## Print IDs to file
-write_lines(subsample$AccID, file="/Users/mis696/proj/parathaa/input/subsampleIDs_SeedGeneraV4V5.txt")
+write_lines(subsample$AccID, file="./input/subsampleIDs_SeedGeneraV4V5.txt")
 
 ## Subset fasta file with:
 ## faSomeRecords  /Users/mis696/proj/16s-region-checker/input/SILVA_138.1_SSURef_tax_silva.fasta /Users/mis696/proj/parathaa/input/subsampleIDs.txt /Users/mis696/proj/parathaa/input/SILVAsubsample.fasta 
