@@ -25,6 +25,17 @@ workflow.add_argument(
     desc="Reads to be taxonomically classified [default: input/test_reads_V4.fasta]",
     default="input/test_reads_V4.fasta")
 
+workflow.add_argument(
+    name="wt1",
+    desc="penalty weight for over-splitting errors [default: 1]",
+    default=1)
+
+workflow.add_argument(
+    name="wt2",
+    desc="penalty weight for over-merging errors [default: 1]",
+    default=1)
+
+
 # Parsing the workflow arguments
 args = workflow.parse_args()
 
@@ -76,10 +87,10 @@ workflow.add_task(
 # See R script for comments
 # Does this try and find optimal cutoffs for negative binomial model?
 workflow.add_task(
-    "src/find.cutoffs.R   -d [depends[1]] -o [args[0]] -n [depends[2]]",
+    "src/find.cutoffs.R   -d [depends[1]] -o [args[0]] -n [depends[2]] --wt1 [args[1]] --wt2 [args[2]]",
     depends=[TrackedExecutable("src/analysis.R"), "input/taxmap_slv_ssu_ref_138.1.txt", args.tree],
     targets= [args.output+"/optimal_scores.png"],
-    args=args.output,
+    args=[args.output, args.wt1, args.wt2],
     name="Finding thresholds"
 )
 

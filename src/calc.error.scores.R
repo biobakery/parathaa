@@ -3,7 +3,9 @@
 ## 1) data frame of error scores for each group at the taxonomic level, and 
 ## 2) sum of error scores across all groups at the taxonomic level
 
-calc.error.scores <- function(treeData, level){
+calc.error.scores <- function(treeData, level, wt1=1, wt2=1){
+  #wt1 is the weight given to penalizing over-splitting
+  #wt2 is the weight given to penalizing over-clumping
   
   results <- list()
   
@@ -24,18 +26,19 @@ calc.error.scores <- function(treeData, level){
   groupNames <- treeData %>% filter(node %in% names(levelTables)) %>% dplyr::select(!!as.symbol(level), node)
   
   #taking total number of names within the grouping node and - max which is the majority class and name of that node
+  # ("over-clumping")
   groupNames$score2count <-  unlist(lapply(levelTables, FUN=function(x) sum(x)-max(x)))
   
   #sum this score across all groups with a given name (gives an error score for each name at a level)
   levelscore2s <- groupNames %>% group_by(!!as.symbol(level)) %>% summarize(score2count = sum(score2count))
   
-  # number of names represented multiple times
+  # number of names represented multiple times ("over-splitting")
   # goes through the name of the phylum and get see if there are multiple and scores it (first score above)
   levelscore2s$score1count <- as.integer(table(Nodes[[level]])-1)
   score1 <- sum(levelscore2s$score1count)
   score2 <- sum(levelscore2s$score2count)
   scoreSum <- score1 + score2
-  levelscore2s$scoreSum <- levelscore2s$score1count + levelscore2s$score2count
+  levelscore2s$scoreSum <- wt1*levelscore2s$score1count + wt2*levelscore2s$score2count
   
   results[["counts"]] <- levelscore2s
   results[["scores"]] <- scoreSum
