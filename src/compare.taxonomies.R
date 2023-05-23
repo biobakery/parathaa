@@ -4,7 +4,7 @@ library(microbiome) # data analysis and visualisation
 library(phyloseq) # also the basis of data object. Data analysis and visualisation
 library(RColorBrewer) # nice color options
 library(ggpubr) # publication quality figures, based on ggplot2
-library(tidyverse) # data handling  
+library(dplyr) # data handling  
 library(treeio)
 library(gridExtra)
 library(lemon)

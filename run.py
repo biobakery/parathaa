@@ -66,7 +66,7 @@ args.treelog = os.path.join(args.output, 'treelog.txt')
 # from what I understand the database has to be a pre-aligned for input into parathaa?
 
 workflow.add_task(
-    "mothur '#pcr.seqs(fasta = [depends[0]], oligos=[depends[1]], pdiffs=0, rdiffs=0, keepdots=f)'",
+    "mothur '#pcr.seqs(fasta = [depends[0]], oligos=[depends[1]], pdiffs=3, rdiffs=3, keepdots=f)'",
     depends=[args.database, args.primers],
     targets=args.trimmedDatabase,
     name="Trimming database")
