@@ -1,5 +1,8 @@
 ## Manual/automatic SILVA species consolidation
-library(tidyverse)
+library(dplyr)
+library(stringr)
+library(readr)
+library(tidyr)
 
 if(FALSE){ #Reading in data for testing
 inFileSeed <- "/Users/mis696/proj/parathaa/input/silva.seed_v138_1.tax"

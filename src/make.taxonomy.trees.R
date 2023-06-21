@@ -36,6 +36,7 @@ library(dplyr)
 library(ape)
 library(ggimage)
 library(TDbook)
+library(ggplot2)
 source("src/SILVA.species.editor.R")
 
 ## Set task

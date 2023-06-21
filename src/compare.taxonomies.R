@@ -4,7 +4,7 @@ library(microbiome) # data analysis and visualisation
 library(phyloseq) # also the basis of data object. Data analysis and visualisation
 library(RColorBrewer) # nice color options
 library(ggpubr) # publication quality figures, based on ggplot2
-library(tidyverse) # data handling  
+library(dplyr) # data handling  
 library(treeio)
 library(gridExtra)
 library(lemon)
@@ -792,7 +792,10 @@ write.fasta(sequences = seed.db.bac , names = seed.db.bac.names, nbchar = 80, fi
 parathaData <- read.delim(#"output/20230110_SyntheticV1V2_nameHarmonizing/taxonomic_assignments.tsv",
   #"/Users/mis696/proj/parathaa/output/20230125_SyntheticV1V2_SpThreshold00001/taxonomic_assignments.tsv",
   #"/Users/mis696/proj/parathaa/output/20230119_SyntheticV1V2_SpThreshold003/taxonomic_assignments.tsv",
-  "output/20230120_SyntheticV1V2_removeUndefSp/taxonomic_assignments2.tsv", 
+  #"output/20230120_SyntheticV1V2_removeUndefSp/taxonomic_assignments2.tsv", 
+  #"C:/Users/mshort/Downloads/taxonomic_assignments.tsv", # from replication run
+  #"C:/Users/mshort/Downloads/taxonomic_assignments_nm.tsv", # from name harmonizing v1v2
+  "C:/Users/mshort/Documents/proj/parathaa/output/20230509_SynthV1V2diffs/taxonomic_assignments.tsv",
                           sep='\t', fill=T, stringsAsFactors = F, header=T)
 tax_paratha <- parathaData %>%
   dplyr::select(query.name, Kingdom, Phylum, Class, Order, Family, Genus, Species) %>%
@@ -1130,7 +1133,7 @@ dim(compare.synth %>% filter(is.na(Flag.genus.x) & is.na(Flag.genus.y) ) %>% sel
 
 ###################################
 #compare.synth.full <- compare.synth
-compare.synth <- compare.synth.full %>% filter(!Species.silva %in% taxdata_SP)
+compare.synth <- compare.synth.full %>% filter(Species.silva %in% taxdata_SP)
 ## Both uniquely correct:
 dim(compare.synth %>% filter(Species.dada==Species.silva & Species.parathaa==Species.silva) %>% select(Species.dada, Species.parathaa, Species.silva, AccID))
 ## Paratha uniquely correct, dada2 partly correct:
@@ -1197,7 +1200,7 @@ in.jplace <- read.jplace("output/20230120_SyntheticV1V2_removeUndefSp/merged.sub
 
 in.tree.data <- resultData$tax_bestcuts
 ## Example: "KT962913.1.1234" is a short sequence (27 NT) that dada2 assigns correctly to genus level but parathaa has wrong phylum
-compare.synth %>% filter(AccID=="BX571859.58438.59982") %>% View
+compare.synth.full %>% filter(AccID=="AB930131.1.1469") %>% View
 plotTree <- tree_subset(as.treedata(in.tree.data), node = 7, levels_back = 10)
 ggtree(plotTree, aes(color=Genus)) + geom_tippoint() + geom_nodepoint()
 
@@ -1211,10 +1214,17 @@ ids <- ids$AccID
 ids <- compare.synth.full %>% filter(Species.dada==Species.silva & Species.parathaa==Species.silva)
 ids <- ids$AccID
 
+## Dada2 Genus right, parathaa wrong:
+ids <- compare.synth %>% filter(Genus.dada==Genus.silva & !Flag.genus.y ) %>% select(AccID) %>% as.data.frame()
+ids <- ids$AccID
+
 for(nm in ids[1:20]){
-  plotTree <- tree_subset(as.treedata(in.tree.data), node = in.jplace@placements$node[which(in.jplace@placements$name==nm)][1], levels_back = 1)
-  ggtree(plotTree, aes(color=Species)) + geom_tippoint() + geom_nodepoint() + geom_tiplab(aes(label=AccID))
-  ggsave(paste0("output/20230120_SyntheticV1V2_removeUndefSp/trees_bothcorrect/", nm, ".png"))
+  plotTree <- tree_subset(as.treedata(in.tree.data), node = in.jplace@placements$node[which(in.jplace@placements$name==nm)][1], levels_back = 2)
+  truName <- compare.synth %>% filter(AccID==nm) %>% select(Genus.silva) %>% as.character()
+  parName <- compare.synth %>% filter(AccID==nm) %>% select(Genus.parathaa) %>% as.character()
+  ggtree(plotTree, aes(color=Genus)) + geom_tippoint() + geom_nodepoint() + geom_tiplab(aes(label=AccID)) + labs(title=paste0("Source: ", truName), 
+                                                                                                                 subtitle = paste0("Parathaa: ", parName))
+  ggsave(paste0("output/20230120_SyntheticV1V2_removeUndefSp/genusDadacorrect/", nm, ".png"))
   
 }
 

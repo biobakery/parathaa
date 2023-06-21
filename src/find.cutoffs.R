@@ -10,6 +10,8 @@ Options:
    -d naming file [default: input/taxmap_slv_ssu_ref_138.1.txt]
    -o model output directory [default: output/testrun20230117]
    -n tree [default: /Users/mis696/proj/parathaa/output/20230109_SyntheticV4V5_nameHarmonizing/region_specific.tree]
+   --wt1 over-split penalty weight [default: 1]
+   --wt2 over-merge penalty weight [default: 1]
 
  ]' -> doc
 
@@ -32,6 +34,7 @@ library(tidyr)
 library(dplyr)
 library(ape)
 ##library(ggimage)
+library(ggplot2)
 library(TDbook)
 source("src/SILVA.species.editor.R")
 source("src/calc.error.scores.R")
@@ -202,7 +205,7 @@ for(cut1 in cutoffs){
   ## Calculate Error Scores for the given cutoff at each level
   
   for(level in c("Phylum", "Class", "Order", "Family", "Genus", "Species")){
-    errs <- calc.error.scores(tempData, level)
+    errs <- calc.error.scores(tempData, level, wt1=as.numeric(opts$wt1), wt2=as.numeric(opts$wt2))
     outputCounts[[level]][[as.character(cut1)]] <- errs[["counts"]]
     outputScores[[level]][as.character(cut1)] <- errs[["scores"]]
   }
