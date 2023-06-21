@@ -1,12 +1,13 @@
 #!/usr/bin/env Rscript
 require(docopt)
 'Usage:
-   tax.assign.R [-j <jplace file> -o <output> -t <tree>]
+   tax.assign.R [-j <jplace file> -o <output> -t <tree> -s <optimal_scores>]
 
 Options:
    -j jplace file with queries placed into reference tree
    -o output directory [default: output]
    -t reference tree with named internal nodes
+   -s Optimal threshold scores
 
  ]' -> doc
 
@@ -32,6 +33,7 @@ library(phytools)
 ## Inputs
 jplaceFile <-  opts$j
 in.treeFile <-  opts$t
+optimalFile <- opts$s
 outDir <- opts$o 
 plotTree <- FALSE
 
@@ -76,7 +78,7 @@ for(ind in query.names){
     names(maxDistPlacements) <- query.place.data$node
   
   ## Load thresholds for levels
-  load(file.path(opts$o, "optimal_scores.RData"))
+  load(opts$s)
   bestThresh <- plotData2 %>% group_by(Level) %>% summarise(minThreshold = mean(minThreshold))
   cutoffs <- bestThresh$minThreshold
   names(cutoffs) <- bestThresh$Level

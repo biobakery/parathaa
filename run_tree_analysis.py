@@ -42,11 +42,21 @@ workflow.add_argument(
     default="input/taxmap_slv_ssu_ref_138.1.txt"
 )
 
+workflow.add_argument(
+    name="sweight",
+    desc="penalty weight for over-splitting errors [default: 1]",
+    default=1
+)
+
+workflow.add_argument(
+    name="mweight",
+    desc="penalty weight for over-merging errors [default: 1]",
+    default=1
+)
+
+
 # Parsing the workflow arguments
 args = workflow.parse_args()
-
-#Loading the config setting
-args.config = 'etc/config.ini'
 
 
 # Download taxonomy file from SILVA
@@ -58,7 +68,6 @@ args.config = 'etc/config.ini'
 
 # Add prefix of db name
 dbname = Path(args.database).stem
-print(dbname)
 
 #add the name for the generated trimmed aligned sequences
 args.trimmedDatabase = os.path.join(args.output, dbname + '.pcr.align')
@@ -70,15 +79,13 @@ args.treelog = os.path.join(args.output, 'treelog.txt')
 
 ## Trim database
 workflow.add_task(
-    "mothur '#set.dir(output=[args[0]]);pcr.seqs(fasta = [depends[0]], oligos=[depends[1]], pdiffs=0, rdiffs=0, keepdots=f)'",
+    "mothur '#set.dir(output=[args[0]]);set.dir(debug=[args[0]]);pcr.seqs(fasta = [depends[0]], oligos=[depends[1]], pdiffs=0, rdiffs=0, keepdots=f)'",
     depends=[args.database, args.primers],
     targets=[args.trimmedDatabase],
     args=args.output,
     name="Trimming database")
 
 ## Create tree from region-specific alignment, save log file for use by pplacer
-
-# how does this step deal with duplicate reads that are generated after primer trimming?
 
 workflow.add_task(
     "FastTree -gtr -log [targets[0]] \
@@ -90,26 +97,19 @@ workflow.add_task(
 ## Find best thresholds
 
 # See R script for comments
-# Does this try and find optimal cutoffs for negative binomial model?
 workflow.add_task(
     "src/find.cutoffs.R   -d [depends[1]] -o [args[0]] -n [depends[2]]",
-    depends=[TrackedExecutable("src/analysis.R"), "input/taxmap_slv_ssu_ref_138.1.txt", args.tree],
+    depends=[TrackedExecutable("src/analysis.R"), args.taxonomy, args.tree],
     targets= [args.output+"/optimal_scores.png"],
-    args=args.output,
+    args=[args.output, args.sweight, args.mweight],
     name="Finding thresholds"
 )
 
 
-# See R script for comments
-
-# did my best to go through this script but still a bit unclear on some parts of it!
-
 ## Assign taxonomy to nodes 
-## it was a bit unclear to me but is the point of this to determine the taxonomy of internal nodes 
-## based on the new tree? so we can use that to assign taxonomy to the newly placed tips?
 workflow.add_task(
     "src/assign.node.tax.R   -d [depends[1]] -o [args[0]] -n [depends[2]]",
-    depends=[TrackedExecutable("src/analysis.R"), "input/taxmap_slv_ssu_ref_138.1.txt", args.tree,
+    depends=[TrackedExecutable("src/analysis.R"), args.taxonomy, args.tree,
              args.output+"/optimal_scores.png"],
     targets= args.output+"/resultTree_bestThresholds.RData",
     args=args.output,

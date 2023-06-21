@@ -1,6 +1,7 @@
 #!/usr/bin/env Rscript
 
 ### This script finds optimal cutoffs for each taxonomic level for a given tree, and plots their error scores
+if(!interactive()) pdf(NULL)
 
 require(docopt)
 'Usage:

@@ -11,6 +11,9 @@ Need to make a test taxonomy assignment dataset..... (not sure the best way to d
 Hmmm... (we could just use the terrible tree and just use it as test case and leave it at that)
 We could also write a seperate test script that downloads an already pre-computed tree and uses that to test assignments.
 
+
+Generate pre-computed files for V1V2, V3V4, EMPV4. 
+
 #### Introduction
 > PARATHAA is a tool for taxonomic assignment while retaining information about ambiguity in placements. It is still under active development.
 
