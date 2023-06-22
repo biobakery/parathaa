@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 ### This script given an aligned 16S file, an accompanying taxonomy for those sequences
 ### and a primer pair will output a phylogenetic tree based on the regions amplified by those primers
 

@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 import os
 from glob import glob
 from anadama2 import Workflow
