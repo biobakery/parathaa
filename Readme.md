@@ -1,18 +1,6 @@
 
 # PARATHAA
 > Preserving and Assimilating Region-specific Ambiguities in Taxonomic Hierarchical Assignments for Amplicons
- 
-#### Dev notes.
-
-For input file I think for now we ignore this and then we can host the input files on another platform..
-We can include a script that will download these files in a static location (whether that be zenodo or hutlab public space)
-
-Need to make a test taxonomy assignment dataset..... (not sure the best way to do this because the test making tree script won't do the best for assignment :/ 
-Hmmm... (we could just use the terrible tree and just use it as test case and leave it at that)
-We could also write a seperate test script that downloads an already pre-computed tree and uses that to test assignments.
-
-
-Generate pre-computed files for V1V2, V3V4, EMPV4. 
 
 #### Introduction
 > PARATHAA is a tool for taxonomic assignment while retaining information about ambiguity in placements. It is still under active development.
@@ -37,24 +25,81 @@ git clone https://github.com/biobakery/parathaa
 ```
 or using the "**Clone or Download**" button.
 
+#### Parathaa Usage:
 
-##### Demo Run:
+- Parathaa is seperated into two seperate workflows that are used in conjunction with one another. In general most users will only use step 2 with already pre-computed files from step 1. However users able to adjust the reference database parathaa uses for taxonomic assignment using the commands in step 1.
+
+
+
+#### Step 1: Creation of primer trimmed phylogenetic trees with taxonomic labels
+
+- The first step in parathaa is to create a primer trimmed phyloegentic tree that has its internal nodes labelled with taxonomic annotations. This is done using the command:
 ```
-python run.py --primers input/V4V5.oligos --database input/silva.seed_v138_1/silva.seed_v138_1.align --query input/ASVs.fasta --output output 
+run_tree_analysis.py
 ```
-```python run.py --help```
+
+In brief this command does the following:
+
+1. Takes in the reference MSA and trims the sequences to the region that was amplified based on the given set of primers
+2. Generates a new phylogenetic tree based on these newly trimmed sequences using FastTree
+3. Finds the appropriate distance thresholding cutoffs for each taxonomic level
+4. Assigns taxonomy to the internal nodes of the new primer trimmed reference tree
+
+
+#### Inputs
+This command takes in the following:
+- `primers` A set of primers
+- `database` A reference database that consists of a pre-aligned 16S rRNA gene reference set. By default we a use silva v138 seed database.
+- `taxonomy` A taxonomy file that contains the original taxonomic labels for the 16S sequences in the provided reference database
+
+There are two optional commands as well:
+- ```swight``` which controls the penalty weighting for over splitting taxonomic groups
+- ```mwight``` which controls the penalty weighting for over merge taxonomic groups
+
+These two options are used when calculating the optimal threshold distance along the tree for each taxonomic level. 
+
+##### Demo Run Step 1:
+
+Not some input files will have been gzip'd so that they can fit within this repository. Please check the input files before running and expand them with ```gunzip```. 
+```
+run_tree_analysis.py --primers input/primers/V4V5.oligos --database input/testing/tree_construction/subset_silva_seed_v138_1.align  --output output --taxonomy input/silva_v138/taxmap_slv_ssu_ref_138.1.txt
+```
+
+#### Step 2: Taxonomic assignment
+
+PARATHAA will come with a number of pre-computed-trees for this step so that users do not need to generate their own primer trimmed trees for commonly used reference databases. However this is still under development and currently the only pre-computed-tree available is for silva_v138 using V4V5 primers. 
+
+
+- The second step of PARATHAA uses the phylogenetic tree, multiple sequence alignment (MSA) and tree data files to create taxonomic assignments to 16S rRNA gene sequences. This step is running using the following command:
+```
+run_taxa_assignment.py
+```
+
+Briefly this step takes in the newly created primer trimmed tree, MSA, tree reference files, and thresholding information to assign taxonomy to query 16S sequences by the following steps.
+
+1. Aligns query sequences to primer trimmed MSA generated in step 1
+2. Places those sequences into the primer trimmed tree generated in step 1 using pplacer
+3. Assigns taxonomy to those query sequences based on their placement and their distance from taxonomically labelled interior nodes. Note the thresholding distance computed in step one determines the apprioriate distance away a node can be to be assigned to a taxonomic level.
+
+##### Inputs:
+This command takes the following inputs:
+- `trimmedDatabase` the primer trimmed MSA generated from step 1
+- `trimmedTree` the trimmed phylogenetic tree generated from step 1
+- `treeLog` the treelog.txt file generated from step 1
+- `query` the 16S sequences that you want to assign taxonomy
+- `thresholds` an RData file containing the optimal phylogenetic distances for taxonomic assignment
+- `namedTree` an RData file containing the annotated trimmed phylogenetic tree  
+
+##### Demo Run Step 2:
+Not some input files will have been gzip'd so that they can fit within this repository. Please check the input files before running and expand them with ```gunzip```.
 
 ```
-usage: run.py [-h] [--version] [--primers PRIMERS]
-[--database DATABASE] [--query QUERY] -o OUTPUT [-i INPUT]
-[--config CONFIG] [--local-jobs JOBS] [--grid-jobs GRID_JOBS]
-[--grid GRID] [--grid-partition GRID_PARTITION]
-[--grid-benchmark {on,off}] [--grid-options GRID_OPTIONS]
-[--grid-environment GRID_ENVIRONMENT]
-[--grid-scratch GRID_SCRATCH] [--dry-run] [--skip-nothing]
-[--quit-early] [--until-task UNTIL_TASK]
-[--exclude-task EXCLUDE_TASK] [--target TARGET]
-[--exclude-target EXCLUDE_TARGET]
-[--log-level {DEBUG,INFO,WARNING,ERROR,CRITICAL}]
+python run_taxa_assignment.py --trimmedDatabase input/silva_v138/Pre-Computed-Trees/V4V5/silva.seed_v138_1.pcr.align \
+--trimmedTree input/silva_v138/Pre-Computed-Trees/V4V5/region_specific.tree \
+--treeLog input/silva_v138/Pre-Computed-Trees/V4V5/treelog.txt \
+--query input/testing/taxa_assignment/SRR3225703_V4V5_subset.fasta \
+--thresholds input/silva_v138/Pre-Computed-Trees/V4V5/optimal_scores.RData \
+--namedTree input/silva_v138/Pre-Computed-Trees/V4V5/resultTree_bestThresholds.RData \
+--output output_taxa_test
 ```
 
