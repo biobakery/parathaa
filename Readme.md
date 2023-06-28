@@ -37,7 +37,5 @@ or using the "**Clone or Download**" button.
 
 ##### Demo Run:
 See Tutorial: https://github.com/biobakery/parathaa/wiki/PARATHAA-Tutorial
-[--exclude-target EXCLUDE_TARGET]
-[--log-level {DEBUG,INFO,WARNING,ERROR,CRITICAL}]
-```
+
 
