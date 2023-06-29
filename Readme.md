@@ -94,12 +94,12 @@ This command takes the following inputs:
 Not some input files will have been gzip'd so that they can fit within this repository. Please check the input files before running and expand them with ```gunzip```.
 
 ```
-python run_taxa_assignment.py --trimmedDatabase input/silva_v138/Pre-Computed-Trees/V4V5/silva.seed_v138_1.pcr.align \
---trimmedTree input/silva_v138/Pre-Computed-Trees/V4V5/region_specific.tree \
---treeLog input/silva_v138/Pre-Computed-Trees/V4V5/treelog.txt \
+run_taxa_assignment.py --trimmedDatabase input/silva_v138/Pre-computed-Trees/V4V5/silva.seed_v138_1.pcr.align \
+--trimmedTree input/silva_v138/Pre-computed-Trees/V4V5/region_specific.tree \
+--treeLog input/silva_v138/Pre-computed-Trees/V4V5/treelog.txt \
 --query input/testing/taxa_assignment/SRR3225703_V4V5_subset.fasta \
---thresholds input/silva_v138/Pre-Computed-Trees/V4V5/optimal_scores.RData \
---namedTree input/silva_v138/Pre-Computed-Trees/V4V5/resultTree_bestThresholds.RData \
+--thresholds input/silva_v138/Pre-computed-Trees/V4V5/optimal_scores.RData \
+--namedTree input/silva_v138/Pre-computed-Trees/V4V5/resultTree_bestThresholds.RData \
 --output output_taxa_test
 ```
 
