@@ -1,4 +1,5 @@
 source("src/SILVA.species.editor.R")
+makeSynthFile <- FALSE
 
 ## Read in SILVA 138.1 taxonomy for subsetting
 inFileTaxdata <- "./input/taxmap_slv_ssu_ref_138.1.txt"
@@ -44,7 +45,7 @@ GenusCounts <- GenusCounts %>% filter(Genus %in% unique(SeedTax$Genus))
 dim(GenusCounts)
 sum(GenusCounts$subsetN)
 
-
+if(makeSynthFile==TRUE){
 library(purrr)
 set.seed(978)
 subsample <- taxdata_seedless %>% 
@@ -53,6 +54,7 @@ subsample <- taxdata_seedless %>%
 
 ## Print IDs to file
 write_lines(subsample$AccID, file="./input/subsampleIDs_SeedGeneraV4V5.txt")
+}
 
 ## Subset fasta file with:
 ## faSomeRecords  /Users/mis696/proj/16s-region-checker/input/SILVA_138.1_SSURef_tax_silva.fasta /Users/mis696/proj/parathaa/input/subsampleIDs.txt /Users/mis696/proj/parathaa/input/SILVAsubsample.fasta 
