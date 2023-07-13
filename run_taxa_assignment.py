@@ -1,5 +1,7 @@
 #!/usr/bin/python3
 
+
+# update parathaa code to take in one directory from step 1 with all the required files?
 import os
 from glob import glob
 from anadama2 import Workflow
@@ -12,18 +14,25 @@ workflow = Workflow(
     description="Preserving Primer-Induced Taxonomic Ambiguities for Amplicons"     #Update the description as needed
     ) 
 
-# Setting additional custom arguments for workflow - run.py
+#this will take in a directory and then create all the rest of the arguments..
+workflow.add_argument(
+    name="treeFiles",
+    desc="The output directory generated from run_tree_analysis.py",
+    default=""
+)
+
+#Setting additional custom arguments for workflow - run.py
 workflow.add_argument(
     name="trimmedDatabase",
     desc="",
     default=""
-    )
+)
     
 workflow.add_argument(
     name="trimmedTree",
     desc="Database for taxonomy [default: input/silva.seed_v138_1/silva.seed_v138_1.align]",
     default="Pre-computed-trees/Silva_v138/silva.seed_v138_1.align"
-    )
+)
 
 workflow.add_argument(
     name="treeLog",
@@ -50,6 +59,29 @@ workflow.add_argument(
 
 # Parsing the workflow arguments
 args = workflow.parse_args()
+
+if(len(args.treeFiles)!=0):
+    db_files = [f for f in os.listdir(args.treeFiles) if f.endswith('.pcr.align')]
+    for i in db_files:
+        if not i.endswith('.scrap.pcr.align'):
+            args.trimmedDatabase = args.treeFiles + i
+    
+    temp = [f for f in os.listdir(args.treeFiles) if f.endswith('.tree')]
+    args.trimmedTree = args.treeFiles + temp[0]
+    print(args.trimmedTree)
+    
+    temp = [f for f in os.listdir(args.treeFiles) if f.endswith('treelog.txt')]
+    args.treeLog = args.treeFiles + temp[0]
+    print(args.treeLog)
+
+    temp = [f for f in os.listdir(args.treeFiles) if f.endswith('scores.RData')]
+    args.thresholds = args.treeFiles + temp[0]
+    print(args.thresholds)
+
+    temp = [f for f in os.listdir(args.treeFiles) if f.endswith('holds.RData')]
+    args.namedTree = args.treeFiles + temp[0]
+    print(args.namedTree)
+
 
 queryName = Path(args.query).stem
 alignName = os.path.join(args.output, queryName + '.align')

@@ -56,6 +56,17 @@ workflow.add_argument(
     default=1
 )
 
+workflow.add_argument(
+    name="errorRate",
+    desc="The error rate parameter for the binomial model for ambigious taxonomic assignment",
+    default=0.05
+)
+
+workflow.add_argument(
+    name="binoThreshold",
+    desc="Threshold for the binomial error model for ambigious taxonomic assignment",
+    default=0.20
+)
 
 # Parsing the workflow arguments
 args = workflow.parse_args()
@@ -81,7 +92,7 @@ args.treelog = os.path.join(args.output, 'treelog.txt')
 
 ## Trim database
 workflow.add_task(
-    "mothur '#set.dir(output=[args[0]]);set.dir(debug=[args[0]]);pcr.seqs(fasta = [depends[0]], oligos=[depends[1]], pdiffs=0, rdiffs=0, keepdots=f)'",
+    "mothur -q '#set.dir(output=[args[0]]);pcr.seqs(fasta = [depends[0]], oligos=[depends[1]], pdiffs=0, rdiffs=0, keepdots=f)'",
     depends=[args.database, args.primers],
     targets=[args.trimmedDatabase],
     args=args.output,
@@ -100,10 +111,14 @@ workflow.add_task(
 
 # See R script for comments
 workflow.add_task(
-    "src/find.cutoffs.R   -d [depends[1]] -o [args[0]] -n [depends[2]]",
+<<<<<<< HEAD
+    "src/find.cutoffs.R   -d [depends[1]] -o [args[0]] -n [depends[2]] --wt1 [args[1]] --wt2 [args[2]] --bError [args[3]] --bThreshold [args[4]]",
+=======
+    "src/find.cutoffs.R   -d [depends[1]] -o [args[0]] -n [depends[2]] --wt1 [args[1]] --wt2 [args[2]]",
+>>>>>>> 5cbe400bf70ebb5878380941b924477d3680b7b3
     depends=[TrackedExecutable("src/analysis.R"), args.taxonomy, args.tree],
     targets= [args.output+"/optimal_scores.png"],
-    args=[args.output, args.sweight, args.mweight],
+    args=[args.output, args.sweight, args.mweight, args.errorRate, args.binoThreshold],
     name="Finding thresholds"
 )
 

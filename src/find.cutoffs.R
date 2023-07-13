@@ -5,14 +5,20 @@ if(!interactive()) pdf(NULL)
 
 require(docopt)
 'Usage:
-   find.cutoffs.R [-d <naming file> -o <output> -n <tree>]
+<<<<<<< HEAD
+   find.cutoffs.R [-d <naming file> -o <output> -n <tree> --wt1 <sweight> --wt2 <mweight> --bError <error_rate> --bThreshold <threshold>]
+=======
+   find.cutoffs.R [-d <naming file> -o <output> -n <tree> --wt1 <split weight> --wt2 <merge weight>]
+>>>>>>> 5cbe400bf70ebb5878380941b924477d3680b7b3
 
 Options:
    -d naming file [default: input/taxmap_slv_ssu_ref_138.1.txt]
-   -o model output directory [default: output/testrun20230117]
-   -n tree [default: /Users/mis696/proj/parathaa/output/20230109_SyntheticV4V5_nameHarmonizing/region_specific.tree]
+   -o model output directory [default: output/20230707_weight3Err10]
+   -n tree [default: output/20230707_weight3Err10/region_specific.tree]
    --wt1 over-split penalty weight [default: 1]
    --wt2 over-merge penalty weight [default: 1]
+   --bError binomial error rate [default: 1]
+   --bThreshold binomial threshold [default: 1]
 
  ]' -> doc
 
@@ -34,7 +40,7 @@ library(treeio)
 library(tidyr)
 library(dplyr)
 library(ape)
-##library(ggimage)
+library(ggimage)
 library(ggplot2)
 library(TDbook)
 source("src/SILVA.species.editor.R")
@@ -97,8 +103,8 @@ in.tree.data <- in.tree.data %>% mutate(Kingdom = na_if(Kingdom, ""),
 
 
 # parameters from the binomModel
-falseNegRate <- 0.05
-acceptableProb <- 0.20
+falseNegRate <- opts$bError
+acceptableProb <- opts$bThreshold
 
 
 #Broad range of cutoffs:
@@ -132,7 +138,9 @@ for(cut1 in cutoffs){
 for (intNode in which(inputData$isTip==F)){
   #progress bar?
   print(paste("Node:", intNode))
-  #grab tips
+
+  
+#grab tips
   ch <- offspring(inputData, intNode, tiponly=T)
   #get the sub tree
   tre <- tree_subset(as.treedata(inputData), intNode, levels_back = 0)

@@ -37,8 +37,8 @@ calc.error.scores <- function(treeData, level, wt1=1, wt2=1){
   levelscore2s$score1count <- as.integer(table(Nodes[[level]])-1)
   score1 <- sum(levelscore2s$score1count)
   score2 <- sum(levelscore2s$score2count)
-  scoreSum <- score1 + score2
-  levelscore2s$scoreSum <- wt1*levelscore2s$score1count + wt2*levelscore2s$score2count
+  scoreSum <- ((wt1*score1) + (wt2*score2))/((wt1+wt2)/2)
+  levelscore2s$scoreSum <- (wt1*levelscore2s$score1count + wt2*levelscore2s$score2count)/((wt1+wt2)/2)
   
   results[["counts"]] <- levelscore2s
   results[["scores"]] <- scoreSum
