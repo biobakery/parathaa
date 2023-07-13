@@ -16,6 +16,7 @@ suppressPackageStartupMessages(library(seqinr))
 ## Specify input paths/working directory
 setwd("C:/Users/mshort/Documents/proj/parathaa/")
 parathaaFile <- "C:/Users/mshort/Documents/proj/parathaa/output/20230526_SynthV1V2_weights3to1/taxonomic_assignments.tsv"
+parathaaFile <- "C:/Users/mshort/Desktop/20230711_err1/taxonomic_assignments.tsv"
 sequenceFile <- "input/SILVAsubsample_SeedGenera_V1V2.pcr.fasta"
 DADAdb <- "input/20230111.silva.seed_v138_1.ng.dada.fasta"
 DADAdb.sp <- "input/silva_species_assignment_v138.1.seedonly.fa"
@@ -168,14 +169,14 @@ compare.synth <- compare.synth %>%
          Genus.silva = Genus.y.y)
 
 
-genus.summary <- data.frame("mWeight"=3, "sWeight"=1, "binErr"=0.05, "binP"=0.20)
+genus.summary <- data.frame("mWeight"=3, "sWeight"=1, "binErr"=0.01, "binP"=0.20)
 genus.summary$unique.correct <- round(nrow(compare.synth %>% filter(Genus.parathaa==Genus.silva))/nrow(compare.synth), 3)
 genus.summary$one.to.many <- round(nrow(compare.synth %>% filter(Flag.genus.y & Genus.parathaa!=Genus.silva))/nrow(compare.synth), 3)
 genus.summary$fpr <- round(nrow(compare.synth %>% filter(!Flag.genus.y ))/nrow(compare.synth), 3)
 genus.summary$unassigned <- round(nrow(compare.synth %>% filter(is.na(Flag.genus.y) ))/nrow(compare.synth), 3)
 print(genus.summary)
 
-species.summary <- data.frame("mWeight"=3, "sWeight"=1, "binErr"=0.05, "binP"=0.20)
+species.summary <- data.frame("mWeight"=3, "sWeight"=1, "binErr"=0.01, "binP"=0.20)
 species.summary$unique.correct <- round(nrow(compare.synth %>% filter(Species.parathaa==Species.silva))/nrow(compare.synth), 3)
 species.summary$one.to.many <- round(nrow(compare.synth %>% filter(Flag.y & Species.parathaa!=Species.silva))/nrow(compare.synth), 3)
 species.summary$fpr <- round(nrow(compare.synth %>% filter(!Flag.y ))/nrow(compare.synth), 3)
@@ -291,9 +292,9 @@ for(ind in 1:length(sp.list)){
 #save(compare.synth.full, file = "output/20230120_SyntheticV1V2_removeUndefSp/compare.synth.RData")
 
 ## Load in Data
-load("output/20230120_SyntheticV1V2_removeUndefSp/resultTree_bestThresholds.RData")
-load("output/20230120_SyntheticV1V2_removeUndefSp/compare.synth.RData")
-in.jplace <- read.jplace("output/20230120_SyntheticV1V2_removeUndefSp/merged.sub.jplace")
+load("output/20230711_err1/resultTree_bestThresholds.RData")
+load("output/20230711_err1/compare.synth.RData")
+in.jplace <- read.jplace("output/20230711_err1/merged_sub.jplace")
 
 
 in.tree.data <- resultData$tax_bestcuts
@@ -305,10 +306,10 @@ ggtree(plotTree, aes(color=Genus)) + geom_tippoint() + geom_nodepoint()
 
 ## Identify queries based on how they're assigned
 #Dada2 right, parathaa wrong
-ids <- compare.synth %>% filter(Species.dada==Species.silva & !Flag.y ) %>% select(AccID) %>% as.data.frame()
+ids <- compare.synth.full %>% filter(Species.dada==Species.silva & !Flag.y ) %>% select(AccID) %>% as.data.frame()
 ids <- ids$AccID
 #Dada2 unassigned, paratha wrong
-ids <- compare.synth %>% filter(is.na(Flag.x) & !Flag.y ) %>% select(AccID) %>% as.data.frame()
+ids <- compare.synth.full %>% filter(is.na(Flag.x) & !Flag.y ) %>% select(AccID) %>% as.data.frame()
 ids <- ids$AccID
 # Both correct 
 ids <- compare.synth.full %>% filter(Species.dada==Species.silva & Species.parathaa==Species.silva)
@@ -324,7 +325,7 @@ for(nm in ids[1:20]){ #
   parName <- compare.synth %>% filter(AccID==nm) %>% select(Genus.parathaa) %>% as.character()
   ggtree(plotTree, aes(color=Genus)) + geom_tippoint() + geom_nodepoint() + geom_tiplab(aes(label=AccID)) + labs(title=paste0("Source: ", truName), 
                                                                                                                  subtitle = paste0("Parathaa: ", parName))
-  ggsave(paste0("output/20230120_SyntheticV1V2_removeUndefSp/genusDadacorrect/", nm, ".png"))
+  ggsave(paste0("output/20230711_err1/genusDadacorrect/", nm, ".png"))
   
 }
 
