@@ -100,7 +100,7 @@ workflow.add_task(
 
 # See R script for comments
 workflow.add_task(
-    "src/find.cutoffs.R   -d [depends[1]] -o [args[0]] -n [depends[2]]",
+    "src/find.cutoffs.R   -d [depends[1]] -o [args[0]] -n [depends[2]] --wt1 [args[1]] --wt2 [args[2]]",
     depends=[TrackedExecutable("src/analysis.R"), args.taxonomy, args.tree],
     targets= [args.output+"/optimal_scores.png"],
     args=[args.output, args.sweight, args.mweight],

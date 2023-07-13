@@ -5,12 +5,12 @@ if(!interactive()) pdf(NULL)
 
 require(docopt)
 'Usage:
-   find.cutoffs.R [-d <naming file> -o <output> -n <tree>]
+   find.cutoffs.R [-d <naming file> -o <output> -n <tree> --wt1 <split weight> --wt2 <merge weight>]
 
 Options:
    -d naming file [default: input/taxmap_slv_ssu_ref_138.1.txt]
-   -o model output directory [default: output/testrun20230117]
-   -n tree [default: /Users/mis696/proj/parathaa/output/20230109_SyntheticV4V5_nameHarmonizing/region_specific.tree]
+   -o model output directory [default: output/20230707_weight3Err10]
+   -n tree [default: output/20230707_weight3Err10/region_specific.tree]
    --wt1 over-split penalty weight [default: 1]
    --wt2 over-merge penalty weight [default: 1]
 
@@ -132,7 +132,9 @@ for(cut1 in cutoffs){
 for (intNode in which(inputData$isTip==F)){
   #progress bar?
   print(paste("Node:", intNode))
-  #grab tips
+
+  
+#grab tips
   ch <- offspring(inputData, intNode, tiponly=T)
   #get the sub tree
   tre <- tree_subset(as.treedata(inputData), intNode, levels_back = 0)
