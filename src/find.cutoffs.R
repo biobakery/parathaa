@@ -5,11 +5,7 @@ if(!interactive()) pdf(NULL)
 
 require(docopt)
 'Usage:
-<<<<<<< HEAD
    find.cutoffs.R [-d <naming file> -o <output> -n <tree> --wt1 <sweight> --wt2 <mweight> --bError <error_rate> --bThreshold <threshold>]
-=======
-   find.cutoffs.R [-d <naming file> -o <output> -n <tree> --wt1 <split weight> --wt2 <merge weight>]
->>>>>>> 5cbe400bf70ebb5878380941b924477d3680b7b3
 
 Options:
    -d naming file [default: input/taxmap_slv_ssu_ref_138.1.txt]
