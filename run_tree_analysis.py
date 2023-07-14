@@ -121,11 +121,11 @@ workflow.add_task(
 
 ## Assign taxonomy to nodes 
 workflow.add_task(
-    "src/assign.node.tax.R   -d [depends[1]] -o [args[0]] -n [depends[2]]",
+    "src/assign.node.tax.R   -d [depends[1]] -o [args[0]] -n [depends[2]] --bError [args[1]] --bThreshold [args[2]]",
     depends=[TrackedExecutable("src/analysis.R"), args.taxonomy, args.tree,
              args.output+"/optimal_scores.png"],
     targets= args.output+"/resultTree_bestThresholds.RData",
-    args=args.output,
+    args=[args.output, args.errorRate, args.binoThreshold],
     name="Assigning taxonomy to internal nodes of ref tree"
     )
 

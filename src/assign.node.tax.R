@@ -3,13 +3,14 @@
 
 require(docopt)
 'Usage:
-   assign.node.tax.R [-d <naming file> -o <output> -n <tree>]
+   assign.node.tax.R [-d <naming file> -o <output> -n <tree> --bError <error_rate> --bThreshold <threshold>]
 
 Options:
    -d naming file [default: input/taxmap_slv_ssu_ref_138.1.txt]
    -o model output directory [default: output/20230406_testrun]
    -n tree [default: output/20230406_testrun/region_specific.tree]
-
+   --bError binomial error rate [default: 0.05]
+   --bThreshold binomial error rate [default: 1]
  ]' -> doc
 
 #To add as arguments: binom error params
@@ -92,8 +93,8 @@ in.tree.data <- in.tree.data %>% mutate(Kingdom = na_if(Kingdom, ""),
 
 
 # parameters from the binomModel
-falseNegRate <- 0.05
-acceptableProb <- 0.20
+falseNegRate <- opts$bError
+acceptableProb <- opts$bThreshold
 
 ## Get optimal scores from find.cutoffs.R output
 load(file.path(opts$o, "optimal_scores.RData"))
