@@ -68,6 +68,14 @@ workflow.add_argument(
     default=0.20
 )
 
+
+workflow.add_argument(
+    name="threads",
+    desc="Number of threads to run multi-threaded processes",
+    default=1
+
+)
+
 # Parsing the workflow arguments
 args = workflow.parse_args()
 
@@ -89,6 +97,7 @@ args.tree = os.path.join(args.output, "region_specific.tree")
 #add the name for the tree log file.
 args.treelog = os.path.join(args.output, 'treelog.txt')
 
+os.environ["OMP_NUM_THREADS"]=args.threads
 
 ## Trim database
 workflow.add_task(
@@ -109,7 +118,7 @@ workflow.add_task(
 
 ## Find best thresholds
 
-# See R script for comments
+""" # See R script for comments
 workflow.add_task(
     "src/find.cutoffs.R   -d [depends[1]] -o [args[0]] -n [depends[2]] --wt1 [args[1]] --wt2 [args[2]] --bError [args[3]] --bThreshold [args[4]]",
     depends=[TrackedExecutable("src/analysis.R"), args.taxonomy, args.tree],
@@ -127,7 +136,7 @@ workflow.add_task(
     targets= args.output+"/resultTree_bestThresholds.RData",
     args=[args.output, args.errorRate, args.binoThreshold],
     name="Assigning taxonomy to internal nodes of ref tree"
-    )
+    ) """
 
 # Run the workflow
 workflow.go()

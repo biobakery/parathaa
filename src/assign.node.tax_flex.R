@@ -60,9 +60,11 @@ suppressWarnings({
 
 taxdata <- read.table(inFileTaxdata , header=T, fill=TRUE,sep='\t', quote="")
 
+isSILVA=FALSE
 
 # the IDs that come with the file specific ID to the sequence but they also have start and stop for the sequence!
 if("start" %in% colnames(taxdata)){
+  isSILVA <- TRUE
   taxdata <- taxdata %>%
     unite("AccID", c("primaryAccession", "start", "stop"), sep=".", remove=F)
   
@@ -97,7 +99,9 @@ in.tree.data$isTip <- isTip(in.tree.data, in.tree.data$node)
 ## Fix species names
 
 # there are a lot of species names that are inconsistent and needed to be cleaned up!
-in.tree.data <- SILVA.species.editor(in.tree.data, Task="assign_Tax")
+if(isSILVA){
+  in.tree.data <- SILVA.species.editor(in.tree.data, Task="assign_Tax")
+}
 
 in.tree.data <- in.tree.data %>% mutate(Kingdom = na_if(Kingdom, ""),
                                         Phylum = na_if(Phylum, ""),
