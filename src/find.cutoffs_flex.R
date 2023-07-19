@@ -158,9 +158,10 @@ for (intNode in which(inputData$isTip==F)){
   tre <- tree_subset(as.treedata(inputData), intNode, levels_back = 0)
   # grab the max cophenetic distance of the tips within the sub tree?
   # I'm guessing this is what is used to determine the cut-off of if we can be sure its a specific taxa?
-  
-  maxDist <- max(cophenetic(as.phylo(tre)))
-  
+  message("getting dist")
+  maxDist <- max(pdist.big(as.phylo(tre)), memory.G=100)
+  #maxDist <- max(cophenetic(as.phylo(tre)))
+  message("got dist)")
   
   # cutoffs represent distances on the tree from tip to tip
   
