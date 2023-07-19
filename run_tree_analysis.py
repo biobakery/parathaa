@@ -72,7 +72,7 @@ workflow.add_argument(
 workflow.add_argument(
     name="threads",
     desc="Number of threads to run multi-threaded processes",
-    default=1
+    default="1"
 
 )
 
