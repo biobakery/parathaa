@@ -42,10 +42,14 @@ inFileTaxdata <- opts$d
 ## Tree made from database trimmed to region
 in.tree <- read.newick(opts$n)
 in.tree.data <- as_tibble(in.tree)
+
+
 suppressWarnings({
   in.tree.data <- in.tree.data %>%
-    separate(col=label, into=c("primaryAccession", "arbID"), remove=F)
+    separate(col=label, into=c("primaryAccession", "arbID"), remove=F, sep="\\.")
 })
+
+
 ## The above gives a warning because only the tip nodes have primary accessions and arbIDs.
 ## I suppressed it so that the warning message doesn't reach the user.
 

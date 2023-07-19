@@ -118,7 +118,7 @@ workflow.add_task(
 
 ## Find best thresholds
 
-# See R script for comments
+""" # See R script for comments
 workflow.add_task(
     "src/find.cutoffs.R   -d [depends[1]] -o [args[0]] -n [depends[2]] --wt1 [args[1]] --wt2 [args[2]] --bError [args[3]] --bThreshold [args[4]]",
     depends=[TrackedExecutable("src/analysis.R"), args.taxonomy, args.tree],
@@ -130,13 +130,13 @@ workflow.add_task(
 
 ## Assign taxonomy to nodes 
 workflow.add_task(
-    "src/assign.node.tax_flex.R   -d [depends[1]] -o [args[0]] -n [depends[2]] --bError [args[1]] --bThreshold [args[2]]",
+    "src/assign.node.tax.R   -d [depends[1]] -o [args[0]] -n [depends[2]] --bError [args[1]] --bThreshold [args[2]]",
     depends=[TrackedExecutable("src/analysis.R"), args.taxonomy, args.tree,
              args.output+"/optimal_scores.png"],
     targets= args.output+"/resultTree_bestThresholds.RData",
     args=[args.output, args.errorRate, args.binoThreshold],
     name="Assigning taxonomy to internal nodes of ref tree"
-    )
+    ) """
 
 # Run the workflow
 workflow.go()
