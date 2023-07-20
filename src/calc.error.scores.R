@@ -1,4 +1,4 @@
-## This function calculates error scores for a given taxonomic level
+# This function calculates error scores for a given taxonomic level
 ## input is a tree data object and a taxonomic level, output is a list with 
 ## 1) data frame of error scores for each group at the taxonomic level, and 
 ## 2) sum of error scores across all groups at the taxonomic level

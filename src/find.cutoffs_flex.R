@@ -39,6 +39,7 @@ library(ape)
 #library(ggimage)
 library(ggplot2)
 library(TDbook)
+library(castor)
 source("src/SILVA.species.editor.R")
 source("src/calc.error.scores.R")
 
@@ -156,11 +157,18 @@ for (intNode in which(inputData$isTip==F)){
   ch <- offspring(inputData, intNode, tiponly=T)
   #get the sub tree
   tre <- tree_subset(as.treedata(inputData), intNode, levels_back = 0)
+  
   # grab the max cophenetic distance of the tips within the sub tree?
   # I'm guessing this is what is used to determine the cut-off of if we can be sure its a specific taxa?
   message("getting dist")
-  maxDist <- max(pdist.big(as.phylo(tre)), memory.G=100)
+  
+  ##hmmm this doesn't seem to be the solve :/ 
+  ## I could calculate the pairwise distance of all tips and then return the largest
+  
+  phy_tre <- as.phylo(tre)
+  #maxDist <- max(pdist.big(as.phylo(tre)), memory.G=100)
   #maxDist <- max(cophenetic(as.phylo(tre)))
+  maxDist <- max(get_all_pairwise_distances(phy_tre, only_clades = phy_tre$tip.label))
   message("got dist)")
   
   # cutoffs represent distances on the tree from tip to tip
