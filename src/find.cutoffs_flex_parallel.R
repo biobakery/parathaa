@@ -159,7 +159,7 @@ internal_node_stats <- foreach(i=1:length(which(inputData$isTip==F)), .options.s
   
   return(tmp_list)
 }
-
+save(internal_node_stats, file= file.path(opts$o, "internal_node_stats.RData")) ## used in next step
 #set internal node names back on each cutoff distance
 iterations <- length(cutoffs)
 pb <- txtProgressBar(max=iterations, style=3)
@@ -201,7 +201,7 @@ resultData <- foreach(i=1:length(cutoffs), .options.snow=pb_opts) %dopar% {
   return(tmp_rez[[paste0("tax",cut1)]])
 }
 names(resultData) <- paste0("tax",cutoffs)
-
+save(resultData, file= file.path(opts$o, "resultData.RData")) ## used in next step
 # get the scores for each cutoff
 
 iterations <- length(cutoffs)
@@ -272,7 +272,6 @@ ggplot(plotData2 , aes(x=Threshold, y=Scores, color=Level)) + geom_point() +
   theme(text = element_text(size = 14)) 
 
 save(plotData2, file = file.path(opts$o, "optimal_scores.RData")) ## This is used in future steps
-save(internal_node_stats, file= file.path(opts$o, "internal_node_stats.RData")) ## used in next step
 ggsave(filename = file.path(opts$o, "optimal_scores.png"), height = 4, width=5, units = "in")
 
 stopCluster(cl)
