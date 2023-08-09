@@ -11,6 +11,7 @@ Options:
    -n tree [default: output/20230406_testrun/region_specific.tree]
    --bError binomial error rate [default: 0.05]
    --bThreshold binomial error rate [default: 1]
+   
  ]' -> doc
 
 #To add as arguments: binom error params
@@ -122,6 +123,9 @@ acceptableProb <- as.numeric(opts$bThreshold)
 
 ## Get optimal scores from find.cutoffs.R output
 load(file.path(opts$o, "optimal_scores.RData"))
+## load in the internal node stats we calculated in the previous job.
+load(file.path(opts$o, "internal_node_stats.RData"))
+
 bestThresh <- plotData2 %>% group_by(Level) %>% summarise(minThreshold = mean(minThreshold))
 cutoffs <- bestThresh$minThreshold
 names(cutoffs) <- bestThresh$Level
@@ -140,24 +144,22 @@ inputData$maxDists <- NA
 print(acceptableProb)
 resultData[["tax_bestcuts"]] <- inputData
 
+pb = txtProgressBar(min = 0, max = length(internal_node_stats), initial = 0) 
 
-for (intNode in which(inputData$isTip==F)){
+for (i in 1:length(internal_node_stats)){
+  setTxtProgressBar(pb,i)
   #progress bar?
-  print(paste("Node:", intNode))
-  #grab tips
-  ch <- offspring(inputData, intNode, tiponly=T)
-  #get the sub tree
-  tre <- tree_subset(as.treedata(inputData), intNode, levels_back = 0)
-  # grab the max cophenetic distance of the tips within the sub tree?
-  # I'm guessing this is what is used to determine the cut-off of if we can be sure its a specific taxa?
+  intNode <- which(inputData$isTip==F)[i]
   
-  maxDist <- max(cophenetic(as.phylo(tre)))
+  maxDist <- internal_node_stats[[i]][[1]]
   
+  ch <- internal_node_stats[[i]][[2]]
   
+  #print(paste("Node:", intNode))
+
   # cutoffs represent distances on the tree from tip to tip
   
   # do a correlation plot from distances to ANI would be nice!
-  
   
   resultData[["tax_bestcuts"]][intNode, "maxDists"] <- maxDist
   
@@ -183,81 +185,9 @@ for (intNode in which(inputData$isTip==F)){
                                                                falseNegRate=falseNegRate, 
                                                                acceptableProb=acceptableProb
                                                                )
-  
   }
-  
-  # the distance has to be lower than the optimal cutoff and it has children node that were assigned phylum
-  # if its above cutoff we leave it as "unassigned/unclassified/however you want to call it"
-  if(maxDist < cutoffs["Phylum"] & length(table(ch[["Phylum"]]))!=0){
-    #i'm guessing this is checking whether this taxonomy level meets some
-    # specification within its binomial distribution
-    # q is calculated in the first line,
-    # size is than the sum of the total number of children within that phylum?
-    # falsenegrate (constant at 0.05) is used as the prob parameter?
-    # then we check if that is greater than the accetableProb 
-    # not sure how that is defined and why its a contanst of 0.2
-    
-    
-    # okay so quantiles = the number of that phylum - the majority number
-    # if the number of nodes that are not the majority phylum are larger than 
-    # the error threhold would we accept that error rate
-    
-    # check if all of the children are one phylum? (might speed it up??)
-    if(pbinom(sum(table(ch[["Phylum"]]))-max(table(ch[["Phylum"]]))-1,
-              sum(table(ch[["Phylum"]])),falseNegRate, lower.tail = F) > acceptableProb){
-      
-      # if that is correct we then assign the int node to that phylum
-      resultData[["tax_bestcuts"]][intNode, "Phylum"] <- names(table(ch[["Phylum"]]))[which(table(ch[["Phylum"]])==max(table(ch[["Phylum"]])))][[1]]
-    } 
-    # if it doesn't pass we assign multiple names to that node 
-    # were names are base on the assignment that passes that error model.
-    else {resultData[["tax_bestcuts"]][intNode, "Phylum"] <- paste(
-      names(which(table(ch[["Phylum"]]) >
-                    qbinom(acceptableProb , sum(table(ch[["Phylum"]])),falseNegRate, lower.tail = F))), collapse=";")}
-  }
-  if(maxDist < cutoffs["Class"] & length(table(ch[["Class"]]))!=0){
-    if(pbinom(sum(table(ch[["Class"]]))-max(table(ch[["Class"]]))-1,
-              sum(table(ch[["Class"]])),falseNegRate, lower.tail = F) > acceptableProb){
-      resultData[["tax_bestcuts"]][intNode, "Class"] <- names(table(ch[["Class"]]))[which(table(ch[["Class"]])==max(table(ch[["Class"]])))][[1]]
-    } else {resultData[["tax_bestcuts"]][intNode, "Class"] <- paste(
-      names(which(table(ch[["Class"]]) >
-                    qbinom(acceptableProb , sum(table(ch[["Class"]])),falseNegRate, lower.tail = F))), collapse=";")}
-  }
-  if(maxDist < cutoffs["Order"] & length(table(ch[["Order"]]))!=0){
-    if(pbinom(sum(table(ch[["Order"]]))-max(table(ch[["Order"]]))-1,
-              sum(table(ch[["Order"]])),falseNegRate, lower.tail = F) > acceptableProb){
-      resultData[["tax_bestcuts"]][intNode, "Order"] <- names(table(ch[["Order"]]))[which(table(ch[["Order"]])==max(table(ch[["Order"]])))][[1]]
-    } else {resultData[["tax_bestcuts"]][intNode, "Order"] <- paste(
-      names(which(table(ch[["Order"]]) >
-                    qbinom(acceptableProb , sum(table(ch[["Order"]])),falseNegRate, lower.tail = F))), collapse=";")}
-  }
-  if(maxDist < cutoffs["Family"] & length(table(ch[["Family"]]))!=0){
-    if(pbinom(sum(table(ch[["Family"]]))-max(table(ch[["Family"]]))-1,
-              sum(table(ch[["Family"]])),falseNegRate, lower.tail = F) > acceptableProb){
-      resultData[["tax_bestcuts"]][intNode, "Family"] <- names(table(ch[["Family"]]))[which(table(ch[["Family"]])==max(table(ch[["Family"]])))][[1]]
-    } else {resultData[["tax_bestcuts"]][intNode, "Family"] <- paste(
-      names(which(table(ch[["Family"]]) >
-                    qbinom(acceptableProb , sum(table(ch[["Family"]])),falseNegRate, lower.tail = F))), collapse=";")}
-  }
-  if(maxDist < cutoffs["Genus"] & length(table(ch[["Genus"]]))!=0){
-    if(pbinom(sum(table(ch[["Genus"]]))-max(table(ch[["Genus"]]))-1,
-              sum(table(ch[["Genus"]])),falseNegRate, lower.tail = F) > acceptableProb){
-      resultData[["tax_bestcuts"]][intNode, "Genus"] <- names(table(ch[["Genus"]]))[which(table(ch[["Genus"]])==max(table(ch[["Genus"]])))][[1]]
-    } else {resultData[["tax_bestcuts"]][intNode, "Genus"] <- paste(
-      names(which(table(ch[["Genus"]]) >
-                    qbinom(acceptableProb , sum(table(ch[["Genus"]])),falseNegRate, lower.tail = F))), collapse=";")}
-  }
-  if(maxDist < cutoffs["Species"] & length(table(ch[["Species"]]))!=0){
-    if(pbinom(sum(table(ch[["Species"]]))-max(table(ch[["Species"]]))-1,
-              sum(table(ch[["Species"]])),falseNegRate, lower.tail = F) > acceptableProb){
-      resultData[["tax_bestcuts"]][intNode, "Species"] <- names(table(ch[["Species"]]))[which(table(ch[["Species"]])==max(table(ch[["Species"]])))][[1]]
-    } else {resultData[["tax_bestcuts"]][intNode, "Species"] <- paste(
-      names(which(table(ch[["Species"]]) >
-                    qbinom(acceptableProb , sum(table(ch[["Species"]])),falseNegRate, lower.tail = F))), collapse=";")}
-  }
-  
 }
-
+close(pb)
 
 ### Define "Genus" as a clade defined by a Genus-named node with a non-Genus-named parent node, etc
 

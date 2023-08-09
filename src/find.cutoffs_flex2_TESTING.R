@@ -28,6 +28,7 @@ opts <- docopt(doc)
 # Although it might be nice to have this as a seperate R script 
 # that runs on anadama workflow start up
 library(logging)
+library(reshape2)
 
 # R logging example 
 loginfo("Performing analysis data", logger="")
@@ -43,11 +44,11 @@ library(TDbook)
 library(castor)
 source("src/SILVA.species.editor.R")
 source("src/calc.error.scores.R")
+library(doParallel)
+
 
 ## Bring in taxonomy file
 inFileTaxdata <- opts$d
-
-# inFileTaxdata <- "~/Repos/Parathaa2_OP3/BB3/gca2taxa.07022019.tsv"
 
 ## Tree made from database trimmed to region
 in.tree <- read.newick(opts$n)
@@ -118,11 +119,6 @@ in.tree.data <- in.tree.data %>% mutate(Kingdom = na_if(Kingdom, ""),
                                         Species = na_if(Species, ""))  
 
 
-# parameters from the binomModel
-falseNegRate <- opts$bError
-acceptableProb <- opts$bThreshold
-
-
 #Broad range of cutoffs:
 #looks at a series of cutoffs for the best "threshold"
 #might be better to look minima and choose that and search around it rather than looking at all these...
@@ -149,62 +145,25 @@ for(cut1 in cutoffs){
 # Also a general comment! For loops and very slow in R I wonder if we can make use of other
 # If we cannot vectorize this loop (using apply) maybe we can think about allow multi core
 # loop using the "foreach" package?
-
-
-col_data <- castor::collapse_tree_at_resolution(as.phylo(inputData),
-  resolution = 0, shorten = F)
-
-col_data_df <- as_tibble(col_data$tree) 
-col_data_df$isTip <- isTip(col_data_df, col_data_df$node)
-
-col_tips <- which(col_data_df$isTip==TRUE)
-
-all_dists <- castor::get_all_pairwise_distances(col_data$tree, only_clades = col_tips)
-
-internal_col_nodes <- which(col_data_df$isTip==FALSE) - length(col_data$tree$tip.label)
-
-sub_trees <- get_subtrees_at_nodes(col_data$tree, internal_col_nodes)
-
-## this is still very slow...
-max_distance <- list()
-for(col_intNode in internal_col_nodes){
-  max_distance[[col_intNode]] <- max(all_dists[sub_trees$new2old_tips[[col_intNode]], sub_trees$new2old_tips[[col_intNode]]])
-}
-
-
-
-
-## go through each node that is not a tip
-
-## okay this part is now extremely slow...
-## how would we go about speeding it up?
-
-## adding in parallel computation?
-cl <- makeCluster(opts$threads, outfile="~/Desktop/workers_test.txt")
+cl <- makeCluster(as.numeric(opts$threads), outfile="~/Desktop/workers_test.txt")
 registerDoParallel(cl)
 
 
+#This loop needs to be re-written if we want it to run in parallel...
 
-foreach(i=1:length(which(inputData$isTip==F))) %dopar% {
+#something to do here...
+start_time1 <- Sys.time()
+foreach(i=1:length(which(inputData$isTip==F))) %do% {
   #progress bar?
   intNode <- which(inputData$isTip==F)[i]
   print(paste("Node:", intNode))
+  
+  tmp_node <- intNode - length(which(inputData$isTip==T))
+  sub_tree <- castor::get_subtree_at_node(treeio::as.phylo(inputData), tmp_node)
+  maxDist <- castor::find_farthest_tip_pair(sub_tree$subtree)$distance
 
-  
-#grab tips
-  ch <- tidytree::offspring(inputData, intNode, tiponly=T)
-  
-  # cutoffs represent distances on the tree from tip to tip
-  
-  # do a correlation plot from distances to ANI would be nice!
-  intNode_map <- col_data$old2new_clade[intNode]
-  intNode_map
-
-  if(intNode_map <= length(col_data$tree$tip.label)){
-    maxDist <- 0
-  }else{
-    maxDist <- max_distance[[intNode_map - length(col_data$tree$tip.label)]]
-  }
+  tmp_tips <- sub_tree$new2old_tip
+  ch <- inputData[which(inputData$node %in% tmp_tips),]
   
   for(cut1 in cutoffs){
 
@@ -212,7 +171,6 @@ foreach(i=1:length(which(inputData$isTip==F))) %dopar% {
     if(maxDist < cut1) {
       #check if the cutoff is less than the maximum distance
       #if it is then we check if there are nodes underneath it assigned to X level
-      message(cut1)
       
       if(length(table(ch[["Kingdom"]]))!=0)
         #This looks like a crtical part of the code
@@ -230,17 +188,21 @@ foreach(i=1:length(which(inputData$isTip==F))) %dopar% {
         resultData[[paste0("tax",cut1)]][intNode, "Family"] <- names(table(ch[["Family"]]))[which(table(ch[["Family"]])==max(table(ch[["Family"]])))][[1]]
       if(length(table(ch[["Genus"]]))!=0)
         resultData[[paste0("tax",cut1)]][intNode, "Genus"] <- names(table(ch[["Genus"]]))[which(table(ch[["Genus"]])==max(table(ch[["Genus"]])))][[1]]
-      if(length(table(ch[["Species"]]))!=0)
+      if(length(table(ch[["Species"]]))!=0 & cut1 < 0.05)
         resultData[[paste0("tax",cut1)]][intNode, "Species"] <- names(table(ch[["Species"]]))[which(table(ch[["Species"]])==max(table(ch[["Species"]])))][[1]]
     }
   }
 }
-
+end_time1 <- Sys.time()
 ### this loop takes forever to run...
 ### running this in parallel is certainly possible..
+#saveRDS(resultData, "~/Repos/Parathaa2_OP3/BB3/results_from_maxdists.RDS")
 
 
-foreach(i=1:length(cutoffs)) %dopar% {
+
+## update this loop to run in parallel...
+start_time2 <- Sys.time()
+outputScores <- foreach(i=1:length(cutoffs), .packages = c("dplyr", "treeio", "tidytree", "castor"), .combine = c) %dopar% {
   cut1 <- cutoffs[[i]]
   print(cut1)
   tempData <- resultData[[paste0("tax",cut1)]]
@@ -258,40 +220,31 @@ foreach(i=1:length(cutoffs)) %dopar% {
   
   
   ## Calculate Error Scores for the given cutoff at each level
-  
+  outputCounts <- list()
+  outputScores <- list()
   for(level in c("Phylum", "Class", "Order", "Family", "Genus", "Species")){
     errs <- calc.error.scores(tempData, level, wt1=as.numeric(opts$wt1), wt2=as.numeric(opts$wt2))
-    outputCounts[[level]][[as.character(cut1)]] <- errs[["counts"]]
+    #outputCounts[[level]][[as.character(cut1)]] <- errs[["counts"]]
     outputScores[[level]][as.character(cut1)] <- errs[["scores"]]
   }
-  
+  ret_list <- list(outputScores)
+  return(ret_list)
 }
+end_time2 <- Sys.time()
 
+tmp_df <- do.call(cbind, outputScores)
+colnames(tmp_df) <- names(unlist(tmp_df[1,]))
+rnames <- rownames(tmp_df)
 
+tmp_df <- apply(tmp_df, 2, function(x) unlist(x))
+rownames(tmp_df) <- rnames
+tmp_df_melt <- reshape2::melt(tmp_df)
+colnames(tmp_df_melt) <- c("Level", "Threshold", "Scores")
 ## Create Plot of Error Scores for each threshold at each level
 nseqs <- nrow(inputData %>% filter(isTip==TRUE))
-plotData2 <- data.frame("Scores"=c(outputScores[["Kingdom"]]/nseqs,
-                                   outputScores[["Phylum"]]/nseqs,
-                                   outputScores[["Class"]]/nseqs,
-                                   outputScores[["Order"]]/nseqs,
-                                   outputScores[["Family"]]/nseqs,
-                                   outputScores[["Genus"]]/nseqs, 
-                                   outputScores[["Species"]]/nseqs),
-                        "Level"=c(rep("Kingdom", length(outputScores[["Kingdom"]])), 
-                                  rep("Phylum", length(outputScores[["Phylum"]])),
-                                  rep("Class", length(outputScores[["Class"]])),
-                                  rep("Order", length(outputScores[["Order"]])),
-                                  rep("Family", length(outputScores[["Family"]])),
-                                  rep("Genus", length(outputScores[["Genus"]])),
-                                  rep("Species", length(outputScores[["Species"]]))),
-                        "Threshold"=as.numeric(c(names(outputScores[["Kingdom"]]),
-                                                 names(outputScores[["Phylum"]]),
-                                                 names(outputScores[["Class"]]),
-                                                 names(outputScores[["Order"]]),
-                                                 names(outputScores[["Family"]]),
-                                                 names(outputScores[["Genus"]]),
-                                                 names(outputScores[["Species"]])))
-)
+tmp_df_melt$Scores <- tmp_df_melt$Scores/nseqs
+
+plotData2 <- tmp_df_melt
 
 # decide whatever cutoff gives the best low score!
 plotData2$Level <- factor(plotData2$Level, levels=c("Phylum", "Class", "Order", "Family", "Genus", 
@@ -299,6 +252,8 @@ plotData2$Level <- factor(plotData2$Level, levels=c("Phylum", "Class", "Order", 
 mins<- plotData2 %>% 
   group_by(Level) %>% 
   summarize(minScores = min(Scores))
+
+
 plotData2 <- plotData2 %>% 
   left_join(mins) %>%
   group_by(Level) %>%
@@ -311,4 +266,5 @@ ggplot(plotData2 , aes(x=Threshold, y=Scores, color=Level)) + geom_point() +
 save(plotData2, file = file.path(opts$o, "optimal_scores.RData")) ## This is used in future steps
 ggsave(filename = file.path(opts$o, "optimal_scores.png"), height = 4, width=5, units = "in")
 
-stopCluster(cl = cl)
+stopCluster(cl)
+

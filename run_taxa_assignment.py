@@ -57,6 +57,12 @@ workflow.add_argument(
     default=""
 )
 
+workflow.add_argument(
+    name="threads",
+    desc="Number of threads to run job",
+    default="1"
+)
+
 # Parsing the workflow arguments
 args = workflow.parse_args()
 
@@ -141,10 +147,10 @@ workflow.add_task(
     
 ## Assign taxonomy to queries
 workflow.add_task(
-    "src/tax.assign.R  -j [depends[0]] -o [args[0]] -t [depends[1]] -s [depends[2]]",
+    "src/tax.assign_parallel.R  -j [depends[0]] -o [args[0]] -t [depends[1]] -s [depends[2]] --threads [args[1]]",
     depends=[os.path.join(args.output, "merged_sub.jplace"), args.namedTree, args.thresholds],
     targets=[os.path.join(args.output, "taxonomic_assignments.tsv")],
-    args=[args.output],
+    args=[args.output, args.threads],
     name="Assigning taxonomy to queries"
 )
 

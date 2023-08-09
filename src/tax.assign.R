@@ -41,12 +41,18 @@ plotTree <- FALSE
 in.jplace <- read.jplace(jplaceFile)
 query.names <- unique(in.jplace@placements$name)
 load(in.treeFile)
+load(optimalFile)
 in.tree <- resultData$tax_bestcuts
 
 ## Index through query sequences to add taxonomy
 results <- c()
 # might beable to speed this up using foreach/ vectorized code
+pb = txtProgressBar(min = 0, max = length(query.names), initial = 0, style = 3)
+i <- 0
+
 for(ind in query.names){
+  i <- i + 1
+  setTxtProgressBar(pb,i)
   ## Read in data, filter to most likely placement(s) and make various useful formats of it
   query.place.data <- in.jplace@placements %>% filter(name==ind)  %>% filter(like_weight_ratio==max(like_weight_ratio))
   tree.w.placements <- left_join(in.tree, query.place.data, by="node")
@@ -78,7 +84,6 @@ for(ind in query.names){
     names(maxDistPlacements) <- query.place.data$node
   
   ## Load thresholds for levels
-  load(opts$s)
   bestThresh <- plotData2 %>% group_by(Level) %>% summarise(minThreshold = mean(minThreshold))
   cutoffs <- bestThresh$minThreshold
   names(cutoffs) <- bestThresh$Level
