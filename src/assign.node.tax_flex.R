@@ -99,9 +99,7 @@ if("start" %in% colnames(taxdata)){
 
 
 #in.tree.data is from the FAstTree... and taxdata is the silva taxonomy database
-in.tree.data <- left_join(in.tree.data, taxdata, by="primaryAccession", multiple="all")
-
-# %>%
+in.tree.data <- left_join(in.tree.data, taxdata, by="primaryAccession", multiple="all") %>%
   distinct(node, .keep_all=T) 
 
 #some functions won't work unless its a specific type of class of data
