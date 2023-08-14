@@ -10,7 +10,7 @@ Options:
    -o model output directory [default: output/20230406_testrun]
    -n tree [default: output/20230406_testrun/region_specific.tree]
    --bError binomial error rate [default: 0.05]
-   --bThreshold binomial error rate [default: 1]
+   --bThreshold binomial error rate [default: 0.20]
    
  ]' -> doc
 
@@ -45,10 +45,17 @@ in.tree <- read.newick(opts$n)
 in.tree.data <- as_tibble(in.tree)
 
 
-suppressWarnings({
-  in.tree.data <- in.tree.data %>%
-    separate(col=label, into=c("primaryAccession", "arbID"), remove=F, sep="\\.")
-})
+if(grepl("|M", in.tree.data$label[1])){
+  suppressWarnings({
+    in.tree.data <- in.tree.data %>%
+      separate(col=label, into=c("arbID", "primaryAccession"), remove=F, sep="\\|")
+  })
+}else{
+  suppressWarnings({
+    in.tree.data <- in.tree.data %>%
+      separate(col=label, into=c("primaryAccession", "arbID"), remove=F, sep="\\.")
+  })
+}
 
 
 ## The above gives a warning because only the tip nodes have primary accessions and arbIDs.
@@ -92,7 +99,9 @@ if("start" %in% colnames(taxdata)){
 
 
 #in.tree.data is from the FAstTree... and taxdata is the silva taxonomy database
-in.tree.data <- left_join(in.tree.data, taxdata, by="primaryAccession", multiple="all") %>%
+in.tree.data <- left_join(in.tree.data, taxdata, by="primaryAccession", multiple="all")
+
+# %>%
   distinct(node, .keep_all=T) 
 
 #some functions won't work unless its a specific type of class of data
@@ -144,7 +153,7 @@ inputData$maxDists <- NA
 print(acceptableProb)
 resultData[["tax_bestcuts"]] <- inputData
 
-pb = txtProgressBar(min = 0, max = length(internal_node_stats), initial = 0) 
+pb = txtProgressBar(min = 0, max = length(internal_node_stats), initial = 0, style=3) 
 
 for (i in 1:length(internal_node_stats)){
   setTxtProgressBar(pb,i)
@@ -204,3 +213,6 @@ resultData[["tax_bestcuts"]]$isSpeciesNode <- is.na(resultData[["tax_bestcuts"]]
 
 ## Save output
 save(resultData, file = file.path(opts$o, "resultTree_bestThresholds.RData"))
+
+
+
