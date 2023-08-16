@@ -110,7 +110,7 @@ workflow.add_task(
 ## Create tree from region-specific alignment, save log file for use by pplacer
 
 workflow.add_task(
-    "FastTree -gtr -log [targets[0]] \
+    "FastTree -log [targets[0]] \
     -nt [depends[0]] > [targets[1]]",
     depends= [args.trimmedDatabase],
     targets=[args.treelog, args.tree],

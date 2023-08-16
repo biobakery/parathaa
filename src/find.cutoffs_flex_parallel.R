@@ -52,7 +52,7 @@ inFileTaxdata <- opts$d
 in.tree <- read.newick(opts$n)
 in.tree.data <- as_tibble(in.tree)
 
-if(grepl("|M", in.tree.data$label[1])){
+if(grepl("\\|M", in.tree.data$label[1])){
   suppressWarnings({
     in.tree.data <- in.tree.data %>%
       separate(col=label, into=c("arbID", "primaryAccession"), remove=F, sep="\\|")
