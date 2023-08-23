@@ -58,6 +58,7 @@ registerDoSNOW(cl)
 
 result <- foreach(i=1:length(query.names), .combine = bind_rows, .options.snow = pb_opts,
                   .packages = c("dplyr", "treeio", "tidytree", "phytools")) %dopar% {
+  
   ind <- query.names[i]
   setTxtProgressBar(pb,i)
   ## Read in data, filter to most likely placement(s) and make various useful formats of it
@@ -107,6 +108,7 @@ result <- foreach(i=1:length(query.names), .combine = bind_rows, .options.snow =
 
   
   assignment$query.name <- ind
+  assignment$maxDist <- max(maxDistPlacements)
   return(assignment)
 }
 ## what is the point of this function??
@@ -132,6 +134,7 @@ tax_parathaa <- result %>%
             Genus = pick.taxon(Genus),
             Species = pick.taxon(Species))
 
+tax_parathaa$maxDist <- result$maxDist[match(tax_parathaa$query.name, result$query.name)]
 write.table(tax_parathaa, file=file.path(opts$o, "taxonomic_assignments.tsv"),sep = '\t', quote = F, row.names=F)
 
 
