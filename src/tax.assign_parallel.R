@@ -71,7 +71,7 @@ result <- foreach(i=1:length(query.names), .combine = bind_rows, .options.snow =
   tree.w.placements.tib$nodeHeight <- 0
   
   # we want to see how close that sequence is to the children node 
-  # we could have something that all "original" children as X genus but then we place new node very far away which deosn't mean its that genus
+  # compute the height above the root for all nodes
   tree.w.placements.tib$nodeHeight[tree.w.placements.phy$edge[,"node"]] <- nodeHeights(tree.w.placements.phy)[,2]
   
   ## Identify query placements and their offspring, extract maximum node heights
@@ -79,15 +79,26 @@ result <- foreach(i=1:length(query.names), .combine = bind_rows, .options.snow =
   
   
   # check for tied placements
+  #maxNodeHeights ends up just being the root doesn't make a ton of sense here...
+  #I think that is whats going wrong here is that this algorithim isn't set up for internal nodes?
   if(length(query.place.data$node)==1){
     maxNodeHeights <- tree.w.placements.tib %>% filter(node == query.place.data$node) %>% summarize(max(nodeHeight)) %>% as.numeric
   } else {
-  maxNodeHeights <- sapply(ind.offs, FUN= function(x) tree.w.placements.tib %>% filter(node %in% x) %>% summarize(max(nodeHeight)) %>% as.numeric)
+    maxNodeHeights <- sapply(ind.offs, FUN= function(x) tree.w.placements.tib %>% filter(node %in% x) %>% summarize(max(nodeHeight)) %>% as.numeric)
   }
   
   # calculate the distance from the query node to any other child node
+  #maxNodeHeights is distance from the root to the tip
+  ## shouldn't this really be the distance from the furthest child node and the root? 
+  ## I don't think this is being calculated correctly when sequences are placed on internal nodes which is messy up
+  ## the assignment algorithim.
+  #tree.w.placements.tin$nodeHeight[query.place.data$node]
+  ## this is the distance from the root to the query node
+  
+  #it seems like maxNodeHeights
   maxDistPlacements <- maxNodeHeights-tree.w.placements.tib$nodeHeight[query.place.data$node] + tree.w.placements.tib$distal_length[query.place.data$node] + tree.w.placements.tib$pendant_length[query.place.data$node]
   
+  #what does this do?
   if(length(maxDistPlacements)==1) ## If only one placement, maxDistPlacements isn't named, so add name
     names(maxDistPlacements) <- query.place.data$node
   
@@ -100,6 +111,8 @@ result <- foreach(i=1:length(query.names), .combine = bind_rows, .options.snow =
   ## Using max of distances across placements to be conservative, for now
   assignmentLevels <- names(which(cutoffs>max(maxDistPlacements)))
   assignment <- tree.w.placements.tib[query.place.data$node, c("Kingdom", rev(assignmentLevels))]
+  
+  
   ## Deal with multifurcation or placements at child nodes
   #this is the case when multiple tides are below a single node?
   #or is this dealing with a case where p placer places a sequence as a child of a placed sequence?
@@ -109,6 +122,8 @@ result <- foreach(i=1:length(query.names), .combine = bind_rows, .options.snow =
   
   assignment$query.name <- ind
   assignment$maxDist <- max(maxDistPlacements)
+  #assignment$same_testing <- maxNodeHeights == tree.w.placements.tib$nodeHeight[query.place.data$node]
+  #I think it both cases the calculations are only correct for tips and not internal node placements.
   return(assignment)
 }
 ## what is the point of this function??

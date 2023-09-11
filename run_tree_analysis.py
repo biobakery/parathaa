@@ -116,7 +116,20 @@ workflow.add_task(
     targets=[args.treelog, args.tree],
     name="Building tree from primer-trimmed database")
 
+## force biforcation of tree...
+
+workfow.add_taks(
+    "src/force_bifurcated_tree.R -t [depends[0]] -o [args[0]]",
+    depends=[args.tree],
+    args=[args.output],
+    targets=[args.out+"region_specific_bi.tree"],
+    name="Resolving polytomies"
+)
+
+args.tree = os.path.join(args.output, "region_specific_bi.tree")
 ## Find best thresholds
+
+
 
 # See R script for comments
 workflow.add_task(
@@ -137,6 +150,8 @@ workflow.add_task(
     args=[args.output, args.errorRate, args.binoThreshold],
     name="Assigning taxonomy to internal nodes of ref tree"
     )
+
+
 
 # Run the workflow
 workflow.go()

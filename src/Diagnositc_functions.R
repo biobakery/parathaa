@@ -8,7 +8,8 @@ library(dplyr)
 library(forcats)
 library(ggtree)
 library(castor)
-
+library(treeio)
+library(tidyr)
 
 plot_region_specific_tree <- function(taxafile, region_tree, level="Phylum", prevelance=0.01,
                                layout="circular"){
@@ -76,7 +77,7 @@ plot_region_specific_tree <- function(taxafile, region_tree, level="Phylum", pre
   
   plot_data <- in.tree.data
   
-  plot_data[,level] <- fct_lump(f=factor(unlist(plot_data[,level])), prop=0.01)
+  plot_data[,level] <- fct_lump(f=factor(unlist(plot_data[,level])), prop=prevelance)
   
   plot <- ggtree(in.tree, layout=layout) %<+% plot_data + geom_tippoint(aes(color=Phylum))
   
@@ -248,4 +249,18 @@ plot_low_resolved_placements <- function(taxafile, region_tree, level="Phylum", 
   
   
   
+}
+
+
+#given a node plots the subtree
+get_subtree_plot_data <- function(tree_df, node){
+  
+  tree_phylo <- as.phylo(tree_df)
+  
+  subtree <- get_subtree_at_node(tree_phylo, node)
+  subtree_df <- as_tibble(subtree$subtree)
+  
+  subtree_df$Phylum <- tree_df$Phylum[match(subtree_df$label, tree_df$label)]
+  
+  return(subtree_df)
 }
