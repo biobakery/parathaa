@@ -11,6 +11,64 @@ library(castor)
 library(treeio)
 library(tidyr)
 
+benchmark_classifications <- function(assignments, true_assignments, ret_frame=F){
+  
+  merged_data <- assignments %>% left_join(true_assignments, by="ID")
+  
+  merged_data <- merged_data %>% 
+    mutate(Species.x = unlist(lapply(str_split(Species.x, ";"), FUN=function(x) paste0(word(x,1,2), collapse = ";" ))))
+  
+  merged_data <- merged_data %>% 
+    mutate(Species.x = ifelse(Species.x=="NA", NA, Species.x),
+           Genus.x = ifelse(Genus.x=="", NA, Genus.x))
+  
+  merged_data2 <- merged_data %>% 
+    dplyr::rowwise() %>%
+    mutate(Flag = ifelse(is.na(Species.x), NA, word(Species.y, 1, 2) %in% str_split(Species.x, ";", simplify = T)),
+           Flag.genus = ifelse(is.na(Genus.x), NA, Genus.y %in% str_split(Genus.x, ";", simplify = T))
+    )
+  
+  
+  multi_spec <- merged_data2[grep(";", merged_data2$Species.x),]
+  non_multi_spec <- merged_data2[grep(";", merged_data2$Species.x, invert = T), ]
+  
+
+  
+  results_specs <- data.frame(
+    unique_correct <- c(length(which(non_multi_spec$Flag)), 
+                        length(which(non_multi_spec$Flag))/dim(assignments)[1]),
+    one_to_many <- c(length(which(multi_spec$Flag)),
+                     length(which(multi_spec$Flag))/dim(assignments)[1]),
+    fpr <- c(length(which(!non_multi_spec$Flag)) + length(which(!multi_spec$Flag)),
+             (length(which(!non_multi_spec$Flag)) + length(which(!multi_spec$Flag)))/dim(assignments)[1]),
+    unassigned <- c(length(which(is.na(non_multi_spec$Flag))), 
+                    length(which(is.na(non_multi_spec$Flag)))/dim(assignments)[1])
+  )
+  
+  colnames(results_specs) <- c("unique_correct", "one_to_many", "fpr", "unassigned")
+
+  multi_genera <- merged_data2[grep(";", merged_data2$Genus.x),]
+  non_multi_genera <- merged_data2[grep(";", merged_data2$Genus.x, invert = T), ]
+  
+  results_genus <- data.frame(
+    unique_correct <- c(length(which(non_multi_genera$Flag.genus)), 
+                        length(which(non_multi_genera$Flag.genus))/dim(assignments)[1]),
+    one_to_many <- c(length(which(multi_genera$Flag.genus)),
+                     length(which(multi_genera$Flag.genus))/dim(assignments)[1]),
+    fpr <- c(length(which(!non_multi_genera$Flag.genus)) + length(which(!multi_genera$Flag.genus)),
+             (length(which(!non_multi_genera$Flag.genus)) + length(which(!multi_genera$Flag.genus)))/dim(assignments)[1]),
+    unassigned <- c(length(which(is.na(non_multi_genera$Flag.genus))), 
+                    length(which(is.na(non_multi_genera$Flag.genus)))/dim(assignments)[1])
+  )
+  
+  colnames(results_genus) <- c("unique_correct", "one_to_many", "fpr", "unassigned")
+  
+  if(ret_frame)
+    return(list(results_specs, results_genus))
+  else
+    return(list(results_specs, results_genus))
+}
+
 plot_region_specific_tree <- function(taxafile, region_tree, level="Phylum", prevelance=0.01,
                                layout="circular"){
   

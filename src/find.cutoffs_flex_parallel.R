@@ -52,18 +52,6 @@ inFileTaxdata <- opts$d
 in.tree <- read.newick(opts$n)
 in.tree.data <- as_tibble(in.tree)
 
-if(grepl("\\|M", in.tree.data$label[1])){
-  suppressWarnings({
-    in.tree.data <- in.tree.data %>%
-      separate(col=label, into=c("arbID", "primaryAccession"), remove=F, sep="\\|")
-  })
-}else{
-  suppressWarnings({
-    in.tree.data <- in.tree.data %>%
-      separate(col=label, into=c("primaryAccession", "arbID"), remove=F, sep="\\.")
-  })
-}
-
 ## The above gives a warning because only the tip nodes have primary accessions and arbIDs.
 ## I suppressed it so that the warning message doesn't reach the user.
 
@@ -96,6 +84,20 @@ if("start" %in% colnames(taxdata)){
                                                    "Order", "Family", "Genus", "Species"), sep="\\|") %>%
     filter(Kingdom=="Bacteria")
   
+}
+
+if(grepl("\\|M", in.tree.data$label[1])){
+  suppressWarnings({
+    in.tree.data <- in.tree.data %>%
+      separate(col=label, into=c("arbID", "primaryAccession"), remove=F, sep="\\|")
+  })
+}else if(isSILVA){
+  suppressWarnings({
+    in.tree.data <- in.tree.data %>%
+      separate(col=label, into=c("primaryAccession", "arbID"), remove=F, sep="\\.")
+  })
+}else{
+  in.tree.data$primaryAccession <- in.tree.data$label
 }
 
 #in.tree.data is from the FAstTree... and taxdata is the silva taxonomy database
