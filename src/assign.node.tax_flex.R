@@ -58,7 +58,7 @@ in.tree.data <- as_tibble(in.tree)
 
 ## we need to update this to read in a flexible taxonomy file...
 
-taxdata <- read.table(inFileTaxdata , header=T, fill=TRUE,sep='\t', quote="")
+taxdata <- read.table(inFileTaxdata , header=T, fill=TRUE,sep='\t', quote="", check.names = FALSE)
 
 isSILVA=FALSE
 

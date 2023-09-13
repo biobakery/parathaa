@@ -61,7 +61,7 @@ in.tree.data <- as_tibble(in.tree)
 # I wonder if using a data.table/tibbly/big.data (pckge) would increase performance here?
 # (below three lines run fairly slowly...)
 
-taxdata <- read.table(inFileTaxdata , header=T, fill=TRUE,sep='\t', quote="")
+taxdata <- read.table(inFileTaxdata , header=T, fill=TRUE,sep='\t', quote="", check.names=FALSE)
 
 isSILVA=FALSE
 
