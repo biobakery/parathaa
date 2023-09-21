@@ -111,7 +111,7 @@ workflow.add_task(
 
 workflow.add_task(
     "FastTree -log [targets[0]] \
-    -nt [depends[0]] > [targets[1]]",
+    -nt -gtr [depends[0]] > [targets[1]]",
     depends= [args.trimmedDatabase],
     targets=[args.treelog, args.tree],
     name="Building tree from primer-trimmed database")
