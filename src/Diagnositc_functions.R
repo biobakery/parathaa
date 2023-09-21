@@ -311,14 +311,31 @@ plot_low_resolved_placements <- function(taxafile, region_tree, level="Phylum", 
 
 
 #given a node plots the subtree
-get_subtree_plot_data <- function(tree_df, node){
+get_subtree_plot_data <- function(tree_df, node, isTip=FALSE, highlight_lab,
+                                  level="Phylum"){
   
   tree_phylo <- as.phylo(tree_df)
   
-  subtree <- get_subtree_at_node(tree_phylo, node)
-  subtree_df <- as_tibble(subtree$subtree)
-  
-  subtree_df$Phylum <- tree_df$Phylum[match(subtree_df$label, tree_df$label)]
-  
+  if(isTip){
+    subtree <- get_subtree_at_node(tree_phylo, node)
+    subtree_df <- as_tibble(subtree$subtree)
+  }else{
+    ntips <- length(which(tree_df$isTip))
+    subtree <- get_subtree_at_node(tree_phylo, node=node-ntips)
+    subtree_df <- as_tibble(subtree$subtree)
+  }
+
+  subtree_df$Phylum <- unlist(tree_df[,level])[match(subtree_df$label, tree_df$label)]
+  subtree_df$highlight <- FALSE
+  subtree_df$highlight[which(subtree_df$label %in% highlight_lab)] <- TRUE
   return(subtree_df)
+}
+
+get_n_parents <- function(tree_df, node, steps){
+  i <- 0
+  while(i < steps){
+    i <- i + 1
+    node <- tree_df$parent[which(tree_df$node==node)]
+  }
+  return(node)
 }
