@@ -101,7 +101,7 @@ os.environ["OMP_NUM_THREADS"]=args.threads
 
 ## Trim database
 workflow.add_task(
-    "mothur -q '#set.dir(output=[args[0]]);pcr.seqs(fasta = [depends[0]], oligos=[depends[1]], pdiffs=0, rdiffs=0, keepdots=t)'",
+    "mothur -q '#set.dir(output=[args[0]]);pcr.seqs(fasta = [depends[0]], oligos=[depends[1]], pdiffs=3, rdiffs=3, keepdots=t)'",
     depends=[args.database, args.primers],
     targets=[args.trimmedDatabase],
     args=args.output,

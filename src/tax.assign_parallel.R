@@ -79,10 +79,10 @@ result <- foreach(i=1:length(query.names), .combine = bind_rows, .options.snow =
   
   
   # check for tied placements
-  #maxNodeHeights ends up just being the root doesn't make a ton of sense here...
-  #I think that is whats going wrong here is that this algorithim isn't set up for internal nodes?
+  # check for tied placements
   if(length(query.place.data$node)==1){
-    maxNodeHeights <- tree.w.placements.tib %>% filter(node == query.place.data$node) %>% summarize(max(nodeHeight)) %>% as.numeric
+    ##maxNodeHeights <- tree.w.placements.tib %>% filter(node == query.place.data$node) %>% summarize(max(nodeHeight)) %>% as.numeric ## old
+    maxNodeHeights <- tree.w.placements.tib %>% filter(node %in% ind.offs) %>% summarize(max(nodeHeight)) %>% as.numeric ## new
   } else {
     maxNodeHeights <- sapply(ind.offs, FUN= function(x) tree.w.placements.tib %>% filter(node %in% x) %>% summarize(max(nodeHeight)) %>% as.numeric)
   }
