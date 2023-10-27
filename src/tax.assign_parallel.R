@@ -107,7 +107,7 @@ result <- foreach(i=1:length(query.names), .combine = bind_rows, .options.snow =
     maxNodeHeights <- sapply(ind.offs, FUN= function(x) tree.w.placements.tib %>% filter(node %in% x) %>% summarize(max(nodeHeight)) %>% as.numeric)
   }
   
-  2# calculate the distance from the query node to any other child node
+  # calculate the distance from the query node to any other child node
   #maxNodeHeights is distance from the root to the tip
   ## shouldn't this really be the distance from the furthest child node and the root? 
   ## I don't think this is being calculated correctly when sequences are placed on internal nodes which is messy up
@@ -127,10 +127,10 @@ result <- foreach(i=1:length(query.names), .combine = bind_rows, .options.snow =
   
   ## Find lowest justifiable taxonomic classification of placement 
   ## Using max of distances across placements to be conservative, for now
-numLevels <- lapply(maxDistPlacements, FUN=function(x) names(which(cutoffs>x))) %>% lapply(length) %>% getmode %>% unlist
-assignmentLevels <- names(cutoffs[1:numLevels]) ### LEFT OFF HERE
+  numLevels <- lapply(maxDistPlacements, FUN=function(x) names(which(cutoffs>x))) %>% lapply(length) %>% getmode %>% unlist
+  assignmentLevels <- names(cutoffs[1:numLevels]) ### LEFT OFF HERE
 
-assignment <- tree.w.placements.tib[query.place.data$node, c("Kingdom", assignmentLevels)]
+  assignment <- tree.w.placements.tib[query.place.data$node, c("Kingdom", assignmentLevels)]
 
   
   
@@ -168,6 +168,9 @@ tax_parathaa <- result %>%
             Genus = pick.taxon(Genus),
             Species = pick.taxon(Species))
 
+
+## nearest.neighbor.distance code is extremely slow need to fix this at somepoint
+## not a prority issue though.
 if(delta>0){
   dists <- nearest.neighbor.distances(tax.df=tax_parathaa, 
                                       placement.object=in.jplace, 
@@ -178,7 +181,6 @@ if(delta>0){
                                              distances=dists, 
                                              radius=delta)
 }
-
 tax_parathaa$maxDist <- result$maxDist[match(tax_parathaa$query.name, result$query.name)]
 
 write.table(tax_parathaa, file=file.path(opts$o, "taxonomic_assignments.tsv"),sep = '\t', quote = F, row.names=F)
