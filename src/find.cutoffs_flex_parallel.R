@@ -5,7 +5,7 @@ if(!interactive()) pdf(NULL)
 
 require(docopt)
 'Usage:
-   find.cutoffs.R [-d <naming file> -o <output> -n <tree> --wt1 <sweight> --wt2 <mweight> --threads <threads>]
+   find.cutoffs.R [-d <naming file> -o <output> -n <tree> --wt1 <sweight> --wt2 <mweight> --threads <threads> --name <testing_param>]
 
 Options:
    -d naming file [default: input/taxmap_slv_ssu_ref_138.1.txt]
@@ -14,6 +14,7 @@ Options:
    --wt1 over-split penalty weight [default: 1]
    --wt2 over-merge penalty weight [default: 1]
    --threads number of threads to run in parallel [default: 1]
+   --name Testing SILVA naming parameter [default: "spNames4"]
 
  ]' -> doc
 
@@ -114,7 +115,7 @@ in.tree.data$isTip <- isTip(in.tree.data, in.tree.data$node)
 
 # there are a lot of species names that are inconsistent and needed to be cleaned up!
 if(isSILVA){
-  in.tree.data <- SILVA.species.editor(in.tree.data, Task="assign_Tax")
+  in.tree.data <- SILVA.species.editor(in.tree.data, Task="assign_Tax", nameStep=opts$name)
 }
 
 in.tree.data <- in.tree.data %>% mutate(Kingdom = na_if(Kingdom, ""),

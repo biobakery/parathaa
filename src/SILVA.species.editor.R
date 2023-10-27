@@ -5,7 +5,7 @@ library(readr)
 library(tidyr)
 
 if(FALSE){ #Reading in data for testing
-inFileSeed <- "/Users/mis696/proj/parathaa/input/silva.seed_v138_1.tax"
+inFileSeed <- "input/silva.seed_v138_1.tax"
 seedTax <- read.table(inFileSeed , header=F, fill=TRUE,sep='\t', quote="")
 colnames(seedTax) <- c("label", "seedTaxonomy")
 seedTax <- seedTax %>%
@@ -26,12 +26,13 @@ seedTax <- left_join(seedTax, taxdata, by="primaryAccession")
 length(unique(seedTax$taxonomy))
 dataf <- seedTax
 
-taxdata <- dataf %>%
-  separate(col=taxonomy, into=c("Kingdom", "Phylum", "Class", "Order", "Family", "Genus", "Species"), sep=";")
+dataf <- dataf %>%
+  separate(col=taxonomy, into=c("Kingdom", "Phylum", "Class", "Order", "Family", "Genus", "Species"), sep=";") %>%
+  filter(Kingdom=="Bacteria")
 
 }
 
-SILVA.species.editor <- function(dataf, Task){
+SILVA.species.editor <- function(dataf, Task, nameStep = "spNames9"){
 
 spNames <- unique(dataf$Species)
 
@@ -119,7 +120,7 @@ Index <- c("[Haemophilus] ducreyi", "Acidiphilium cryptum", "Acidothermus cellul
            "Aphanizomenon flos-aquae", "Aquifex aeolicus", "Bacillus amyloliquefaciens", 
            "Bacillus cereus", "Bacillus halodurans", "Bacillus lehensis",
            "Bacillus subtilis", "Bacillus thuringiensis", "Bacillus velezensis",
-           "Bacteroides fragilis", "Bordetella bronchiseptica", "Bradyrhizobium diazoefficiens", "Brucella ceti", "Brucella suis", 
+           "Bacteroides fragilis", "Borreliella burgdorferi", "Bordetella bronchiseptica", "Bradyrhizobium diazoefficiens", "Brucella ceti", "Brucella suis", 
            "Buchnera aphidicola", "Butyrivibrio crossotus", "Caldora penicillata",
            "Calothrix brevissima", "Capnocytophaga sputigena", "Caulobacter segnis", "Caulobacter vibrioides",
            "Cellulomonas flavigena", "Cellulomonas massiliensis", "Cellulophaga algicola",
@@ -176,7 +177,7 @@ spNamesdf <- spNamesdf %>% mutate(spNames9 =replace(spNames9,
 
 ## Recode species names in dataset
 
-renamingVec <- spNamesdf$spNames9
+renamingVec <- spNamesdf[, nameStep]
 names(renamingVec) <- spNamesdf$spNames
 
 newNames <- renamingVec[dataf$Species]
@@ -241,5 +242,3 @@ SILVA.species.editor.DADA <- function(dataf, colname){
   cat(length(binom), "sequences with genus/species binomial annotation output.\n")
   return(dataf)
 }
-
-  

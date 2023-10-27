@@ -1,16 +1,5 @@
 #!/usr/bin/python3
 
-### This script given an aligned 16S file, an accompanying taxonomy for those sequences
-### and a primer pair will output a phylogenetic tree based on the regions amplified by those primers
-
-
-#### TO DO:
-
-# allow users to to skip primer trimming step if they just want full length and only the thresholding...
-# set up the output so that they go into their own folder...
-# generate a small test case...
-
-
 import os
 from glob import glob
 from anadama2 import Workflow
@@ -74,6 +63,12 @@ workflow.add_argument(
     desc="Number of threads to run multi-threaded processes",
     default="1"
 
+)
+
+workflow.add_argument(
+    name="namePar",
+    desc="Testing parameter for Silva name editor",
+    default="spNames4"
 )
 
 # Parsing the workflow arguments
@@ -143,11 +138,11 @@ workflow.add_task(
 
 ## Assign taxonomy to nodes 
 workflow.add_task(
-    "src/assign.node.tax_flex.R   -d [depends[1]] -o [args[0]] -n [depends[2]] --bError [args[1]] --bThreshold [args[2]]",
+    "src/assign.node.tax_flex.R   -d [depends[1]] -o [args[0]] -n [depends[2]] --bError [args[1]] --bThreshold [args[2]] --name [args[3]]",
     depends=[TrackedExecutable("src/analysis.R"), args.taxonomy, args.tree,
              args.output+"/optimal_scores.png"],
     targets= args.output+"/resultTree_bestThresholds.RData",
-    args=[args.output, args.errorRate, args.binoThreshold],
+    args=[args.output, args.errorRate, args.binoThreshold, args.namePar],
     name="Assigning taxonomy to internal nodes of ref tree"
     )
 

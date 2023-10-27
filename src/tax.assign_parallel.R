@@ -1,7 +1,7 @@
 #!/usr/bin/env Rscript
 require(docopt)
 'Usage:
-   tax.assign.R [-j <jplace file> -o <output> -t <tree> -s <optimal_scores> --threads <threads>]
+   tax.assign.R [-j <jplace file> -o <output> -t <tree> -s <optimal_scores> --threads <threads> -d <delta>]
 
 Options:
    -j jplace file with queries placed into reference tree
@@ -9,6 +9,7 @@ Options:
    -t reference tree with named internal nodes
    -s Optimal threshold scores
    --threads number of threads to run in parallel [default: 1]
+   -d delta [default: 0.02]
 
  ]' -> doc
 
@@ -31,6 +32,13 @@ library(treeio)
 library(dplyr)
 library(phytools)
 library(doSNOW)
+source("src/nearest.neighbor.revisions.R")
+
+
+getmode <- function(v) {
+  uniqv <- unique(v)
+  uniqv[which.max(tabulate(match(v, uniqv)))]
+}
 
 ## Inputs
 jplaceFile <-  opts$j
@@ -45,6 +53,17 @@ query.names <- unique(in.jplace@placements$name)
 load(in.treeFile)
 load(optimalFile)
 in.tree <- resultData$tax_bestcuts
+
+in.tree <- in.tree %>% mutate(label_new = ifelse(isTip, label, paste0("Node_",node))) %>%
+  select(!label) %>%
+  rename(label=label_new)
+
+delta <- as.numeric(opts$d)
+
+
+bestThresh <- plotData2 %>% group_by(Level) %>% summarise(minThreshold = mean(minThreshold))
+cutoffs <- bestThresh$minThreshold
+names(cutoffs) <- bestThresh$Level
 
 ## Index through query sequences to add taxonomy
 # might beable to speed this up using foreach/ vectorized code
@@ -62,8 +81,9 @@ result <- foreach(i=1:length(query.names), .combine = bind_rows, .options.snow =
   ind <- query.names[i]
   setTxtProgressBar(pb,i)
   ## Read in data, filter to most likely placement(s) and make various useful formats of it
-  query.place.data <- in.jplace@placements %>% filter(name==ind)  %>% filter(like_weight_ratio==max(like_weight_ratio))
+  query.place.data <- in.jplace@placements %>% filter(name==ind)  %>% filter(like_weight_ratio > 0.5*max(like_weight_ratio))
   tree.w.placements <- left_join(in.tree, query.place.data, by="node")
+  class(tree.w.placements) <- c("tbl_tree", class(tree.w.placements))
   tree.w.placements.phy <- tidytree::as.phylo(tree.w.placements)
   tree.w.placements.tib <- as_tibble(tree.w.placements)
   
@@ -87,7 +107,7 @@ result <- foreach(i=1:length(query.names), .combine = bind_rows, .options.snow =
     maxNodeHeights <- sapply(ind.offs, FUN= function(x) tree.w.placements.tib %>% filter(node %in% x) %>% summarize(max(nodeHeight)) %>% as.numeric)
   }
   
-  # calculate the distance from the query node to any other child node
+  2# calculate the distance from the query node to any other child node
   #maxNodeHeights is distance from the root to the tip
   ## shouldn't this really be the distance from the furthest child node and the root? 
   ## I don't think this is being calculated correctly when sequences are placed on internal nodes which is messy up
@@ -103,19 +123,18 @@ result <- foreach(i=1:length(query.names), .combine = bind_rows, .options.snow =
     names(maxDistPlacements) <- query.place.data$node
   
   ## Load thresholds for levels
-  bestThresh <- plotData2 %>% group_by(Level) %>% summarise(minThreshold = mean(minThreshold))
-  cutoffs <- bestThresh$minThreshold
-  names(cutoffs) <- bestThresh$Level
+
   
   ## Find lowest justifiable taxonomic classification of placement 
   ## Using max of distances across placements to be conservative, for now
-  assignmentLevels <- names(which(cutoffs>max(maxDistPlacements)))
-  assignment <- tree.w.placements.tib[query.place.data$node, c("Kingdom", rev(assignmentLevels))]
+numLevels <- lapply(maxDistPlacements, FUN=function(x) names(which(cutoffs>x))) %>% lapply(length) %>% getmode %>% unlist
+assignmentLevels <- names(cutoffs[1:numLevels]) ### LEFT OFF HERE
+
+assignment <- tree.w.placements.tib[query.place.data$node, c("Kingdom", assignmentLevels)]
+
   
   
-  ## Deal with multifurcation or placements at child nodes
-  #this is the case when multiple tides are below a single node?
-  #or is this dealing with a case where p placer places a sequence as a child of a placed sequence?
+  #if there is a multifurcation then assign the taxonomy as its parent node
   if(length(unique(tree.w.placements.tib$parent[query.place.data$node]))==1 & length(query.place.data$node)>1)
     assignment <- tree.w.placements.tib[unique(tree.w.placements.tib$parent[query.place.data$node]), c("Kingdom", rev(assignmentLevels))]
 
@@ -149,7 +168,19 @@ tax_parathaa <- result %>%
             Genus = pick.taxon(Genus),
             Species = pick.taxon(Species))
 
+if(delta>0){
+  dists <- nearest.neighbor.distances(tax.df=tax_parathaa, 
+                                      placement.object=in.jplace, 
+                                      reference.tree=in.tree, 
+                                      max.radius=delta)
+
+  tax_parathaa <- nearest.neighbor.revisions(tax.df=tax_parathaa, 
+                                             distances=dists, 
+                                             radius=delta)
+}
+
 tax_parathaa$maxDist <- result$maxDist[match(tax_parathaa$query.name, result$query.name)]
+
 write.table(tax_parathaa, file=file.path(opts$o, "taxonomic_assignments.tsv"),sep = '\t', quote = F, row.names=F)
 
 

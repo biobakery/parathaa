@@ -63,6 +63,13 @@ workflow.add_argument(
     default="1"
 )
 
+workflow.add_argument(
+    name="delta",
+    desc="Second thresholding value for Species that looks at neighbouring tips",
+    default="0.02"
+
+)
+
 # Parsing the workflow arguments
 args = workflow.parse_args()
 
@@ -147,10 +154,10 @@ workflow.add_task(
     
 ## Assign taxonomy to queries
 workflow.add_task(
-    "src/tax.assign_parallel.R  -j [depends[0]] -o [args[0]] -t [depends[1]] -s [depends[2]] --threads [args[1]]",
+    "src/tax.assign_parallel.R  -j [depends[0]] -o [args[0]] -t [depends[1]] -s [depends[2]] --threads [args[1]] -d [args[2]]",
     depends=[os.path.join(args.output, "merged_sub.jplace"), args.namedTree, args.thresholds],
     targets=[os.path.join(args.output, "taxonomic_assignments.tsv")],
-    args=[args.output, args.threads],
+    args=[args.output, args.threads, args.delta],
     name="Assigning taxonomy to queries"
 )
 

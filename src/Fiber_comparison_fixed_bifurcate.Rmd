@@ -188,6 +188,36 @@ merged_assignments <- cbind(Assignment_levels_kSGB, Assignment_levels_SEED,
 kable_styling(kable(merged_assignments))
 ```
 
+# Set Analysis
+
+```{r}
+m4_genera <- unique(m4_filt_spec$Genus)
+parathaa_kSGB_genera <- unique(parathaa_ksgb_assignments$Genus)
+
+genera_set <- list("MetaPhlAn4"=m4_genera, "Parathaa kSGB"=parathaa_kSGB_genera)
+ggvenn(genera_set)
+
+## and its probably better than that really...
+
+m4_specs <- unique(m4_filt_spec$Species)
+parathaa_kSGB_spec <- unique(parathaa_ksgb_assignments$Species)
+
+spec_set <- list("MetaPhlAn4"=m4_specs, "Parathaa kSGB"=parathaa_kSGB_spec)
+ggvenn(spec_set)
+### still need to deal with the multi assignments lets try that
+
+parathaa_kSGB_genera_multi <- unlist(str_split(parathaa_kSGB_genera, ";"))
+parathaa_kSGB_genera_multi
+
+parathaa_kSGB_spec_multi <- unlist(str_split(parathaa_kSGB_spec, ";"))
+
+genera_set <- list("MetaPhlAn4"=m4_genera, "Parathaa kSGB"=parathaa_kSGB_genera_multi)
+ggvenn(genera_set)
+
+spec_set <- list("MetaPhlAn4"=m4_specs, "Parathaa kSGB"=parathaa_kSGB_spec_multi)
+ggvenn(spec_set)
+```
+
 # Composition Analysis
 
 ```{r}
@@ -481,7 +511,7 @@ generate_PCA <- function(feat_tables, distance="bray"){
 
 Generate data
 ```{r}
-parathaa_kSGB_Species <- generate_tax_level_table(parathaa_abundance_table_kSGB, level="Species", prop=0)
+parathaa_kSGB_Species <- generate_tax_level_table(parathaa_abundance_table_kSGB, level="Genus", prop=0)
 colnames(parathaa_kSGB_Species)[-ncol(parathaa_kSGB_Species)] <- 
   paste("P_kSGB_", colnames(parathaa_kSGB_Species)[-ncol(parathaa_kSGB_Species)], sep="")
 
@@ -499,7 +529,7 @@ colnames(dada2_seed_Species)[-ncol(dada2_seed_Species)] <-
   paste("D_SEED_", colnames(dada2_seed_Species)[-ncol(dada2_seed_Species)], sep="")
 
 
-m4_Species <- generate_tax_level_table(m4_filt_spec, level="Species", prop=0)
+m4_Species <- generate_tax_level_table(m4_filt_spec, level="Genus", prop=0)
 colnames(m4_Species)[-ncol(m4_Species)] <- 
   paste("M4_", colnames(m4_Species)[-ncol(m4_Species)], sep="")
 
@@ -507,169 +537,152 @@ spec_feat_tabs <- list(parathaa_kSGB_Species, parathaa_seed_Species, dada2_full_
                        m4_Species)
 
 
-
 ```
 
+Hmph they still seperate completely here... not the greatest result :/
 ### Bray
 ```{r}
-Spec_PCA_bray <- generate_PCA(spec_feat_tabs)
+Spec_PCA_bray <- generate_PCA(spec_feat_tabs[c(5,1)])
 Spec_PCA_bray
+```
+
+Still no overlap... but we need to figure out how to deal with multi-assignments when calculating these results..
+
+```{r}
+Genus_PCA_bray <- generate_PCA(genus_test)
+Genus_PCA_bray
 ```
 
 ### Jaccard
 ```{r}
-Spec_PCA_Jac <- generate_PCA(spec_feat_tabs, distance="jaccard")
+Spec_PCA_Jac <- generate_PCA(spec_feat_tabs[c(5,1)], distance="jaccard")
 Spec_PCA_Jac
 ```
 
-# Deeper investigation
+
+# Deep Dive
+
+## Firmciutes/Tenericutes classifications..
 
 ```{r}
-region_tree_kSGB <- "~/Repos/Parathaa2_OP3/M4_Oct22/M4_kSGB_V3V4/region_specific.tree"
-taxafile_kSGB <- "~/Repos/Parathaa2_OP3/M4_Oct22/taxmapper.tsv"
-load("~/Repos/Parathaa2_OP3/M4_Oct22/M4_kSGB_V3V4/resultTree_bestThresholds.RData")
-Parathaa_kSGB_tree <- resultData$tax_bestcuts
-Parathaa_kSGB_placements <- read.jplace("~/Repos/Parathaa2_OP3/M4_Oct22/M4_kSGB_V3V4/Fiber_assignments/merged_sub.jplace")
+sub_df_kSGB <- parathaa_ksgb_assignments[which(parathaa_ksgb_assignments$Phylum=="Firmicutes;Tenericutes"),]
 
 
-region_tree_SEED <- "~/Repos/Parathaa2_OP3/SILVA_run_V3V4/region_specific.tree"
-taxafile_SEED <- "~/Repos/Parathaa/parathaa/input/silva_v138/taxmap_slv_ssu_ref_138.1.txt"
+merged_data <- sub_df_kSGB %>% left_join(parathaa_seed_assignments, by="query.name")
+merged_data$Class.y
+
+#Seed puts them all as Firmicutes
+
+merged_data$Genus.y
+#none are classified at Genus level in this case.
+
+merged_data$Family.y
+merged_data$Order.y
+merged_data$Class.y
+#they all get placed in the family Bacillaceae...
+
+dada2_merge <- sub_df_kSGB %>% left_join(DADA2_assignments, by="query.name")
+dada2_merge$Phylum.y
+dada2_merge$Family.y
+dada2_merge$Order.y
+dada2_merge$Class.y
+#dada2 and seed do not agree
+#one puts it in Erysipelotrichales the other puts it in Bacillales...
+
+#hmmm lets try and blast a few...
+
+```
+
+Seems like seed could possibly be putting these in the wrong order...
+
+### 007c28b2f1e870949c3f139a543b27f4
+
+Blast puts it as the result dada2 is giving... (Erysipelotrichaceae)
+
+```{r}
+load("~/Repos/Parathaa2_OP3/m4_kSGB_V3V4/resultTree_bestThresholds.RData")
+
+kSGB_tree <- resultData$tax_bestcuts
+
+kSGB_tree$Family[grep("Erysi", kSGB_tree$Family)]
+## okay this family does exist in the kSGB tree...
 
 load("~/Repos/Parathaa2_OP3/SILVA_run_V3V4/resultTree_bestThresholds.RData")
-Parathaa_SEED_tree <- resultData$tax_bestcuts
-Parathaa_SEED_placements <- read.jplace("~/Repos/Parathaa2_OP3/SILVA_run_V3V4/Fiber_assignments/merged_sub.jplace")
+Seed_tree <- resultData$tax_bestcuts
+
+Seed_tree$Family[grep("Erysi", Seed_tree$Family)]
+# exists in SEED database as well.... okay
 ```
 
-## Phylum investigation...
-```{r}
-merged_parathaa_assignments <- full_join(parathaa_ksgb_assignments, parathaa_seed_assignments, by="query.name")
-
-phylum_non_agreement <- merged_parathaa_assignments[which(merged_parathaa_assignments$Phylum.x !=
-                                                            merged_parathaa_assignments$Phylum.y),]
-
-setdiff(phylum_non_agreement$Phylum.x, phylum_non_agreement$Phylum.y)
-setdiff(phylum_non_agreement$Phylum.y, phylum_non_agreement$Phylum.x)
-
-phylum_non_agreement$Phylum.y[which(phylum_non_agreement$Phylum.y=="Actinobacteriota")] <- "Actinobacteria"
-phylum_non_agreement$Phylum.y[which(phylum_non_agreement$Phylum.y=="Bacteroidota")] <- "Bacteroidetes"
-phylum_non_agreement$Phylum.y[which(phylum_non_agreement$Phylum.y=="Acidobacteriota")] <- "Acidobacteria"
-phylum_non_agreement$Phylum.y[which(phylum_non_agreement$Phylum.y=="Fusobacteriota")] <- "Fusobacteria"
-
-phylum_non_agreement <- phylum_non_agreement[which(phylum_non_agreement$Phylum.x !=
-                                                     phylum_non_agreement$Phylum.y),]
-```
-
-### Bacterodietes dive... {.tabset}
+Has multiple best placements...
+(is this what is causing the issue?)
 
 ```{r}
-non_agree_bacts <- phylum_non_agreement[which(phylum_non_agreement$Phylum.x=="Bacteroidetes"),]
-non_agree_bacts$query.name[1]
-non_agree_bacts$query.name[2]
+kSGB_placements <- read.jplace("~/Repos/Parathaa2_OP3/m4_kSGB_V3V4/Fiber/merged_sub.jplace")
+
+Seed_placements <- read.jplace("~/Repos/Parathaa2_OP3/SILVA_run_V3V4/Fiber/merged_sub.jplace")
+
+ksgb_placement_plot <- plot_placement(kSGB_tree, "Phylum", kSGB_placements, label="007c28b2f1e870949c3f139a543b27f4", collapse = F)
+
+## okay in this case they are placed at tips with 0 branch length
+## placed at a pendent length of 0.09 which should land it in atleast genus level..
+ksgb_placement_plot[[1]]
 ```
 
-#### 008424a175a5cc75c61aa1a547a93f2b
+### 060121fa95de9cd310a3770300fdbce2
 
 ```{r}
-non_agree_bacts[which(non_agree_bacts$query.name=="008424a175a5cc75c61aa1a547a93f2b"),]
-DADA2_assignments[which(DADA2_assignments$query.name=="008424a175a5cc75c61aa1a547a93f2b"),]
+ksgb_placement_lot <- plot_placement(kSGB_tree, "Phylum", kSGB_placements, 
+                                     label="060121fa95de9cd310a3770300fdbce2", collapse=F)
+ksgb_placement_lot[[1]]
 ```
-HMMM so dada2 assigns it Fusobacterium but the other two do not... that is very concerning...
 
-All blast searches give: Fusobacterium..
-
-Lets look at the tree placements...
-```{r}
-parthaa_kSGB_placements <- get.placements(Parathaa_kSGB_placements)
-
-### hmmm I think something is going wrong here...
-parthaa_kSGB_placement_nodes <- plot_placement(Parathaa_kSGB_tree, "Phylum", Parathaa_kSGB_placements, 
-                                         label="008424a175a5cc75c61aa1a547a93f2b")
-
-get_n_parents(Parathaa_kSGB_tree, 2320, 10)
-
-subtree_parent <- get_subtree_plot_data(Parathaa_kSGB_tree, 13294, isTip=FALSE,
-                                        highlight_lab = "PEMPGKGO_00004_16S_ribosomal_RNA|M1878371282")
-
-ggtree(as.phylo(subtree_parent)) %<+% subtree_parent + geom_tippoint(aes(fill=Phylum, size=highlight, color=highlight), shape=21)
-```
-It seems the placements around it are all "bacteroidetes" lets blast the sequence at its tip..
-
-It does blast to Bacteroidetes... so doesn't seem like a huge issue... 
-
-Why is it being placed there though?????
-Something is clearly going wrong here during placement not sure what it is though...
-Is it the bifurcation enforcement?
-
-
-
-
+### 131fd919bcc6b3e1722b47979881ad2d
 
 ```{r}
-parthaa_SEED_placement <- plot_placement(Parathaa_SEED_tree, "Phylum", Parathaa_SEED_placements,
-                                         label="008424a175a5cc75c61aa1a547a93f2b")
-parthaa_SEED_placement
-
-get_n_parents(Parathaa_SEED_tree, 2030, 10)
-
-subtree_parent_SEED <- get_subtree_plot_data(Parathaa_SEED_tree, 5918, isTip = FALSE,
-                                             highlight_lab="AF030451.Ru2Albu9")
-
-ggtree(as.phylo(subtree_parent_SEED)) %<+% subtree_parent_SEED + geom_tippoint(aes(fill=Phylum, size=highlight, color=highlight), shape=21) + scale_color_viridis_d()
+ksgb_placement_plot3 <- plot_placement(kSGB_tree, "Phylum", kSGB_placements, 
+                                       label="131fd919bcc6b3e1722b47979881ad2d", collapse=F)
+ksgb_placement_plot3[[1]]
 ```
 
-HMMM it places it in the Firmicutes...
-There are Fuso's in the subtree but there are a bit far away...
-
-Again looks like it is a placement issue?
-
-
-
-#### 00fd4ac0447c6b6539db1bcc40240e81
-```{r}
-non_agree_bacts[which(non_agree_bacts$query.name=="00fd4ac0447c6b6539db1bcc40240e81"),]
-DADA2_assignments[which(DADA2_assignments$query.name=="00fd4ac0447c6b6539db1bcc40240e81"),]
-```
-
-So parathaa_kSGB says it should be Bacteroidetes... (no classification after Phylum...)
-Parathaa_SEED says it should be Actinobacteria...(Order is Streptosporangiales...)
-DADA2 says it should be Actinobacteria... (Family is Eggerthellaceae, Genus is Asaccharobacter...)
-
-So DADA2 and Parathaa do not agree on Order assignment... lets dig in...
-
-BLAST says: it should be in Eggerthellaceae.... 
+### 15e2285f64a1ddea4ab18f37c692c5b2
 
 ```{r}
-### hmmm I think something is going wrong here...
-parthaa_kSGB_placement_nodes <- plot_placement(Parathaa_kSGB_tree, "Phylum", Parathaa_kSGB_placements, 
-                                         label="00fd4ac0447c6b6539db1bcc40240e81")
-parthaa_kSGB_placement_nodes
-
-get_n_parents(Parathaa_kSGB_tree, 2456, 10)
-
-subtree_parent <- get_subtree_plot_data(Parathaa_kSGB_tree, 13287, isTip=FALSE,
-                                        highlight_lab = "MDNOLOHA_04242_16S_ribosomal_RNA|M1873143409")
-
-ggtree(as.phylo(subtree_parent)) %<+% subtree_parent + geom_tippoint(aes(fill=Phylum, size=highlight, color=highlight), shape=21)
+ksgb_placement_plot4 <- plot_placement(kSGB_tree, "Phylum", kSGB_placements, 
+                                       label="15e2285f64a1ddea4ab18f37c692c5b2", collapse=F)
+ksgb_placement_plot4[[1]]
 ```
 
-Bad placement??
+It seems all of these sequences are placed on this high up internal node in the tree....
+It does seem a bit odd there there are a mix of tenericutes and Firmicutes in this close proximity...
+Hmm..
 
+### inspection of node
 ```{r}
-parthaa_SEED_placement_nodes <- plot_placement(Parathaa_SEED_tree, "Phylum", Parathaa_SEED_placements,
-                                               label="00fd4ac0447c6b6539db1bcc40240e81")
+get_n_parents(kSGB_tree, 23444, steps = 6)
 
-## placed at a bifurcated branch so it won't plot...
-#parthaa_SEED_placement_nodes
+plot_data <- get_subtree_plot_data(tree=kSGB_tree, node=22974, highlight_lab = "0.992")
 
-get_n_parents(Parathaa_SEED_tree, 2692, 10)
+#ggplotly(ggtree(as.phylo(plot_data)))
+ggtree(as.phylo(plot_data)) %<+% plot_data + geom_tippoint(aes(fill=Phylum, size=highlight, color=highlight), shape=21) + scale_color_viridis_d()
 
-subtree_parent <- get_subtree_plot_data(Parathaa_SEED_tree, 6920, isTip=FALSE,
-                                        highlight_lab = c("AF116563.GWJChro2", "AB011817.I97Lent5"),
-                                        level="Family")
 
-get_mrca_of_set(as.phylo(Parathaa_SEED_tree), c(2717, 2692))
+tenericutes_pulled <- plot_data[which(plot_data$Phylum=="Tenericutes"),]
+write.table(gsub("\\|.*", "", tenericutes_pulled$label[1:30]), "~/Repos/Parathaa2_OP3/Datasets/fiber_amplicons_true/taxonomic_assignments/Tenerciutes_inspection_labels.tsv",
+            row.names = FALSE, col.names = FALSE, quote=FALSE, sep="\t")
 
-ggtree(as.phylo(subtree_parent)) %<+% subtree_parent + geom_tippoint(aes(fill=Phylum, size=highlight, color=highlight), shape=21) + scale_color_viridis_d()
+
+write.table(merged_data$query.name, "~/Repos/Parathaa2_OP3/Datasets/fiber_amplicons_true/taxonomic_assignments/Tenericutes_inspection.tsv",
+            row.names=FALSE, col.names=FALSE, quote=FALSE, sep="\t")
 ```
 
-This placement looks fine at genus level but is pretty far away from Eggerthelleace at the family level (which is its most likely origin given the dada2 and blast search)
+
+
+
+So it seems that Tenericutes does not exist as a phylum in SILVA or GTDB and is instead part of the Firmicutes Phylum....
+
+
+Add qiime2 naive bayes gg2 and silva classifications to my comparison as well?
+Seems like SEED doesn't do that well either which is very concerning but this could potentially be improved using a bigger database...
+
+
