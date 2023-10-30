@@ -14,7 +14,7 @@ Options:
    --wt1 over-split penalty weight [default: 1]
    --wt2 over-merge penalty weight [default: 1]
    --threads number of threads to run in parallel [default: 1]
-   --name Testing SILVA naming parameter [default: "spNames4"]
+   --name Testing SILVA naming parameter [default: spNames4]
 
  ]' -> doc
 
