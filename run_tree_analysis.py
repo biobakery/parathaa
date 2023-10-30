@@ -128,21 +128,21 @@ workflow.add_task(
 
 # See R script for comments
 workflow.add_task(
-    "src/find.cutoffs_flex_parallel.R   -d [depends[1]] -o [args[0]] -n [depends[2]] --wt1 [args[1]] --wt2 [args[2]] --threads [args[3]]",
+    "src/find.cutoffs_flex_parallel.R   -d [depends[1]] -o [args[0]] -n [depends[2]] --wt1 [args[1]] --wt2 [args[2]] --threads [args[3]] --name [args[[4]]] ",
     depends=[TrackedExecutable("src/analysis.R"), args.taxonomy, args.tree],
     targets= [args.output+"/optimal_scores.png"],
-    args=[args.output, args.sweight, args.mweight, args.threads],
+    args=[args.output, args.sweight, args.mweight, args.threads, args.namePar],
     name="Finding thresholds"
 )
 
 
 ## Assign taxonomy to nodes 
 workflow.add_task(
-    "src/assign.node.tax_flex.R   -d [depends[1]] -o [args[0]] -n [depends[2]] --bError [args[1]] --bThreshold [args[2]] --name [args[3]]",
+    "src/assign.node.tax_flex.R   -d [depends[1]] -o [args[0]] -n [depends[2]] --bError [args[1]] --bThreshold [args[2]]",
     depends=[TrackedExecutable("src/analysis.R"), args.taxonomy, args.tree,
              args.output+"/optimal_scores.png"],
     targets= args.output+"/resultTree_bestThresholds.RData",
-    args=[args.output, args.errorRate, args.binoThreshold, args.namePar],
+    args=[args.output, args.errorRate, args.binoThreshold],
     name="Assigning taxonomy to internal nodes of ref tree"
     )
 
