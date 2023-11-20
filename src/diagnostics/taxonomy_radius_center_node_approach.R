@@ -17,7 +17,6 @@ Options:
 library(castor)
 library(dplyr)
 library(treeio)
-library(ggridges)
 library(ggplot2)
 library(ggtree)
 library(cowplot)
