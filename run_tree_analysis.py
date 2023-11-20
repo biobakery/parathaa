@@ -11,12 +11,14 @@ from pathlib import Path
 workflow = Workflow(
     version="0.2.1",
     description=("Preserving Primer-Induced Taxonomic Ambiguities for Amplicons: This script given an aligned 16S file, an accompanying taxonomy file "
-                 " and a primer pair will output a phylogenetic tree of those 16S sequences based on the amplified regions and find optimal "
-                 " threhold distances for taxonomy assignment and assigns taxonomy to the internal nodes of the tree"   #Update the description as needed
+                 " and a primer pair will output a phylogenetic tree with taxonomically labeled internal nodes based on the amplified region using optimal "
+                 "distance thresholds for taxonomic assignment." 
     ) 
 )
 
 # Setting additional custom arguments for workflow - run_tree_analysis
+# Default parameters will run the test case shown in the tutorial.
+
 workflow.add_argument(
     name="primers",
     desc="File with primer oligos [default: input/EMPV4.oligos]",
@@ -29,58 +31,51 @@ workflow.add_argument(
 
 workflow.add_argument(
     name="taxonomy",
-    desc="File that contains taxonomy for the input database",
+    desc="File that contains taxonomy for the input database [defualt: input/taxmap_slv_ssu_ref_138.1.txt]",
     default="input/taxmap_slv_ssu_ref_138.1.txt"
 )
 
 workflow.add_argument(
     name="sweight",
-    desc="penalty weight for over-splitting errors [default: 1]",
+    desc="penalty weight for over-splitting errors when identifying optimal distance thresholds [default: 1]",
     default=1
 )
 
 workflow.add_argument(
     name="mweight",
-    desc="penalty weight for over-merging errors [default: 1]",
+    desc="penalty weight for over-merging errors when identifying optimal distance thresholds [default: 1]",
     default=1
 )
 
 workflow.add_argument(
     name="errorRate",
-    desc="The error rate parameter for the binomial model for ambigious taxonomic assignment",
+    desc="The assumed error rate for the binomial model for ambigious taxonomic assignment [default: 0.05]",
     default=0.05
 )
 
 workflow.add_argument(
     name="binoThreshold",
-    desc="Threshold for the binomial error model for ambigious taxonomic assignment",
+    desc="Critial p-value (threshold) for the binomial error model for ambigious taxonomic assignment [default: 0.20]",
     default=0.20
 )
 
 
 workflow.add_argument(
     name="threads",
-    desc="Number of threads to run multi-threaded processes",
+    desc="Number of threads to run multi-threaded processes [default: 1]",
     default="1"
 
 )
 
+# This needs a better descripition from Meg
 workflow.add_argument(
     name="namePar",
-    desc="Testing parameter for Silva name editor",
+    desc="Testing parameter for Silva name editor [default: spNames4]",
     default="spNames4"
 )
 
 # Parsing the workflow arguments
 args = workflow.parse_args()
-
-
-# Download taxonomy file from SILVA
-
-# I think its better for users to input this file directly as SILVA is known to change the area that they house these files.
-# We can then think about providing these files some place incase they get removed etc..
-#workflow.do("curl https://www.arb-silva.de/fileadmin/silva_databases/current/Exports/taxonomy/taxmap_slv_ssu_ref_138.1.txt.gz -o [t:input/taxmap_slv_ssu_ref_138.1.txt.gz]")
-#workflow.do("gunzip -fc [d:input/taxmap_slv_ssu_ref_138.1.txt.gz] > [t:input/taxmap_slv_ssu_ref_138.1.txt]")
 
 # Add prefix of db name
 dbname = Path(args.database).stem
@@ -92,9 +87,10 @@ args.tree = os.path.join(args.output, "region_specific.tree")
 #add the name for the tree log file.
 args.treelog = os.path.join(args.output, 'treelog.txt')
 
+#set an environmental variable used to determine the number of threads
 os.environ["OMP_NUM_THREADS"]=args.threads
 
-## Trim database
+## Trim the aligned 16S database to the primer inputs
 workflow.add_task(
     "mothur -q '#set.dir(output=[args[0]]);pcr.seqs(fasta = [depends[0]], oligos=[depends[1]], pdiffs=3, rdiffs=3, keepdots=t)'",
     depends=[args.database, args.primers],
@@ -103,7 +99,6 @@ workflow.add_task(
     name="Trimming database")
 
 ## Create tree from region-specific alignment, save log file for use by pplacer
-
 workflow.add_task(
     "FastTree -log [targets[0]] \
     -nt -gtr [depends[0]] > [targets[1]]",
@@ -111,22 +106,8 @@ workflow.add_task(
     targets=[args.treelog, args.tree],
     name="Building tree from primer-trimmed database")
 
-## force biforcation of tree...
 
-""" workfow.add_taks(
-    "src/force_bifurcated_tree.R -t [depends[0]] -o [args[0]]",
-    depends=[args.tree],
-    args=[args.output],
-    targets=[args.out+"region_specific_bi.tree"],
-    name="Resolving polytomies"
-) """
-
-#args.tree = os.path.join(args.output, "region_specific_bi.tree")
-## Find best thresholds 
-
-
-
-# See R script for comments
+# Identify the optimal distance thresholdings for taxonomic assignment
 workflow.add_task(
     "src/find.cutoffs_flex_parallel.R   -d [depends[0]] -o [args[0]] -n [depends[1]] --wt1 [args[1]] --wt2 [args[2]] --threads [args[3]] --name [args[4]]",
     depends=[args.taxonomy, args.tree],
@@ -136,7 +117,7 @@ workflow.add_task(
 )
 
 
-## Assign taxonomy to nodes 
+## Assign taxonomy to the internal nodes of the phylogenetic tree
 workflow.add_task(
     "src/assign.node.tax_flex.R   -d [depends[0]] -o [args[0]] -n [depends[1]] --bError [args[1]] --bThreshold [args[2]]",
     depends=[args.taxonomy, args.tree,
@@ -145,7 +126,6 @@ workflow.add_task(
     args=[args.output, args.errorRate, args.binoThreshold],
     name="Assigning taxonomy to internal nodes of ref tree"
     )
-
 
 
 # Run the workflow
