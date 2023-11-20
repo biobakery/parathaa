@@ -111,7 +111,7 @@ tree_plot <- ggtree(as.phylo(tree)) %<+% plot_df + geom_tippoint(aes(alpha=isCen
 
 tree_plot
 
-tree_plot + geom_facet(panel="Log Optimal Radi", data=plot_df2, geom=geom_point, mapping=aes(x=log(test2+0.01), color=Phyla_agg)) +
+tree_plot + geom_facet(panel="Log Optimal Radi", data=plot_df, geom=geom_point, mapping=aes(x=log(test2+0.01), color=Phyla_agg)) +
   theme_bw(base_size=10)
 
 
