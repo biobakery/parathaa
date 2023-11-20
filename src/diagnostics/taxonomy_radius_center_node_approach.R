@@ -19,7 +19,6 @@ library(dplyr)
 library(treeio)
 library(ggplot2)
 library(ggtree)
-library(cowplot)
 
 opts <- docopt(doc)
 
