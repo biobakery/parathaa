@@ -89,8 +89,6 @@ for(taxa in taxon_set){
 #write raw table of optimal radi
 write.table(unlist(taxon_radi), file=paste0(outputDir, "/", "taxon_radi", ".tsv"))
 
-taxon_set_phyla <- tree_tips$Phylum[match(taxon_set, tree_tips$Species)]
-
 tree$optimal_radi <- NA
 tree$optimal_radi[center_nodes] <- unlist(taxon_radi)
 ## plot across the tree?
@@ -104,20 +102,25 @@ Other_phlya <- phyla_n$Phylum[which(phyla_n$`n()` < 50)]
 plot_df$Phyla_agg <- plot_df$Phylum
 plot_df$Phyla_agg[which(plot_df$Phyla_agg %in% Other_phlya)] <- "Other"
 plot_df$test2 <- plot_df$optimal_radi
-plot_df$phyla2 <- plot_df$Phylum
+plot_df$phyla2 <- plot_df$Phyla_agg
+plot_df2 <- data.frame(plot_df)
+plot_df2$Phyla <- plot_df2$Phyla_agg
 
-tree_plot <- ggtree(as.phylo(tree)) %<+% plot_df + geom_tippoint(aes(alpha=isCenter), size=4) +
-  scale_alpha_manual(values=c(0,0.3))
+tree_plot <- ggtree(as.phylo(tree))
 
-tree_plot
+full_plot <- tree_plot %<+% tree + geom_tippoint(aes(alpha=isCenter), size=3) + 
+  scale_alpha_manual(values=c(0,0.5))
 
-tree_plot + geom_facet(panel="Log Optimal Radi", data=plot_df, geom=geom_point, mapping=aes(x=log(test2+0.01), color=Phyla_agg)) +
+
+facet_plot(full_plot, 
+           panel="Log Optimal Radi", data=plot_df2, mapping=aes(x=log(test2+0.01), color=Phyla), geom=geom_point) +
   theme_bw(base_size=10)
 
 
 ggsave(filename = paste0(outputDir, "/", "tree_with_taxon_radi.png"), device = "png")
 
-Smooth_plot <- test1$data %>% filter(!is.na(x), !is.na(test2)) %>% ggplot(aes(x=y, y=test2)) + geom_smooth(color="red") + 
+Smooth_plot <- full_plot$data %>% filter(!is.na(x), !is.na(optimal_radi)) %>% 
+  ggplot(aes(x=y, y=optimal_radi)) + geom_smooth(color="red") + 
   geom_point(alpha=0.5) + theme_bw(base_size=12) + coord_flip() + xlab("Tree Position") + ylab("Optimal Radii")
 
 Smooth_plot + xlab("Position in tree") + ylab("Optimal Radi")
@@ -127,7 +130,8 @@ Smooth_plot + xlab("Position in tree") + ylab("Optimal Radi")
 ggsave(filename = paste0(outputDir, "/", "Optimal_radii_by_tree_position.png"), device="png")
 
 
-Smooth_plot <- test1$data %>% filter(!is.na(x), !is.na(test2), test2!=0) %>% ggplot(aes(x=y, y=log(test2))) + geom_smooth() + 
+Smooth_plot <- full_plot$data %>% filter(!is.na(x), !is.na(optimal_radi), optimal_radi!=0) %>% 
+  ggplot(aes(x=y, y=log(optimal_radi))) + geom_smooth() + 
   geom_point(alpha=0.5) + theme_bw(base_size = 12) + coord_flip() + xlab("Tree Position") + ylab("Optimal Radii")
 
 Smooth_plot
