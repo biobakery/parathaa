@@ -117,7 +117,7 @@ facet_plot(full_plot,
   theme_bw(base_size=10)
 
 
-ggsave(filename = paste0(outputDir, "/", "tree_with_taxon_radi.png"), device = "png")
+ggsave(filename = paste0(outputDir, "/", "tree_with_taxon_radi.png"), device = "png", width=12, height=12)
 
 Smooth_plot <- full_plot$data %>% filter(!is.na(x), !is.na(optimal_radi)) %>% 
   ggplot(aes(x=y, y=optimal_radi)) + geom_smooth(color="red") + 
@@ -127,7 +127,7 @@ Smooth_plot + xlab("Position in tree") + ylab("Optimal Radi")
 
 
 
-ggsave(filename = paste0(outputDir, "/", "Optimal_radii_by_tree_position.png"), device="png")
+ggsave(filename = paste0(outputDir, "/", "Optimal_radii_by_tree_position.png"), device="png", width=12, height=12)
 
 
 Smooth_plot <- full_plot$data %>% filter(!is.na(x), !is.na(optimal_radi), optimal_radi!=0) %>% 
@@ -136,5 +136,5 @@ Smooth_plot <- full_plot$data %>% filter(!is.na(x), !is.na(optimal_radi), optima
 
 Smooth_plot
 
-ggsave(filename=paste0(outputDir, "/", "Optimal_radii_by_tree_position_no_zero_log.png"), device="png")
+ggsave(filename=paste0(outputDir, "/", "Optimal_radii_by_tree_position_no_zero_log.png"), device="png", width=12, height=12)
 
