@@ -32,7 +32,7 @@ library(treeio)
 library(dplyr)
 library(phytools)
 library(doSNOW)
-source("src/nearest.neighbor.revisions.R")
+source("utility/nearest.neighbor.revisions.R")
 
 
 getmode <- function(v) {

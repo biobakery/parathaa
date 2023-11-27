@@ -33,8 +33,8 @@ library(dplyr)
 library(ape)
 #library(ggimage)
 library(TDbook)
-source("src/SILVA.species.editor.R")
-source("src/single.tax.R")
+source("utility/SILVA.species.editor.R")
+source("utility/single.tax.R")
 
 
 ## Bring in taxonomy file
