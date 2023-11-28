@@ -187,11 +187,11 @@ dataf$Species <- newNames
 ## remove cases where genus name doesn't match Species
 spNames10 <- strsplit(dataf$Species, split= " ")
 
-dataf$spGenera <- sapply(spNames10, function(x) x[1])
+spGenera <- sapply(spNames10, function(x) x[1])
 
-dataf$remove <- !str_detect(dataf$Genus,spGenera)
+remove <- !str_detect(dataf$Genus,spGenera)
 
-dataf$Species[dataf$remove] <- NA
+dataf$Species[remove] <- NA
 
 #remove uncultured higher-level taxa
 unc.class <- str_detect(dataf$Class, "uncultured") 
