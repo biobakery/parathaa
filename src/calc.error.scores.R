@@ -15,24 +15,17 @@ calc.error.scores <- function(treeData, level, wt1=1, wt2=1){
   ## First score to minimize: number of Phylum represented multiple times
   ## Second score to minimize: number of non-Phylum members clustered within a Phylum
   
-  # grab all the children of nodes at a given taxonomic level from treeData
-  #dereplicated code
-  #groupsAtLevel2 <- offspring(treeData, treeData$node[which(treeData[[levelDefiningVar]]==T)], tiponly=T, self_include=T)
-  
-  ## lets speed this up a bit...
   phylo_treeData <- as.phylo(treeData)
   groupsAtLevel <- list()
   isLeveltips <- treeData$node[which(treeData[[levelDefiningVar]]==T & treeData$isTip==T)]
   isLeveltips
   if(length(isLeveltips) != 0){
     for(i in 1:length(isLeveltips)){
-      #message(i)
       groupsAtLevel[[as.character(isLeveltips[i])]] <- treeData[which(treeData$node==isLeveltips[i]),]
     }
   }
   isLevelnode <- treeData$node[which(treeData[[levelDefiningVar]]==T & treeData$isTip==F)]
   if(length(isLevelnode) != 0){
-    #message("running")
     subNode_trees <- get_subtrees_at_nodes(phylo_treeData, isLevelnode-length(phylo_treeData$tip.label))
     for(i in 1:length(isLevelnode)){
       tips_to_grab <- subNode_trees$new2old_tips[[i]]

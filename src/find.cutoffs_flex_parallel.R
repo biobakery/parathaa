@@ -1,7 +1,6 @@
 #!/usr/bin/env Rscript
 
 ### This script finds optimal cutoffs for each taxonomic level for a given tree, and plots their error scores
-if(!interactive()) pdf(NULL)
 
 require(docopt)
 'Usage:
@@ -18,26 +17,15 @@ Options:
 
  ]' -> doc
 
-#To add as arguments: binom error params
-
 opts <- docopt(doc)
 
 
-# If we wanted we could add a loop that tries to install these packages within R?
-# Although it might be nice to have this as a seperate R script 
-# that runs on anadama workflow start up
-library(logging)
 library(reshape2)
-
-# R logging example 
-loginfo("Performing analysis data", logger="")
-
 library(ggtree)
 library(treeio)
 library(tidyr)
 library(dplyr)
 library(ape)
-#library(ggimage)
 library(ggplot2)
 library(TDbook)
 library(castor)
@@ -75,15 +63,13 @@ if("start" %in% colnames(taxdata)){
   suppressWarnings({
     taxdata <- taxdata %>%
       separate(col=path, into=c("Kingdom", "Phylum", "Class", "Order", "Family", "Genus"), sep=";") %>%
-      dplyr::rename(Species = organism_name) %>%
-      filter(Kingdom=="Bacteria") 
+      dplyr::rename(Species = organism_name)
   })
 }else{
   taxdata$path <- gsub("\\|t__.*", "", taxdata$path)
   taxdata$path <- gsub("[a-z]__", "", taxdata$path)
   taxdata <- taxdata %>% separate(col=path, into=c("Kingdom", "Phylum", "Class", 
-                                                   "Order", "Family", "Genus", "Species"), sep="\\|") %>%
-    filter(Kingdom=="Bacteria")
+                                                   "Order", "Family", "Genus", "Species"), sep="\\|")
   
 }
 
@@ -130,7 +116,7 @@ in.tree.data <- in.tree.data %>% mutate(Kingdom = na_if(Kingdom, ""),
 #Broad range of cutoffs:
 #looks at a series of cutoffs for the best "threshold"
 #might be better to look minima and choose that and search around it rather than looking at all these...
-cutoffs<-c(seq(0.001, 0.009, by=0.001), seq(0.01, 0.5, by=0.01), seq(0.55, 0.9, 0.05))
+cutoffs<-c(seq(0.001, 0.009, by=0.001), seq(0.01, 0.5, by=0.01), seq(0.55, 1.5, 0.05))
 
 
 #Initialize
@@ -241,9 +227,8 @@ outputScores <- foreach(i=1:length(cutoffs), .packages = c("dplyr", "treeio", "t
   ## Calculate Error Scores for the given cutoff at each level
   outputCounts <- list()
   outputScores <- list()
-  for(level in c("Phylum", "Class", "Order", "Family", "Genus", "Species")){
+  for(level in c("Kingdom","Phylum", "Class", "Order", "Family", "Genus", "Species")){
     errs <- calc.error.scores(tempData, level, wt1=as.numeric(opts$wt1), wt2=as.numeric(opts$wt2))
-    #outputCounts[[level]][[as.character(cut1)]] <- errs[["counts"]]
     outputScores[[level]][as.character(cut1)] <- errs[["scores"]]
   }
   ret_list <- list(outputScores)
@@ -265,7 +250,7 @@ tmp_df_melt$Scores <- tmp_df_melt$Scores/nseqs
 plotData2 <- tmp_df_melt
 
 # decide whatever cutoff gives the best low score!
-plotData2$Level <- factor(plotData2$Level, levels=c("Phylum", "Class", "Order", "Family", "Genus", 
+plotData2$Level <- factor(plotData2$Level, levels=c("Kingdom","Phylum", "Class", "Order", "Family", "Genus", 
                                                     "Species"))
 mins<- plotData2 %>% 
   group_by(Level) %>% 

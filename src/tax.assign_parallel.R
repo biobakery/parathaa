@@ -13,14 +13,7 @@ Options:
 
  ]' -> doc
 
-#To add as arguments: binom error params
-
 opts <- docopt(doc)
-
-library(logging)
-
-# R logging example 
-loginfo("Performing analysis data", logger="")
 
 ## This function reads in a jplace object and a reference tree with taxonomy assigned
 ## to interior nodes and outputs taxonomic assignments (with uncertainty) for the reads
@@ -128,15 +121,20 @@ result <- foreach(i=1:length(query.names), .combine = bind_rows, .options.snow =
   ## Find lowest justifiable taxonomic classification of placement 
   ## Using max of distances across placements to be conservative, for now
   numLevels <- lapply(maxDistPlacements, FUN=function(x) names(which(cutoffs>x))) %>% lapply(length) %>% getmode %>% unlist
-  assignmentLevels <- names(cutoffs[1:numLevels]) ### LEFT OFF HERE
+  if(numLevels != 0){
+    assignmentLevels <- names(cutoffs[1:numLevels]) ### LEFT OFF HERE
+  }else
+    assignmentLevels <- NULL
 
-  assignment <- tree.w.placements.tib[query.place.data$node, c("Kingdom", assignmentLevels)]
+
+
+  assignment <- tree.w.placements.tib[query.place.data$node, assignmentLevels]
 
   
   
   #if there is a multifurcation then assign the taxonomy as its parent node
   if(length(unique(tree.w.placements.tib$parent[query.place.data$node]))==1 & length(query.place.data$node)>1)
-    assignment <- tree.w.placements.tib[unique(tree.w.placements.tib$parent[query.place.data$node]), c("Kingdom", rev(assignmentLevels))]
+    assignment <- tree.w.placements.tib[unique(tree.w.placements.tib$parent[query.place.data$node]), rev(assignmentLevels)]
 
   
   assignment$query.name <- ind
