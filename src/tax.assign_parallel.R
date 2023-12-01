@@ -11,13 +11,10 @@ Options:
    --threads number of threads to run in parallel [default: 1]
    -d delta [default: 0.02]
 
- ]' -> doc
 
+ ]' -> doc
 opts <- docopt(doc)
 
-## This function reads in a jplace object and a reference tree with taxonomy assigned
-## to interior nodes and outputs taxonomic assignments (with uncertainty) for the reads
-## in the jplace object
 
 library(ggtree)
 library(tidytree)
@@ -25,7 +22,7 @@ library(treeio)
 library(dplyr)
 library(phytools)
 library(doSNOW)
-source("src/nearest.neighbor.revisions.R")
+source("src/nearest_neighbours_parallel.R")
 
 
 getmode <- function(v) {
@@ -170,10 +167,33 @@ tax_parathaa <- result %>%
 ## nearest.neighbor.distance code is extremely slow need to fix this at somepoint
 ## not a prority issue though.
 if(delta>0){
-  dists <- nearest.neighbor.distances(tax.df=tax_parathaa, 
-                                      placement.object=in.jplace, 
-                                      reference.tree=in.tree, 
-                                      max.radius=delta)
+  
+  
+  #make tree labels unique
+  in.tree$label <- make.unique(in.tree$label)
+  
+  queries.w.species <- tax_parathaa %>% 
+    filter(!is.na(Species)) %>% 
+    pull(query.name)
+  
+  
+  pb <- txtProgressBar(max=length(queries.w.species), style=3)
+  progress <- function(n) setTxtProgressBar(pb, n)
+  pb_opts <- list(progress=progress)
+  
+  dists <- foreach(i=1:length(queries.w.species), .combine=bind_rows, .options.snow=pb_opts,
+                   .packages = c("stringr", "castor")) %dopar% {
+    
+    setTxtProgressBar(pb,i)
+    query <- queries.w.species[i]
+    temp <- nearest.neighbor.distances(tax.df=tax_parathaa, 
+                                       placement.object=in.jplace, 
+                                       reference.tree=in.tree, 
+                                       max.radius=delta,
+                                       query = query)
+    return(temp)
+  }
+
 
   tax_parathaa <- nearest.neighbor.revisions(tax.df=tax_parathaa, 
                                              distances=dists, 
