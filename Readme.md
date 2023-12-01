@@ -1,11 +1,52 @@
+# ***ATTENTION***
 
-# PARATHAA
+Before opening a new issue here, please check the appropriate help channel on the bioBakery Support Forum (https://forum.biobakery.org) and consider opening or commenting on a thread there.
+
+----
+
+# PARATHAA User Manual 
 > Preserving and Assimilating Region-specific Ambiguities in Taxonomic Hierarchical Assignments for Amplicons
 
-#### Introduction
-> PARATHAA is a tool for taxonomic assignment while retaining information about ambiguity in placements. It is still under active development.
+----
 
-#### Dependencies
+
+**If you use PARATHAA in your work, please cite the PARATHAA :**
+[http://huttenhower.sph.harvard.edu/PARATHAA](http://huttenhower.sph.harvard.edu/PARATHAA)
+
+----
+
+
+**For additional information, read the [PARATHAA Tutorial](https://github.com/biobakery/biobakery/wiki/PARATHAA)**
+
+PARATHAA(Preserving and Assimilating Region-specific Ambiguities in Taxonomic Hierarchical Assignments for Amplicons) is a tool used for the taxonomic assignment of 16S rRNA gene sequences that takes into account the uncertainty associated with using specific variable regions/primers. PARATHAA does this by generating new primer-trimmed phylogenetic trees from reference 16S rRNA gene datasets and then determines the optimal phylogenetic distances within that tree for taxonomic labeling. PARATHAA then can use this tree to assign taxonomy to query 16S rRNA gene sequences by aligning and placing those sequences into the new primer-trimmed reference database.
+
+----
+
+## Contents 
+* [Features](#Features)
+* [Requirements](#Requirements)
+* [Installation](#Installation)
+  * [Manual Installation](#Manual_Installation)
+  * [Pypi Installation](#Pypi_Installation)
+* [Workflow](#workflow)
+  * [Step1](#Step1)
+  * [Step2](#Step2)   
+* [Databases](#Databases)
+* [Outputs](#Outputs)
+* [Complete option list](#Complete_option_list)
+
+
+----
+
+
+####  Manual Installation
+- Clone your recently created repository in your local development environment either using:
+```
+git clone https://github.com/biobakery/parathaa
+```
+or using the "**Clone or Download**" button.
+
+#### Requirements
 To run Parathaa, you should be running linux/MacOS, and you should have installed:
 - Python >=3.7
 - R > 4.0.0
@@ -16,20 +57,8 @@ To run Parathaa, you should be running linux/MacOS, and you should have installe
 - pplacer: https://anaconda.org/bioconda/pplacer
 
 
-####  Cloning Repo
-  
-
-- Clone your recently created repository in your local development environment either using:
-```
-git clone https://github.com/biobakery/parathaa
-```
-or using the "**Clone or Download**" button.
-
-#### Parathaa Usage:
-
+#### Workflow:
 - Parathaa is seperated into two seperate workflows that are used in conjunction with one another. In general most users will only use step 2 with already pre-computed files from step 1. However users able to adjust the reference database parathaa uses for taxonomic assignment using the commands in step 1.
-
-
 
 #### Step 1: Creation of primer trimmed phylogenetic trees with taxonomic labels
 
