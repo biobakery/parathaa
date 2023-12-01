@@ -52,6 +52,7 @@ try:
 	import setuptools
 except ImportError:
 	sys.exit("Please install setuptools.")
+	sys.exit(1)
 
 # check setuptools version
 required_setuptools_version_major = 1
@@ -220,8 +221,8 @@ setuptools.setup(
 	# cmdclass={'install': Install},
 	entry_points={
 		'console_scripts': [
-			'parathaa = parathaa.run_tree_analysis:main',
-			'parathaa = parathaa.run_taxa_assignment:main',
+			'parathaa_run_tree_analysis = parathaa.run_tree_analysis:main',
+			'parathaa_run_taxa_assignment = parathaa.run_taxa_assignment:main',
 		]},
 	package_data={
 		'parathaa': [
