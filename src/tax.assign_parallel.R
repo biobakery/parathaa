@@ -1,7 +1,7 @@
 #!/usr/bin/env Rscript
 require(docopt)
 'Usage:
-   tax.assign.R [-j <jplace file> -o <output> -t <tree> -s <optimal_scores> --threads <threads> -d <delta>]
+   tax.assign.R [-j <jplace file> -o <output> -t <tree> -s <optimal_scores> --threads <threads> -d <delta> -m <mult>]
 
 Options:
    -j jplace file with queries placed into reference tree
@@ -10,7 +10,7 @@ Options:
    -s Optimal threshold scores
    --threads number of threads to run in parallel [default: 1]
    -d delta [default: 0.02]
-
+   -m mult [default: 0.5]
 
  ]' -> doc
 opts <- docopt(doc)
@@ -54,6 +54,8 @@ delta <- as.numeric(opts$d)
 bestThresh <- plotData2 %>% group_by(Level) %>% summarise(minThreshold = mean(minThreshold))
 cutoffs <- bestThresh$minThreshold
 names(cutoffs) <- bestThresh$Level
+### Add species multiplier
+cutoffs["Species"] <- cutoffs["Species"] * as.numeric(opts$m)
 
 ## Index through query sequences to add taxonomy
 # might beable to speed this up using foreach/ vectorized code

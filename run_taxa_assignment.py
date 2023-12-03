@@ -70,6 +70,12 @@ workflow.add_argument(
 
 )
 
+workflow.add.argument(
+    name="mult",
+    desc="Species threshold multiplier",
+    default="0.5"
+)
+
 # Parsing the workflow arguments
 args = workflow.parse_args()
 
@@ -154,10 +160,10 @@ workflow.add_task(
     
 ## Assign taxonomy to queries
 workflow.add_task(
-    "src/tax.assign_parallel.R  -j [depends[0]] -o [args[0]] -t [depends[1]] -s [depends[2]] --threads [args[1]] -d [args[2]]1>&2",
+    "src/tax.assign_parallel.R  -j [depends[0]] -o [args[0]] -t [depends[1]] -s [depends[2]] --threads [args[1]] -d [args[2]] --m [args[3]]1>&2",
     depends=[os.path.join(args.output, "merged_sub.jplace"), args.namedTree, args.thresholds],
     targets=[os.path.join(args.output, "taxonomic_assignments.tsv")],
-    args=[args.output, args.threads, args.delta],
+    args=[args.output, args.threads, args.delta, args.mult],
     name="Assigning taxonomy to queries"
 )
 

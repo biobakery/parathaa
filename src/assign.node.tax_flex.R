@@ -105,7 +105,7 @@ in.tree.data$isTip <- isTip(in.tree.data, in.tree.data$node)
 
 # there are a lot of species names that are inconsistent and needed to be cleaned up!
 if(isSILVA){
-  in.tree.data <- SILVA.species.editor(in.tree.data, Task="assign_Tax")
+  in.tree.data <- SILVA.species.editor(in.tree.data)
 }
 
 in.tree.data <- in.tree.data %>% mutate(Kingdom = na_if(Kingdom, ""),
