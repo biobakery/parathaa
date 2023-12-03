@@ -70,7 +70,7 @@ workflow.add_argument(
 
 )
 
-workflow.add.argument(
+workflow.add_argument(
     name="mult",
     desc="Species threshold multiplier",
     default="0.5"
