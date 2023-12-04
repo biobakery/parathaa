@@ -10,7 +10,7 @@ Before opening a new issue here, please check the appropriate help channel on th
 ----
 
 
-**If you use PARATHAA in your work, please cite the PARATHAA :**
+**If you use PARATHAA in your work, please cite PARATHAA at:**
 [http://huttenhower.sph.harvard.edu/PARATHAA](http://huttenhower.sph.harvard.edu/PARATHAA)
 
 ----
@@ -50,6 +50,22 @@ or using the "**Clone or Download**" button.
 To run Parathaa, you should be running linux/MacOS, and you should have installed:
 - Python >=3.7
 - R > 4.0.0
+ - With the following R libraries
+ - Castor (https://cran.r-project.org/web/packages/castor/index.html)
+ - Stringr (https://cran.r-project.org/web/packages/stringr/index.html)
+ - docopt (https://cran.r-project.org/web/packages/docopt/index.html)
+ - ggtree (https://bioconductor.org/packages/release/bioc/html/ggtree.html)
+ - tidytree (https://cran.r-project.org/web/packages/tidytree/index.html)
+ - treeio (https://bioconductor.org/packages/release/bioc/html/treeio.html)
+ - dplyr (https://cran.r-project.org/web/packages/dplyr/index.html)
+ - phytools (https://cran.r-project.org/web/packages/phytools/index.html)
+ - doSNOW (https://cran.r-project.org/web/packages/doSNOW/index.html)
+ - tidyr (https://cran.r-project.org/web/packages/tidyr/index.html)
+ - ape (https://cran.r-project.org/web/packages/ape/index.html)
+ - TDbook (https://cran.r-project.org/web/packages/TDbook/index.html)
+ - readr (https://cran.r-project.org/web/packages/readr/index.html)
+ - ggplot2 (https://cran.r-project.org/web/packages/ggplot2/index.html)
+ - reshape2 (https://cran.r-project.org/web/packages/reshape2/index.html)
 - AnADAMA2: https://pypi.org/project/anadama2/
 - mothur: https://anaconda.org/bioconda/mothur
 - taxtastic: https://pypi.org/project/taxtastic/
@@ -77,7 +93,7 @@ In brief this command does the following:
 
 #### Inputs
 This command takes in the following:
-- `primers` A set of primers
+- `primers` A set of primers.
 - `database` A reference database that consists of a pre-aligned 16S rRNA gene reference set. By default we a use silva v138 seed database.
 - `taxonomy` A taxonomy file that contains the original taxonomic labels for the 16S sequences in the provided reference database
 
