@@ -191,7 +191,7 @@ if(delta>0){
     temp <- nearest.neighbor.distances(tax.df=tax_parathaa, 
                                        placement.object=in.jplace, 
                                        reference.tree=in.tree, 
-                                       max.radius=delta,
+                                       max.radius=0.2,
                                        query = query)
     return(temp)
   }
