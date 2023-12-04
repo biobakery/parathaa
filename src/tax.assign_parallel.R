@@ -196,7 +196,7 @@ if(delta>0){
     return(temp)
   }
 
-
+write.table(dists, file=file.path(opts$o, "distances.tsv"), sep='\t', quote=F, row.names=F)
   tax_parathaa <- nearest.neighbor.revisions(tax.df=tax_parathaa, 
                                              distances=dists, 
                                              radius=delta)
