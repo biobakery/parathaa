@@ -12,7 +12,6 @@ single.tax <- function(intNode, level, maxDist, cutoff, nodeGroups, falseNegRate
   ## (and if there is at least one child node; aka the node is not a tip)
   ## then 
   if(maxDist < cutoff & length(nodeGroups)!=0){
-    message("test")
     if(pbinom(sum(nodeGroups)-max(nodeGroups)-1,
               sum(nodeGroups),falseNegRate, lower.tail = F) > acceptableProb){
       # if that is correct we then assign the int node to that phylum

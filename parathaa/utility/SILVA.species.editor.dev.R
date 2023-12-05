@@ -33,9 +33,11 @@ dataf <- dataf %>%
 
 }
 
-SILVA.species.editor <- function(dataf, Task, nameStep = "spNames9"){
+SILVA.species.editor <- function(dataf){
 
 spNames <- unique(dataf$Species)
+spNames <- str_replace_all(spNames, pattern = "\\[", replacement = "")
+spNames <- str_replace_all(spNames, pattern = "\\]", replacement = "") 
 
 ## remove if "bacterium" at start <- strain-specific
 spNames2.1 <- spNames[startsWith(spNames, "bacterium")]
@@ -89,14 +91,10 @@ spNamesdf <- spNamesdf %>% mutate(spNames6 =replace(spNames5,
                                                     NA))
 
 # remove unidentified strains <- actually seem to be identified?
-#if(Task=="find_cutoffs"){
 spNames7 <- spNamesdf$spNames6[str_split(spNamesdf$spNames6, " ", simplify = T)[,2]=="str."]
 spNamesdf <- spNamesdf %>% mutate(spNames7 =replace(spNames6, 
                                                     spNames %in% spNames7, 
                                                     NA))
-#} else {
-#  spNamesdf$spNames7 <- spNamesdf$spNames6
-#}
 
 # recode identified strains
 spNames8 <- grep("str\\.", spNamesdf$spNames7, value = T)
@@ -177,7 +175,7 @@ spNamesdf <- spNamesdf %>% mutate(spNames9 =replace(spNames9,
 
 ## Recode species names in dataset
 
-renamingVec <- spNamesdf[, nameStep]
+renamingVec <- spNamesdf$spNames9
 names(renamingVec) <- spNamesdf$spNames
 
 newNames <- renamingVec[dataf$Species]
@@ -187,11 +185,11 @@ dataf$Species <- newNames
 ## remove cases where genus name doesn't match Species
 spNames10 <- strsplit(dataf$Species, split= " ")
 
-dataf$spGenera <- sapply(spNames10, function(x) x[1])
+spGenera <- sapply(spNames10, function(x) x[1])
 
-dataf$remove <- !str_detect(dataf$Genus,spGenera)
+remove <- !str_detect(dataf$Genus,spGenera)
 
-dataf$Species[dataf$remove] <- NA
+dataf$Species[remove] <- NA
 
 #remove uncultured higher-level taxa
 unc.class <- str_detect(dataf$Class, "uncultured") 

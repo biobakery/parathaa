@@ -67,13 +67,6 @@ workflow.add_argument(
 
 )
 
-# This needs a better descripition from Meg
-workflow.add_argument(
-    name="namePar",
-    desc="Testing parameter for Silva name editor [default: spNames4]",
-    default="spNames4"
-)
-
 # Parsing the workflow arguments
 args = workflow.parse_args()
 
@@ -110,7 +103,7 @@ def main():
 
     # Identify the optimal distance thresholdings for taxonomic assignment
     workflow.add_task(
-        "utility/find.cutoffs_flex_parallel.R   -d [depends[0]] -o [args[0]] -n [depends[1]] --wt1 [args[1]] --wt2 [args[2]] --threads [args[3]] --name [args[4]]",
+        "utility/find.cutoffs_flex_parallel.R   -d [depends[0]] -o [args[0]] -n [depends[1]] --wt1 [args[1]] --wt2 [args[2]] --threads [args[3]]",
         depends=[args.taxonomy, args.tree],
         targets= [args.output+"/optimal_scores.png"],
         args=[args.output, args.sweight, args.mweight, args.threads, args.namePar],

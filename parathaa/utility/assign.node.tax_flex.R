@@ -21,20 +21,15 @@ opts <- docopt(doc)
 # If we wanted we could add a loop that tries to install these packages within R?
 # Although it might be nice to have this as a seperate R script 
 # that runs on anadama workflow start up
-library(logging)
-
-# R logging example 
-loginfo("Performing analysis data", logger="")
 
 library(ggtree)
 library(treeio)
 library(tidyr)
 library(dplyr)
 library(ape)
-#library(ggimage)
 library(TDbook)
-source("utility/SILVA.species.editor.R")
-source("utility/single.tax.R")
+source("src/SILVA.species.editor.dev.R")
+source("src/single.tax.R")
 
 
 ## Bring in taxonomy file
@@ -71,15 +66,13 @@ if("start" %in% colnames(taxdata)){
   suppressWarnings({
     taxdata <- taxdata %>%
       separate(col=path, into=c("Kingdom", "Phylum", "Class", "Order", "Family", "Genus"), sep=";") %>%
-      dplyr::rename(Species = organism_name) %>%
-      filter(Kingdom=="Bacteria") 
+      dplyr::rename(Species = organism_name)
   })
 }else{
   taxdata$path <- gsub("\\|t__.*", "", taxdata$path)
   taxdata$path <- gsub("[a-z]__", "", taxdata$path)
   taxdata <- taxdata %>% separate(col=path, into=c("Kingdom", "Phylum", "Class", 
-                                                   "Order", "Family", "Genus", "Species"), sep="\\|") %>%
-    filter(Kingdom=="Bacteria")
+                                                   "Order", "Family", "Genus", "Species"), sep="\\|")
   
 }
 
@@ -112,7 +105,7 @@ in.tree.data$isTip <- isTip(in.tree.data, in.tree.data$node)
 
 # there are a lot of species names that are inconsistent and needed to be cleaned up!
 if(isSILVA){
-  in.tree.data <- SILVA.species.editor(in.tree.data, Task="assign_Tax")
+  in.tree.data <- SILVA.species.editor(in.tree.data)
 }
 
 in.tree.data <- in.tree.data %>% mutate(Kingdom = na_if(Kingdom, ""),
@@ -171,15 +164,15 @@ for (i in 1:length(internal_node_stats)){
   resultData[["tax_bestcuts"]][intNode, "maxDists"] <- maxDist
   
   #check that atleast one child node has been assigned at this taxonomy level
-  if(length(table(ch[["Kingdom"]]))!=0){
-    #maximum name which doesn't really matter with Kingdom
-    resultData[["tax_bestcuts"]][intNode, "Kingdom"] <- names(table(ch[["Kingdom"]]))[which(table(ch[["Kingdom"]])==max(table(ch[["Kingdom"]])))][[1]]
-  }
+  # if(length(table(ch[["Kingdom"]]))!=0){
+  #   #maximum name
+  #   resultData[["tax_bestcuts"]][intNode, "Kingdom"] <- names(table(ch[["Kingdom"]]))[which(table(ch[["Kingdom"]])==max(table(ch[["Kingdom"]])))][[1]]
+  # }
   #it seems the below line of code is run in the same manner but on each level of taxonomy
   #this would be a good place to convert it into a function (with good documentation)
   #and use the level of taxonomy as part of the input for that function!
   
-  for(level in c("Phylum", "Class", "Order", "Family", "Genus", "Species")){
+  for(level in c("Kingdom", "Phylum", "Class", "Order", "Family", "Genus", "Species")){
     cutoff <- cutoffs[level]
     nodeGroups <- table(ch[[level]]) ## this is done here rather than inside the function single.tax 
     ## because we only want to calculate ch once for a node (it is time-consuming)
@@ -196,11 +189,10 @@ for (i in 1:length(internal_node_stats)){
 }
 close(pb)
 
-### Define "Genus" as a clade defined by a Genus-named node with a non-Genus-named parent node, etc
-
 #check if its assigned at X level
 # check if its parent is not
 # if so call it a XNode
+resultData[["tax_bestcuts"]]$isKingdomNode <- is.na(resultData[["tax_bestcuts"]]$Kingdom[resultData[["tax_bestcuts"]]$parent]) & !is.na(resultData[["tax_bestcuts"]]$Kingdom)
 resultData[["tax_bestcuts"]]$isPhylumNode <- is.na(resultData[["tax_bestcuts"]]$Phylum[resultData[["tax_bestcuts"]]$parent]) & !is.na(resultData[["tax_bestcuts"]]$Phylum)
 resultData[["tax_bestcuts"]]$isClassNode <- is.na(resultData[["tax_bestcuts"]]$Class[resultData[["tax_bestcuts"]]$parent]) & !is.na(resultData[["tax_bestcuts"]]$Class)
 resultData[["tax_bestcuts"]]$isOrderNode <- is.na(resultData[["tax_bestcuts"]]$Order[resultData[["tax_bestcuts"]]$parent]) & !is.na(resultData[["tax_bestcuts"]]$Order)
@@ -211,6 +203,7 @@ resultData[["tax_bestcuts"]]$isSpeciesNode <- is.na(resultData[["tax_bestcuts"]]
 
 ## Save output
 save(resultData, file = file.path(opts$o, "resultTree_bestThresholds.RData"))
+
 
 
 

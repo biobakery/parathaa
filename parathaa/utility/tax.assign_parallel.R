@@ -1,7 +1,7 @@
 #!/usr/bin/env Rscript
 require(docopt)
 'Usage:
-   tax.assign.R [-j <jplace file> -o <output> -t <tree> -s <optimal_scores> --threads <threads> -d <delta>]
+   tax.assign.R [-j <jplace file> -o <output> -t <tree> -s <optimal_scores> --threads <threads> -d <delta> -m <mult>]
 
 Options:
    -j jplace file with queries placed into reference tree
@@ -10,21 +10,11 @@ Options:
    -s Optimal threshold scores
    --threads number of threads to run in parallel [default: 1]
    -d delta [default: 0.02]
+   -m mult [default: 0.5]
 
  ]' -> doc
-
-#To add as arguments: binom error params
-
 opts <- docopt(doc)
 
-library(logging)
-
-# R logging example 
-loginfo("Performing analysis data", logger="")
-
-## This function reads in a jplace object and a reference tree with taxonomy assigned
-## to interior nodes and outputs taxonomic assignments (with uncertainty) for the reads
-## in the jplace object
 
 library(ggtree)
 library(tidytree)
@@ -32,7 +22,7 @@ library(treeio)
 library(dplyr)
 library(phytools)
 library(doSNOW)
-source("utility/nearest.neighbor.revisions.R")
+source("src/nearest_neighbours_parallel.R")
 
 
 getmode <- function(v) {
@@ -64,6 +54,8 @@ delta <- as.numeric(opts$d)
 bestThresh <- plotData2 %>% group_by(Level) %>% summarise(minThreshold = mean(minThreshold))
 cutoffs <- bestThresh$minThreshold
 names(cutoffs) <- bestThresh$Level
+### Add species multiplier
+cutoffs["Species"] <- cutoffs["Species"] * as.numeric(opts$m)
 
 ## Index through query sequences to add taxonomy
 # might beable to speed this up using foreach/ vectorized code
@@ -128,15 +120,20 @@ result <- foreach(i=1:length(query.names), .combine = bind_rows, .options.snow =
   ## Find lowest justifiable taxonomic classification of placement 
   ## Using max of distances across placements to be conservative, for now
   numLevels <- lapply(maxDistPlacements, FUN=function(x) names(which(cutoffs>x))) %>% lapply(length) %>% getmode %>% unlist
-  assignmentLevels <- names(cutoffs[1:numLevels]) ### LEFT OFF HERE
+  if(numLevels != 0){
+    assignmentLevels <- names(cutoffs[1:numLevels]) ### LEFT OFF HERE
+  }else
+    assignmentLevels <- NULL
 
-  assignment <- tree.w.placements.tib[query.place.data$node, c("Kingdom", assignmentLevels)]
+
+
+  assignment <- tree.w.placements.tib[query.place.data$node, assignmentLevels]
 
   
   
   #if there is a multifurcation then assign the taxonomy as its parent node
   if(length(unique(tree.w.placements.tib$parent[query.place.data$node]))==1 & length(query.place.data$node)>1)
-    assignment <- tree.w.placements.tib[unique(tree.w.placements.tib$parent[query.place.data$node]), c("Kingdom", rev(assignmentLevels))]
+    assignment <- tree.w.placements.tib[unique(tree.w.placements.tib$parent[query.place.data$node]), rev(assignmentLevels)]
 
   
   assignment$query.name <- ind
@@ -172,11 +169,34 @@ tax_parathaa <- result %>%
 ## nearest.neighbor.distance code is extremely slow need to fix this at somepoint
 ## not a prority issue though.
 if(delta>0){
-  dists <- nearest.neighbor.distances(tax.df=tax_parathaa, 
-                                      placement.object=in.jplace, 
-                                      reference.tree=in.tree, 
-                                      max.radius=delta)
+  
+  
+  #make tree labels unique
+  in.tree$label <- make.unique(in.tree$label)
+  
+  queries.w.species <- tax_parathaa %>% 
+    filter(!is.na(Species)) %>% 
+    pull(query.name)
+  
+  
+  pb <- txtProgressBar(max=length(queries.w.species), style=3)
+  progress <- function(n) setTxtProgressBar(pb, n)
+  pb_opts <- list(progress=progress)
+  
+  dists <- foreach(i=1:length(queries.w.species), .combine=bind_rows, .options.snow=pb_opts,
+                   .packages = c("stringr", "castor")) %dopar% {
+    
+    setTxtProgressBar(pb,i)
+    query <- queries.w.species[i]
+    temp <- nearest.neighbor.distances(tax.df=tax_parathaa, 
+                                       placement.object=in.jplace, 
+                                       reference.tree=in.tree, 
+                                       max.radius=0.2,
+                                       query = query)
+    return(temp)
+  }
 
+##write.table(dists, file=file.path(opts$o, "distances.tsv"), sep='\t', quote=F, row.names=F)
   tax_parathaa <- nearest.neighbor.revisions(tax.df=tax_parathaa, 
                                              distances=dists, 
                                              radius=delta)

@@ -13,7 +13,7 @@
 
 
 
-plot_placement <- function(ids, in.tree.data, in.jplace, compare.synth, level="Genus", outputDir="output"){
+plot_placement <- function(ids, in.tree.data, in.jplace, compare.synth, level="Genus", outputDir="output", levels_back=3){
 
   for(nm in ids){ 
     plotTree <- as.phylo(in.tree.data)
@@ -25,10 +25,10 @@ plot_placement <- function(ids, in.tree.data, in.jplace, compare.synth, level="G
       plotTree <- bind.tip(plotTree, tip.label=paste0("Placement_", pind), edge.length=plc$pendant_length[pind], where=plc$node[pind], position=plc$distal_length[pind])
       plc1 <- which(plotTree$tip.label==paste0("Placement_", pind))
       ## Subset tree for plotting
-      test.tree <- tree_subset(plotTree, node=plc1, levels_back = 3)
+      test.tree <- tree_subset(plotTree, node=plc1, levels_back = levels_back)
       ## For plotability, only go 2 levels back if >50 tips
       if(nrow(as_tibble(test.tree))>50)
-        test.tree <- tree_subset(plotTree, node=plc1, levels_back = 2)
+        test.tree <- tree_subset(plotTree, node=plc1, levels_back = levels_back-1)
       
       ## Re-merge tree with taxonomy info from reference tree by label
       labelInfo <- in.tree.data %>% select(label, Kingdom, Phylum, Class, Order, Family, Genus, Species)
