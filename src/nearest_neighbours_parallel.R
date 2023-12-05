@@ -50,7 +50,7 @@ nearest.neighbor.distances <- function(tax.df, placement.object, reference.tree,
      index.dist <- get_pairwise_distances(plotTree, plc1,index.node)
      ## Flag if singleton in db and zero distance to index node (which must be a tip)
      singleton.remove <- reference.tree[plc[pind,] %>% pull(node),] %>% pull(Species) %in% singletons & 
-        (!index.tip | (index.dist > 2e-05) )
+        (!index.tip | (index.dist > 2e-12) )
     
       ## Get neighbors within a given radius
     neighbors <- extract_tip_radius(plotTree, focal_tip = paste0("Placement_", pind), radius = max.radius, include_subtree = FALSE)
@@ -100,7 +100,7 @@ nearest.neighbor.distances <- function(tax.df, placement.object, reference.tree,
       ## What is its distance to the placement node?
       index.dist <- get_pairwise_distances(as.phylo(plotTree2), placement_node,index.node)
       ## Flag if singleton in db and zero distance to index node (which must be a tip)
-      singleton.remove <- (plotTree2[index.node, "Species"] %in% singletons) & (!index.tip | (index.dist > 2e-05) )
+      singleton.remove <- (plotTree2[index.node, "Species"] %in% singletons) & (!index.tip | (index.dist > 2e-12) )
     
     
       #If there are no tips within the max radius that have different species labels we return NA

@@ -36,6 +36,8 @@ dataf <- dataf %>%
 SILVA.species.editor <- function(dataf){
 
 spNames <- unique(dataf$Species)
+spNames <- str_replace_all(spNames, pattern = "\\[", replacement = "")
+spNames <- str_replace_all(spNames, pattern = "\\]", replacement = "") 
 
 ## remove if "bacterium" at start <- strain-specific
 spNames2.1 <- spNames[startsWith(spNames, "bacterium")]
