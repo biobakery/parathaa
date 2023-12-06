@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/python
 
 
 # update parathaa code to take in one directory from step 1 with all the required files?
