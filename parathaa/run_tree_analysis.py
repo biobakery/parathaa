@@ -67,6 +67,12 @@ workflow.add_argument(
 
 )
 
+workflow.add_argument(
+    name="clean",
+    desc="Clean out intermediate files [default: true]",
+    default="true"
+)
+
 # Parsing the workflow arguments
 args = workflow.parse_args()
 
@@ -80,6 +86,8 @@ def main():
     args.tree = os.path.join(args.output, "region_specific.tree")
     #add the name for the tree log file.
     args.treelog = os.path.join(args.output, 'treelog.txt')
+
+    final_out = os.path.join(args.output, "resultTree_bestThresholds.RData")
 
     #set an environmental variable used to determine the number of threads
     os.environ["OMP_NUM_THREADS"]=args.threads
@@ -106,7 +114,7 @@ def main():
         "utility/find.cutoffs_flex_parallel.R   -d [depends[0]] -o [args[0]] -n [depends[1]] --wt1 [args[1]] --wt2 [args[2]] --threads [args[3]]",
         depends=[args.taxonomy, args.tree],
         targets= [args.output+"/optimal_scores.png"],
-        args=[args.output, args.sweight, args.mweight, args.threads, args.namePar],
+        args=[args.output, args.sweight, args.mweight, args.threads],
         name="Finding thresholds"
     )
 
@@ -116,11 +124,18 @@ def main():
         "utility/assign.node.tax_flex.R   -d [depends[0]] -o [args[0]] -n [depends[1]] --bError [args[1]] --bThreshold [args[2]]",
         depends=[args.taxonomy, args.tree,
                 args.output+"/optimal_scores.png"],
-        targets= args.output+"/resultTree_bestThresholds.RData",
+        targets=final_out,
         args=[args.output, args.errorRate, args.binoThreshold],
         name="Assigning taxonomy to internal nodes of ref tree"
         )
 
+    if args.clean == "true":
+        workflow.add_task(
+            "rm [args[0]]/internal_node_stats.RData; rm [args[0]]/*.bad.accnos; rm [args[0]]/*.pcr.8mer; rm [args[0]]/*.scrap.pcr.align; rm mothur.*.logfile",
+            depends=final_out,
+            args=args.output,
+            name="Cleaning intermediate files"
+        )
 
     # Run the workflow
     workflow.go()
