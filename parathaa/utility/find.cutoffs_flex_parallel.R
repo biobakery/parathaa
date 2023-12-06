@@ -32,6 +32,8 @@ source("utility/SILVA.species.editor.dev.R")
 source("utility/calc.error.scores.R")
 library(doSNOW)
 
+#prevents plots from auto saving when called from Rscript
+if(!interactive()) pdf(NULL)
 
 ## Bring in taxonomy file
 inFileTaxdata <- opts$d
