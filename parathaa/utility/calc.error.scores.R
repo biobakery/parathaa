@@ -12,6 +12,12 @@ calc.error.scores <- function(treeData, level, wt1=1, wt2=1){
   levelDefiningVar <- paste0("is", level, "Node")
   
   Nodes <- treeData %>% filter(!!as.symbol(levelDefiningVar)==T)
+  
+  #in some cases the cut-off might be too high and no nodes are assigned at this level
+  #in this case we will return NA
+  if(dim(Nodes)[1]==0){
+    return(NULL)
+  }
   ## First score to minimize: number of Phylum represented multiple times
   ## Second score to minimize: number of non-Phylum members clustered within a Phylum
   

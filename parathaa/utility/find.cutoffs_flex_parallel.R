@@ -230,7 +230,11 @@ outputScores <- foreach(i=1:length(cutoffs), .packages = c("dplyr", "treeio", "t
   outputScores <- list()
   for(level in c("Kingdom","Phylum", "Class", "Order", "Family", "Genus", "Species")){
     errs <- calc.error.scores(tempData, level, wt1=as.numeric(opts$wt1), wt2=as.numeric(opts$wt2))
-    outputScores[[level]][as.character(cut1)] <- errs[["scores"]]
+    if(is.null(errs)){
+      outputScores[[level]][as.character(cut1)] <- NA
+    }else{
+      outputScores[[level]][as.character(cut1)] <- errs[["scores"]] 
+    }
   }
   ret_list <- list(outputScores)
   return(ret_list)
