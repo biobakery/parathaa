@@ -22,7 +22,7 @@ library(treeio)
 library(dplyr)
 library(phytools)
 library(doSNOW)
-source("src/nearest_neighbours_parallel.R")
+source("utility/nearest_neighbours_parallel.R")
 
 
 getmode <- function(v) {

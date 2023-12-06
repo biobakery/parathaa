@@ -28,8 +28,8 @@ library(ape)
 library(ggplot2)
 library(TDbook)
 library(castor)
-source("src/SILVA.species.editor.dev.R")
-source("src/calc.error.scores.R")
+source("utility/SILVA.species.editor.dev.R")
+source("utility/calc.error.scores.R")
 library(doSNOW)
 
 
