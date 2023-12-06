@@ -90,23 +90,19 @@ def main():
         db_files = [f for f in os.listdir(args.treeFiles) if f.endswith('.pcr.align')]
         for i in db_files:
             if not i.endswith('.scrap.pcr.align'):
-                args.trimmedDatabase = args.treeFiles + i
+                args.trimmedDatabase = args.treeFiles + "/" + i
         
         temp = [f for f in os.listdir(args.treeFiles) if f.endswith('.tree')]
-        args.trimmedTree = args.treeFiles + temp[0]
-        print(args.trimmedTree)
+        args.trimmedTree = args.treeFiles + "/" + temp[0]
         
         temp = [f for f in os.listdir(args.treeFiles) if f.endswith('treelog.txt')]
-        args.treeLog = args.treeFiles + temp[0]
-        print(args.treeLog)
+        args.treeLog = args.treeFiles + "/" + temp[0]
 
         temp = [f for f in os.listdir(args.treeFiles) if f.endswith('scores.RData')]
-        args.thresholds = args.treeFiles + temp[0]
-        print(args.thresholds)
+        args.thresholds = args.treeFiles + "/" + temp[0]
 
         temp = [f for f in os.listdir(args.treeFiles) if f.endswith('holds.RData')]
-        args.namedTree = args.treeFiles + temp[0]
-        print(args.namedTree)
+        args.namedTree = args.treeFiles + "/" + temp[0]
 
 
     queryName = Path(args.query).stem
