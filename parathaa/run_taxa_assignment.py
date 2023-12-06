@@ -76,6 +76,12 @@ workflow.add_argument(
     default="0.5"
 )
 
+workflow.add_argument(
+   name="clean",
+   desc="Clean intermediate files",
+   default="true"
+)
+
 # Parsing the workflow arguments
 args = workflow.parse_args()
 
@@ -106,6 +112,7 @@ def main():
     queryName = Path(args.query).stem
     alignName = os.path.join(args.output, queryName + '.align')
 
+    final_out = os.path.join(args.output, "taxonomic_assignments.tsv")
     ## Align query reads to trimmed seed alignment
     workflow.add_task(
         "mothur '#set.dir(output=[args[0]]);set.dir(debug=[args[0]]);align.seqs(candidate=[depends[0]], template=[depends[1]])'",
@@ -163,10 +170,19 @@ def main():
     workflow.add_task(
         "utility/tax.assign_parallel.R  -j [depends[0]] -o [args[0]] -t [depends[1]] -s [depends[2]] --threads [args[1]] -d [args[2]] -m [args[3]]",
         depends=[os.path.join(args.output, "merged_sub.jplace"), args.namedTree, args.thresholds],
-        targets=[os.path.join(args.output, "taxonomic_assignments.tsv")],
+        targets=final_out,
         args=[args.output, args.threads, args.delta, args.mult],
         name="Assigning taxonomy to queries"
     )
+
+    ## Clean working directory
+    if args.clean == "true":
+        workflow.add_task(
+            "rm [args[0]]/merged.fasta; rm [args[0]]/merged_sub.fasta; rm mothur.*.logfile",
+            depends=final_out,
+            args=[args.output],
+            name="Cleaning up intermediate files"
+       )
 
     # Run the workflow
     workflow.go()
