@@ -211,7 +211,7 @@ PARATHAA also contains a few different diagnostic scripts that can be run on the
 
 - find_ambigious_tips.R
 
-This script given a PARATHAA processed tree will output a list of tips within the tree that have atleast two or more taxonomic labels on tips within the given distance radius the distance. This can be useful for identifying taxonomic groups that are pontential ambigious at the given distance threshold for that specific primer region. 
+This script given a PARATHAA processed tree will output a list of taxon within the tree that have tips with atleast one differing taxonomic label within the given distance radius. 
 
 ```
 Rscript find_ambigious_tips.R -t <labeled tree RData file ( often named: resultTree_bestThresholds.RData)> -o <output dir> -l <taxonomic level> -d <distance threshold> -s <summarize results into .tsv file (TRUE/FALSE)>
