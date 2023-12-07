@@ -144,10 +144,10 @@ inputData$maxDists <- NA
 print(acceptableProb)
 resultData[["tax_bestcuts"]] <- inputData
 
-pb = txtProgressBar(min = 0, max = length(internal_node_stats), initial = 0, style=3) 
+#pb = txtProgressBar(min = 0, max = length(internal_node_stats), initial = 0, style=3) 
 
 for (i in 1:length(internal_node_stats)){
-  setTxtProgressBar(pb,i)
+  #setTxtProgressBar(pb,i)
   #progress bar?
   intNode <- which(inputData$isTip==F)[i]
   
@@ -187,7 +187,7 @@ for (i in 1:length(internal_node_stats)){
                                                                )
   }
 }
-close(pb)
+#close(pb)
 
 #check if its assigned at X level
 # check if its parent is not

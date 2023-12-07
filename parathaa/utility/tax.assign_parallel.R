@@ -67,7 +67,7 @@ pb_opts <- list(progress=progress)
 cl <- makeCluster(as.numeric(opts$threads))
 registerDoSNOW(cl)
 
-result <- foreach(i=1:length(query.names), .combine = bind_rows, .options.snow = pb_opts,
+result <- foreach(i=1:length(query.names), .combine = bind_rows,
                   .packages = c("dplyr", "treeio", "tidytree", "phytools")) %dopar% {
   
   ind <- query.names[i]
@@ -183,10 +183,10 @@ if(delta>0){
   progress <- function(n) setTxtProgressBar(pb, n)
   pb_opts <- list(progress=progress)
   
-  dists <- foreach(i=1:length(queries.w.species), .combine=bind_rows, .options.snow=pb_opts,
+  dists <- foreach(i=1:length(queries.w.species), .combine=bind_rows,
                    .packages = c("stringr", "castor")) %dopar% {
     
-    setTxtProgressBar(pb,i)
+    #setTxtProgressBar(pb,i)
     query <- queries.w.species[i]
     temp <- nearest.neighbor.distances(tax.df=tax_parathaa, 
                                        placement.object=in.jplace, 

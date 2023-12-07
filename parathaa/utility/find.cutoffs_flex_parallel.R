@@ -135,14 +135,13 @@ pb <- txtProgressBar(max=iterations, style=3)
 progress <- function(n) setTxtProgressBar(pb, n)
 pb_opts <- list(progress=progress)
 #eventually we should write code that doesn't run it in parallel with "1" worker if the threads is set to 1...
-
 #get the maxdist of each internal node and the its tips
 
-internal_node_stats <- foreach(i=1:length(which(inputData$isTip==F)), .options.snow=pb_opts) %dopar% {
+internal_node_stats <- foreach(i=1:length(which(inputData$isTip==F))) %dopar% {
   tmp_list <- list()
   
   intNode <- which(inputData$isTip==F)[i]
-  print(paste("Node:", intNode))
+ #print(paste("Node:", intNode))
   
   tmp_node <- intNode - length(which(inputData$isTip==T))
   sub_tree <- castor::get_subtree_at_node(treeio::as.phylo(inputData), tmp_node)
@@ -164,7 +163,7 @@ progress <- function(n) setTxtProgressBar(pb, n)
 pb_opts <- list(progress=progress)
 
 
-resultData <- foreach(i=1:length(cutoffs), .options.snow=pb_opts) %dopar% {
+resultData <- foreach(i=1:length(cutoffs)) %dopar% {
   cut1 <- cutoffs[i]
   tmp_rez <- list()
   tmp_rez[[paste0("tax",cut1)]] <- inputData
@@ -208,7 +207,7 @@ pb_opts <- list(progress=progress)
 
 
 outputScores <- foreach(i=1:length(cutoffs), .packages = c("dplyr", "treeio", "tidytree", "castor"), 
-                        .combine = c, .options.snow=pb_opts) %dopar% {
+                        .combine = c) %dopar% {
   cut1 <- cutoffs[[i]]
   print(cut1)
   tempData <- resultData[[paste0("tax",cut1)]]
