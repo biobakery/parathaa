@@ -28,10 +28,10 @@ PARATHAA(Preserving and Assimilating Region-specific Ambiguities in Taxonomic Hi
 * [Installation](#Installation)
   * [Manual Installation](#Manual_Installation)
   * [Pypi Installation](#Pypi_Installation)
+* [Databases](#Databases)
 * [Workflow](#workflow)
   * [Step1](#Step1)
   * [Step2](#Step2)   
-* [Databases](#Databases)
 * [Outputs](#Outputs)
 * [Complete option list](#Complete_option_list)
 
@@ -66,7 +66,7 @@ if (!require("BiocManager", quietly = TRUE))
     install.packages("BiocManager")
 
 BiocManager::install(c("ggtree",
-                       "treeio")
+                       "treeio"))
 ```
 
 
@@ -112,6 +112,9 @@ or using the "**Clone or Download**" button.
 python setup.py install --install-scripts=/path/to/bin/dir
 ```
 
+
+
+
 ### Installation of PARATHAA through pip
 
 ```
@@ -119,7 +122,42 @@ pip install parathaa
 ```
 
 
+### Databases
 
+As part of PARATHAA we provide pre-computed databases for commonly used 16S variable regions on a SEED database of SILVA (provided by the mothur team here: https://mothur.org/wiki/silva_reference_files/
+
+We are currently working with version 138.1
+
+Use the following command to download the Pre-computed databases:
+
+
+16S Full Length - SILVA SEED 138.1
+
+```
+wget  http://huttenhower.sph.harvard.edu/parathaa_db/SILVA_FL.tar.gz
+tar -xvf SILVA_FL.tar.gz
+```
+
+16S V1V2 - SILVA SEED 138.1
+
+```
+wget  http://huttenhower.sph.harvard.edu/parathaa_db/SILVA_V1V2.tar.gz
+tar -xvf SILVA_V1V2.tar.gz
+```
+
+16S V3V4 - SILVA SEED 138.1
+
+```
+wget  http://huttenhower.sph.harvard.edu/parathaa_db/SILVA_V3V4.tar.gz
+tar -xvf SILVA_V3V4.tar.gz
+```
+
+16S V4V5 - SILVA SEED 138.1
+
+```
+wget  http://huttenhower.sph.harvard.edu/parathaa_db/SILVA_V4V5.tar.gz
+tar -xvf SILVA_V4V5.tar.gz
+```
 
 
 ### Workflow:
