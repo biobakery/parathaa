@@ -216,7 +216,7 @@ setuptools.setup(
 		"Programming Language :: Python :: 3.6",
 		"Topic :: Scientific/Engineering :: Bio-Informatics"
 	],
-	#install_requires=['anadama2>=0.7.4'],
+	install_requires=['anadama2>=0.7.4','taxtastic'],
 	packages=setuptools.find_packages(),
 	# cmdclass={'install': Install},
 	entry_points={
