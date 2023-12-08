@@ -32,8 +32,7 @@ PARATHAA(Preserving and Assimilating Region-specific Ambiguities in Taxonomic Hi
 * [Workflow](#workflow)
   * [Step1](#Step1)
   * [Step2](#Step2)   
-* [Outputs](#Outputs)
-* [Complete option list](#Complete_option_list)
+* [Diagnostics](#PARATHAA_Diagnostic_Scripts)
 
 
 ----
