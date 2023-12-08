@@ -108,16 +108,18 @@ or using the "**Clone or Download**" button.
 - install scripts to your bin directory of choice
 
 ```
-python setup.py install --install-scripts=/path/to/bin/dir
+python setup.py install 
 ```
-
-
-
 
 ### Installation of PARATHAA through pip
 
 ```
-pip install parathaa
+pip install parathaa 
+```
+**NOTE:**
+If you do not have write permissions to '/usr/lib/', then add the option "--prefix=<CUSTOM_PYTHON_LIBS_PATH>" to the parathaa install command. This will install the python package into subdirectories of '<CUSTOM_PYTHON_LIBS_PATH>' on Linux. Please note when using the "--prefix" install option on some platforms, you might need to add 'CUSTOM_PYTHON_LIBS_PATH' to your $PYTHONPATH as it might not be included by default. 
+```
+export PYTHONPATH=$PYTHONPATH:<CUSTOM_PYTHON_LIBS_PATH>
 ```
 
 
