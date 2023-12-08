@@ -32,7 +32,7 @@ library(treeio)
 generate_subtree <- function(tree, node, levels_back=3, level, auto_set=TRUE){
   subtree <- tree_subset(as.phylo(tree), node=node, levels_back = levels_back)
   subtree_tibble <- as_tibble(subtree)
-  subtree_tibble <- subtree_tibble %>% left_join(tree[,c(10:15, 4)], by='label')
+  subtree_tibble <- subtree_tibble %>% left_join(tree[,c("label", "Kingdom", "Phylum", "Class", "Order", "Family", "Genus", "Species")], by='label')
   
   if(auto_set){
     n_tips_okay <- FALSE
@@ -50,7 +50,7 @@ generate_subtree <- function(tree, node, levels_back=3, level, auto_set=TRUE){
       levels_back <- levels_back-1
       subtree <- tree_subset(as.phylo(tree), node=node, levels_back = levels_back)
       subtree_tibble <- as_tibble(subtree)
-      subtree_tibble <- subtree_tibble %>% left_join(tree[,c(10:15, 4)], by='label')
+      subtree_tibble <- subtree_tibble %>% left_join(tree[,c("label", "Kingdom", "Phylum", "Class", "Order", "Family", "Genus", "Species")], by='label')
     }else{
       n_tips_okay <- TRUE
     }
