@@ -235,6 +235,11 @@ These two options are used when calculating the optimal threshold distance along
 ##### Demo Run Step 1:
 
 Not some input files will have been gzip'd so that they can fit within this repository. Please check the input files before running and expand them with ```gunzip```. 
+
+```
+gunzip input/silva_v138/taxmap_slv_ssu_ref_138.1.txt.gz
+```
+
 ```
 parathaa_run_tree_analysis --primers input/primers/V4V5.oligos --database input/testing/tree_construction/subset_silva_seed_v138_1.align  --output output --taxonomy input/silva_v138/taxmap_slv_ssu_ref_138.1.txt
 ```
@@ -265,22 +270,27 @@ This command takes the following inputs:
 - `namedTree` an RData file containing the annotated trimmed phylogenetic tree  
 
 ##### Demo Run Step 2:
-Not some input files will have been gzip'd so that they can fit within this repository. Please check the input files before running and expand them with ```gunzip```.
+
+
+For this demo we will first need to download the Pre-computed V4V5 database.
 
 ```
-parathaa_run_taxa_assignment --trimmedDatabase input/silva_v138/Pre-computed-Trees/V4V5/silva.seed_v138_1.pcr.align \
---trimmedTree input/silva_v138/Pre-computed-Trees/V4V5/region_specific.tree \
---treeLog input/silva_v138/Pre-computed-Trees/V4V5/treelog.txt \
---query input/testing/taxa_assignment/SRR3225703_V4V5_subset.fasta \
---thresholds input/silva_v138/Pre-computed-Trees/V4V5/optimal_scores.RData \
---namedTree input/silva_v138/Pre-computed-Trees/V4V5/resultTree_bestThresholds.RData \
---output output_taxa_test
+wget  http://huttenhower.sph.harvard.edu/parathaa_db/SILVA_V4V5.tar.gz
+tar -xvf SILVA_V4V5.tar.gz
+rm SILVA_V4V5.tar.gz
 ```
+
+
+```
+python run_taxa_assignment.py --trimmedDatabase SILVA_V4V5/silva.seed_v138_1.pcr.align --treeLog SILVA_V4V5/treelog.txt --query /input/testing/taxa_assignment/SRR3225703_V4V5_subset.fasta --thresholds SILVA_V4V5/optimal_scores.RData --namedTree SILVA_V4V5/resultTree_bestThresholds.RData --output test --trimmedTree SILVA_V4V5/region_specific.tree
+```
+
+OR
 
 Alternatively you can give this command a directory that contains the ```trimmedTree```, ```treeLog```, ```trimmedDatabase```, ```thresholds```, ```namedTree```, files using the parameter ```--treeFiles```.
 
 ```
-parathaa_run_taxa_assignment --treeFiles input/silva_v138/Pre-computed-Trees/V4V5/ \
+parathaa_run_taxa_assignment --treeFiles SILVA_V4V5/ \
 --query input/testing/taxa_assignment/SRR3225703_V4V5_subset.fasta \
 --output output_taxa_test
 ```
