@@ -38,14 +38,33 @@ PARATHAA(Preserving and Assimilating Region-specific Ambiguities in Taxonomic Hi
 ----
 ### Requirements
 
-Below are the required dependencies to run Parathaa, you should be running linux/MacOS. We have included installation commands for various dependencies assuming the use of a conda environemnt. If the user wants to install outside of conda please check out each tools main page for other installation instructions.
+Below are the required dependencies to run Parathaa, you should be running linux/macOS (note if running macOS follow special instructions for pplacer install). We have included installation commands for various dependencies  If the user wants to install outside of conda please check out each tools main page for other installation instructions.
 
+- Conda environemnt manager (we suggest miniconda https://docs.conda.io/projects/miniconda/en/latest/)
 - Python >=3.7
 - R > 4.0.0
-Install the required R packages using the below code:
+
+#### Create conda environemnt and set up R and python
+
+Create a new conda environemnt and activate it:
+
+```
+conda create -n parathaa.0.1
+
+conda activate parathaa.0.1
+```
+
+Setup conda with R
+
+```
+conda install -c conda-forge r-base
+```
+
+Load R, install packages, quit:
 
 ```
 R
+
 
 install.packages(c("ape", 
                    "castor",
@@ -57,7 +76,6 @@ install.packages(c("ape",
                    "doSNOW",
                    "tidyr",
                    "TDbook",
-                   "readr",
                    "ggplot2",
                    "reshape2")) # add Ncpus = 4 to go faster
 
@@ -66,8 +84,9 @@ if (!require("BiocManager", quietly = TRUE))
 
 BiocManager::install(c("ggtree",
                        "treeio"))
-```
 
+quit()
+```
 
 - AnADAMA2: https://pypi.org/project/anadama2/
 
@@ -89,12 +108,24 @@ pip install taxtastic
 
 - fasttree: http://www.microbesonline.org/fasttree/#Install
 
+```
+conda install -c bioconda fasttree
+```
+
 Install via their website. We recommend using the multithreaded executable which is supported by parathaa. After downloading the executable please add it to PATH within your computing environment.
  
 - pplacer: https://anaconda.org/bioconda/pplacer
 
+**If using linux:**
+
 ```
 conda install -c bioconda pplacer
+```
+
+**If using macOS please install SEPP which includes a recent complited version of pplacer for macOSX. (we will package this up into its own conda environemnt in the future).**
+
+```
+conda install -c bioconda sepp
 ```
 
 
