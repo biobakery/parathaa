@@ -85,6 +85,45 @@ workflow.add_argument(
 # Parsing the workflow arguments
 args = workflow.parse_args()
 
+def get_package_file(basename, type="template"):
+    """ Get the full path to a file included in the installed python package.
+
+        Args:
+            basename (string) : The basename of the file
+            type (string) : The type of file to find (template or Rscript)
+
+        Returns: 
+            string : The full path to the file
+
+    """
+
+    if type == "template":
+        subfolder = "document_templates"
+        extension = ".pmd"
+    elif type == "image":
+        subfolder = os.path.join(os.path.pardir,"images")
+    else:
+        subfolder = "utility"
+        extension = ".R"
+
+    # get all of the templates in this folder
+    package_install_folder=os.path.join(os.path.dirname(os.path.realpath(__file__)), subfolder)
+
+    # return the template with the name
+    if type != "image":
+        found_files=list(filter(lambda file: file.endswith(extension),os.listdir(package_install_folder)))
+        matching_file=list(filter(lambda file: file.startswith(basename+extension), found_files))
+    else:
+        found_files=list(filter(lambda file: os.path.isfile(os.path.join(package_install_folder,file)),os.listdir(package_install_folder)))
+        matching_file=list(filter(lambda file: basename.lower() in file.lower(), found_files))
+
+    if matching_file:
+        matching_file=os.path.join(package_install_folder,matching_file[0])
+    else:
+        matching_file=""
+
+    return matching_file
+
 def main():
     if(len(args.treeFiles)!=0):
         db_files = [f for f in os.listdir(args.treeFiles) if f.endswith('.pcr.align')]
@@ -163,8 +202,9 @@ def main():
     # See R script for comments
         
     ## Assign taxonomy to queries
+    tax_assign_parallel = get_package_file("tax.assign_parallel.R", "Rscript")
     workflow.add_task(
-        "utility/tax.assign_parallel.R  -j [depends[0]] -o [args[0]] -t [depends[1]] -s [depends[2]] --threads [args[1]] -d [args[2]] -m [args[3]]",
+        tax_assign_parallel+"  -j [depends[0]] -o [args[0]] -t [depends[1]] -s [depends[2]] --threads [args[1]] -d [args[2]] -m [args[3]]",
         depends=[os.path.join(args.output, "merged_sub.jplace"), args.namedTree, args.thresholds],
         targets=final_out,
         args=[args.output, args.threads, args.delta, args.mult],
