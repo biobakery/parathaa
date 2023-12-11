@@ -1,37 +1,7 @@
 ## Manual/automatic SILVA species consolidation
 library(dplyr)
 library(stringr)
-library(readr)
 library(tidyr)
-
-if(FALSE){ #Reading in data for testing
-  setwd("C:/Users/mshort/Documents/proj/parathaa/")
-inFileSeed <- "input/silva.seed_v138_1.tax"
-seedTax <- read.table(inFileSeed , header=F, fill=TRUE,sep='\t', quote="")
-colnames(seedTax) <- c("label", "seedTaxonomy")
-seedTax <- seedTax %>%
-  separate(col=label, into=c("primaryAccession", "arbID"), remove=F)
-inFileTaxdata <- "input/taxmap_slv_ssu_ref_138.1.txt"
-taxdata <- read.table(inFileTaxdata , header=T, fill=TRUE,sep='\t', quote="")
-taxdata <- taxdata %>%
-  unite("AccID", c("primaryAccession", "start", "stop"), sep=".", remove=F)
-taxdata <- taxdata %>%
-  mutate(taxonomy=paste0(path, organism_name))
-
-
-#taxdata <- taxdata %>%
-#  separate(col=path, into=c("Kingdom", "Phylum", "Class", "Order", "Family", "Genus"), sep=";") %>%
-#  dplyr::rename(Species = organism_name) %>%
-#  filter(Kingdom=="Bacteria") 
-seedTax <- left_join(seedTax, taxdata, by="primaryAccession")
-length(unique(seedTax$taxonomy))
-dataf <- seedTax
-
-dataf <- dataf %>%
-  separate(col=taxonomy, into=c("Kingdom", "Phylum", "Class", "Order", "Family", "Genus", "Species"), sep=";") %>%
-  filter(Kingdom=="Bacteria")
-
-}
 
 SILVA.species.editor <- function(dataf){
 
