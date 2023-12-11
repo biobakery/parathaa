@@ -51,7 +51,7 @@ For our next release we plan to create a conda package that will cover all of th
 Create a new conda environemnt and activate it:
 
 ```
-conda create -n parathaa.0.1
+conda create -n parathaa.0.1 python=3.9
 
 conda activate parathaa.0.1
 ```
@@ -59,15 +59,19 @@ conda activate parathaa.0.1
 Setup conda with R
 
 ```
-conda install -c conda-forge r-base
+conda install -c conda-forge r-base=4.2.3
+conda install -c r r-openssl
 ```
 
 Load R, install packages, quit:
 
 ```
 R
+```
 
+```
 
+options(timeout=600)
 install.packages(c("ape", 
                    "castor",
                    "stringr", 
@@ -170,6 +174,7 @@ Use the following command to download the Pre-computed databases:
 ```
 wget  http://huttenhower.sph.harvard.edu/parathaa_db/SILVA_FL.tar.gz
 tar -xvf SILVA_FL.tar.gz
+rm SILVA_FL.tar.gz
 ```
 
 16S V1V2 - SILVA SEED 138.1
@@ -177,6 +182,7 @@ tar -xvf SILVA_FL.tar.gz
 ```
 wget  http://huttenhower.sph.harvard.edu/parathaa_db/SILVA_V1V2.tar.gz
 tar -xvf SILVA_V1V2.tar.gz
+rm SILVA_V1V2.tar.gz
 ```
 
 16S V3V4 - SILVA SEED 138.1
@@ -184,6 +190,7 @@ tar -xvf SILVA_V1V2.tar.gz
 ```
 wget  http://huttenhower.sph.harvard.edu/parathaa_db/SILVA_V3V4.tar.gz
 tar -xvf SILVA_V3V4.tar.gz
+rm SILVA_V3V4.tar.gz
 ```
 
 16S V4V5 - SILVA SEED 138.1
@@ -191,6 +198,7 @@ tar -xvf SILVA_V3V4.tar.gz
 ```
 wget  http://huttenhower.sph.harvard.edu/parathaa_db/SILVA_V4V5.tar.gz
 tar -xvf SILVA_V4V5.tar.gz
+rm SILVA_V4V5.tar.gz
 ```
 
 
