@@ -4,7 +4,7 @@
 
 require(docopt)
 'Usage:
-   find.cutoffs.R [-d <naming file> -o <output> -n <tree> --wt1 <sweight> --wt2 <mweight> --threads <threads>]
+   find.cutoffs.R [-d <naming file> -o <output> -n <tree> --wt1 <sweight> --wt2 <mweight> --threads <threads> --util1 <spec.editor_PATH> --util2 <cal.error_PATH>]
 
 Options:
    -d naming file [default: input/taxmap_slv_ssu_ref_138.1.txt]
@@ -13,6 +13,8 @@ Options:
    --wt1 over-split penalty weight [default: 1]
    --wt2 over-merge penalty weight [default: 1]
    --threads number of threads to run in parallel [default: 1]
+   --util1 path to utility file 1 [default: utility/SILVA.species.editor.dev.R]
+   --util2 path to utility file 2 [default: utility/calc.error.scores.R]
 
  ]' -> doc
 
@@ -28,8 +30,8 @@ library(ape)
 library(ggplot2)
 library(TDbook)
 library(castor)
-source("utility/SILVA.species.editor.dev.R")
-source("utility/calc.error.scores.R")
+source(opts$util1)
+source(opts$util2)
 library(doSNOW)
 
 #prevents plots from auto saving when called from Rscript

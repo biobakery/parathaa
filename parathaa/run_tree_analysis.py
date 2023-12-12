@@ -149,24 +149,27 @@ def main():
 
 
     # Identify the optimal distance thresholdings for taxonomic assignment
-    find_cutoffs_flex_parallel = get_package_file("find.cutoffs_flex_parallel.R", "Rscript")
+    find_cutoffs_flex_parallel = get_package_file("find.cutoffs_flex_parallel", "Rscript")
+    spec_dev = get_package_file("SILVA.species.editor.dev", "Rscript")
+    calc_error = get_package_file("calc.error.scores", "Rscript")
     workflow.add_task(
-        find_cutoffs_flex_parallel+" -d [depends[0]] -o [args[0]] -n [depends[1]] --wt1 [args[1]] --wt2 [args[2]] --threads [args[3]]",
+        find_cutoffs_flex_parallel+" -d [depends[0]] -o [args[0]] -n [depends[1]] --wt1 [args[1]] --wt2 [args[2]] --threads [args[3]] --util1 [args[4]] --util2 [args[5]]",
         depends=[args.taxonomy, args.tree],
         targets= [args.output+"/optimal_scores.png"],
-        args=[args.output, args.sweight, args.mweight, args.threads],
+        args=[args.output, args.sweight, args.mweight, args.threads, spec_dev, calc_error],
         name="Finding thresholds"
     )
 
 
     ## Assign taxonomy to the internal nodes of the phylogenetic tree
-    assign_node_tax_flex = get_package_file("assign.node.tax_flex.R", "Rscript")
+    assign_node_tax_flex = get_package_file("assign.node.tax_flex", "Rscript")
+    single_tax = get_package_file("single.tax", "Rscript")
     workflow.add_task(
-        assign_node_tax_flex+" -d [depends[0]] -o [args[0]] -n [depends[1]] --bError [args[1]] --bThreshold [args[2]]",
+        assign_node_tax_flex+" -d [depends[0]] -o [args[0]] -n [depends[1]] --bError [args[1]] --bThreshold [args[2]] --util1 [args[3]] --util2 [args[4]]",
         depends=[args.taxonomy, args.tree,
                 args.output+"/optimal_scores.png"],
         targets=final_out,
-        args=[args.output, args.errorRate, args.binoThreshold],
+        args=[args.output, args.errorRate, args.binoThreshold, spec_dev, single_tax],
         name="Assigning taxonomy to internal nodes of ref tree"
         )
 

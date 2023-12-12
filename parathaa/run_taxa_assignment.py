@@ -202,12 +202,13 @@ def main():
     # See R script for comments
         
     ## Assign taxonomy to queries
-    tax_assign_parallel = get_package_file("tax.assign_parallel.R", "Rscript")
+    tax_assign_parallel = get_package_file("tax.assign_parallel", "Rscript")
+    nearest_neighbour = get_package_file("nearest_neighbours_parallel", "Rscript")
     workflow.add_task(
-        tax_assign_parallel+"  -j [depends[0]] -o [args[0]] -t [depends[1]] -s [depends[2]] --threads [args[1]] -d [args[2]] -m [args[3]]",
+        tax_assign_parallel+"  -j [depends[0]] -o [args[0]] -t [depends[1]] -s [depends[2]] --threads [args[1]] -d [args[2]] -m [args[3]] --util1 [args[4]]",
         depends=[os.path.join(args.output, "merged_sub.jplace"), args.namedTree, args.thresholds],
         targets=final_out,
-        args=[args.output, args.threads, args.delta, args.mult],
+        args=[args.output, args.threads, args.delta, args.mult, nearest_neighbour],
         name="Assigning taxonomy to queries"
     )
 

@@ -3,7 +3,7 @@
 
 require(docopt)
 'Usage:
-   assign.node.tax.R [-d <naming file> -o <output> -n <tree> --bError <error_rate> --bThreshold <threshold>]
+   assign.node.tax.R [-d <naming file> -o <output> -n <tree> --bError <error_rate> --bThreshold <threshold> --util1 <spec.editor_PATH> --util2 <single.tax.R PATH>]
 
 Options:
    -d naming file [default: input/taxmap_slv_ssu_ref_138.1.txt]
@@ -11,6 +11,8 @@ Options:
    -n tree [default: output/20230406_testrun/region_specific.tree]
    --bError binomial error rate [default: 0.05]
    --bThreshold binomial error rate [default: 0.20]
+   --util1 PATH to SILVA.species.editor.dev.R [default: utility/SILVA.species.editor.dev.R]
+   --util2 PATH to single.tax.R [default: utility/single.tax.r] 
    
  ]' -> doc
 
@@ -28,8 +30,8 @@ library(tidyr)
 library(dplyr)
 library(ape)
 library(TDbook)
-source("utility/SILVA.species.editor.dev.R")
-source("utility/single.tax.R")
+source(opts$util1)
+source(opts$util2)
 
 
 ## Bring in taxonomy file

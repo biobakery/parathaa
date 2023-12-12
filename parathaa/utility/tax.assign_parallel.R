@@ -1,7 +1,7 @@
 #!/usr/bin/env Rscript
 require(docopt)
 'Usage:
-   tax.assign.R [-j <jplace file> -o <output> -t <tree> -s <optimal_scores> --threads <threads> -d <delta> -m <mult>]
+   tax.assign.R [-j <jplace file> -o <output> -t <tree> -s <optimal_scores> --threads <threads> -d <delta> -m <mult> --util1 <nearest_neighbor_PATH>]
 
 Options:
    -j jplace file with queries placed into reference tree
@@ -11,6 +11,7 @@ Options:
    --threads number of threads to run in parallel [default: 1]
    -d delta [default: 0.02]
    -m mult [default: 0.5]
+   --util1 PATH to nearest_neighbours_parallel.R [default: utility/nearest_neighbours_parallel.R]
 
  ]' -> doc
 opts <- docopt(doc)
@@ -22,7 +23,7 @@ library(treeio)
 library(dplyr)
 library(phytools)
 library(doSNOW)
-source("utility/nearest_neighbours_parallel.R")
+source(opts$util1)
 
 
 getmode <- function(v) {
