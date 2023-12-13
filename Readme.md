@@ -18,7 +18,7 @@ Before opening a new issue here, please check the appropriate help channel on th
 
 **For additional information, read the [PARATHAA Tutorial](https://github.com/biobakery/biobakery/wiki/PARATHAA)**
 
-PARATHAA(Preserving and Assimilating Region-specific Ambiguities in Taxonomic Hierarchical Assignments for Amplicons) is a tool used for the taxonomic assignment of 16S rRNA gene sequences that takes into account the uncertainty associated with using specific variable regions/primers. PARATHAA does this by generating new primer-trimmed phylogenetic trees from reference 16S rRNA gene datasets and then determines the optimal phylogenetic distances within that tree for taxonomic labeling. PARATHAA then can use this tree to assign taxonomy to query 16S rRNA gene sequences by aligning and placing those sequences into the new primer-trimmed reference database.
+PARATHAA (Preserving and Assimilating Region-specific Ambiguities in Taxonomic Hierarchical Assignments for Amplicons) is a tool used for the taxonomic assignment of 16S rRNA gene sequences that takes into account the uncertainty associated with using specific variable regions/primers. PARATHAA does this by generating new primer-trimmed phylogenetic trees from reference 16S rRNA gene datasets and then determines the optimal phylogenetic distances within that tree for taxonomic labeling. PARATHAA then can use this tree to assign taxonomy to query 16S rRNA gene sequences by aligning and placing those sequences into the new primer-trimmed reference database.
 
 ----
 
@@ -38,7 +38,7 @@ PARATHAA(Preserving and Assimilating Region-specific Ambiguities in Taxonomic Hi
 ----
 ### Requirements
 
-Below are the required dependencies to run Parathaa, you should be running linux/macOS (note if running macOS follow special instructions for pplacer install). We have included installation commands for various dependencies  If the user wants to install outside of conda please check out each tools main page for other installation instructions.
+Below are the required dependencies to run Parathaa, you should be running linux/macOS (note if running macOS follow special instructions for pplacer install). We have included installation commands for various dependencies  If the user wants to install outside of conda please check out each tool's main page for other installation instructions.
 
 For our next release we plan to create a conda package that will cover all of these dependencies automatically.
 
@@ -128,7 +128,7 @@ Install via their website. We recommend using the multithreaded executable which
 conda install -c bioconda pplacer
 ```
 
-**If using macOS please install SEPP which includes a recent complited version of pplacer for macOSX. (we will package this up into its own conda environemnt in the future).**
+**If using macOS please install SEPP which includes a recent compiled version of pplacer for macOSX. (we will package this up into its own conda environemnt in the future).**
 
 ```
 conda install -c bioconda sepp
@@ -162,7 +162,7 @@ export PYTHONPATH=$PYTHONPATH:<CUSTOM_PYTHON_LIBS_PATH>
 
 ### Databases
 
-As part of PARATHAA we provide pre-computed databases for commonly used 16S variable regions on a SEED database of SILVA (provided by the mothur team here: https://mothur.org/wiki/silva_reference_files/
+As part of PARATHAA we provide pre-computed databases for commonly used 16S variable regions on a SEED database of SILVA (provided by the mothur team here: https://mothur.org/wiki/silva_reference_files/)
 
 We are currently working with version 138.1
 
@@ -217,7 +217,7 @@ In brief this command does the following:
 1. Takes in the reference MSA and trims the sequences to the region that was amplified based on the given set of primers
 2. Generates a new phylogenetic tree based on these newly trimmed sequences using FastTree
 3. Finds the appropriate distance thresholding cutoffs for each taxonomic level
-4. Assigns taxonomy to the internal nodes of the new primer trimmed reference tree
+4. Assigns taxonomy to the internal nodes of the new primer-trimmed reference tree
 
 
 #### Inputs
@@ -227,8 +227,8 @@ This command takes in the following:
 - `taxonomy` A taxonomy file that contains the original taxonomic labels for the 16S sequences in the provided reference database
 
 There are two optional commands as well:
-- ```swight``` which controls the penalty weighting for over splitting taxonomic groups
-- ```mwight``` which controls the penalty weighting for over merge taxonomic groups
+- ```sweight``` which controls the penalty weighting for over splitting taxonomic groups
+- ```mweight``` which controls the penalty weighting for over merge taxonomic groups
 
 These two options are used when calculating the optimal threshold distance along the tree for each taxonomic level. 
 
