@@ -230,7 +230,7 @@ There are two optional commands as well:
 - ```sweight``` which controls the penalty weighting for over splitting taxonomic groups
 - ```mweight``` which controls the penalty weighting for over merge taxonomic groups
 
-These two options are used when calculating the optimal threshold distance along the tree for each taxonomic level. 
+These two options are used when calculating the optimal threshold distance along the tree for each taxonomic level, and their default values are each 1, which weights over-splitting and over-merging equally. 
 
 ##### Demo Run Step 1:
 
@@ -267,7 +267,11 @@ This command takes the following inputs:
 - `treeLog` the treelog.txt file generated from step 1
 - `query` the 16S sequences that you want to assign taxonomy
 - `thresholds` an RData file containing the optimal phylogenetic distances for taxonomic assignment
-- `namedTree` an RData file containing the annotated trimmed phylogenetic tree  
+- `namedTree` an RData file containing the annotated trimmed phylogenetic tree
+
+There are two optional commands as well, related to species-level classifications:
+- ```delta``` which controls which species assignments are removed due to nearby reference sequences from different species. Default value is 0.005; we recommend setting this to 0.5 * the species threshold identified by Parathaa for your region in step 1.
+- ```mult``` which shrinks the species threshold for better performance. Default value is 0.5, which is recommended.
 
 ##### Demo Run Step 2:
 
