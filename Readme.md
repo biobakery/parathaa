@@ -42,13 +42,13 @@ Below are the required dependencies to run Parathaa, you should be running linux
 
 For our next release we plan to create a conda package that will cover all of these dependencies automatically.
 
-- Conda environemnt manager (we suggest miniconda https://docs.conda.io/projects/miniconda/en/latest/)
+- Conda (we suggest miniconda https://docs.conda.io/projects/miniconda/en/latest/ although any flavor should work)
 - Python >=3.7
 - R > 4.0.0
 
-#### Create conda environemnt and set up R and python
+#### Create conda environment and set up R and python
 
-Create a new conda environemnt and activate it:
+Create a new conda environment and activate it:
 
 ```
 conda create -n parathaa.0.1 python=3.9
@@ -118,7 +118,7 @@ pip install taxtastic
 conda install -c bioconda fasttree
 ```
 
-Install via their website. We recommend using the multithreaded executable which is supported by parathaa. After downloading the executable please add it to PATH within your computing environment.
+Or install via their website. We recommend using the multithreaded executable which is supported by parathaa. After downloading the executable please add it to PATH within your computing environment.
  
 - pplacer: https://anaconda.org/bioconda/pplacer
 
@@ -128,7 +128,7 @@ Install via their website. We recommend using the multithreaded executable which
 conda install -c bioconda pplacer
 ```
 
-**If using macOS please install SEPP which includes a recent compiled version of pplacer for macOSX. (we will package this up into its own conda environemnt in the future).**
+**If using macOS please install SEPP which includes a recent compiled version of pplacer for macOSX. (we will package this up into its own conda environemnt in the future)**
 
 ```
 conda install -c bioconda sepp
