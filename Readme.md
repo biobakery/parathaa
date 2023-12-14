@@ -286,7 +286,7 @@ rm SILVA_V4V5.tar.gz
 
 
 ```
-python run_taxa_assignment.py --trimmedDatabase SILVA_V4V5/silva.seed_v138_1.pcr.align --treeLog SILVA_V4V5/treelog.txt --query /input/testing/taxa_assignment/SRR3225703_V4V5_subset.fasta --thresholds SILVA_V4V5/optimal_scores.RData --namedTree SILVA_V4V5/resultTree_bestThresholds.RData --output test --trimmedTree SILVA_V4V5/region_specific.tree
+parathaa_run_taxa_assignment --trimmedDatabase SILVA_V4V5/silva.seed_v138_1.pcr.align --treeLog SILVA_V4V5/treelog.txt --query /input/testing/taxa_assignment/SRR3225703_V4V5_subset.fasta --thresholds SILVA_V4V5/optimal_scores.RData --namedTree SILVA_V4V5/resultTree_bestThresholds.RData --output test --trimmedTree SILVA_V4V5/region_specific.tree
 ```
 
 OR
