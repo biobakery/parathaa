@@ -9,7 +9,7 @@ Options:
    -t reference tree with named internal nodes
    -s Optimal threshold scores
    --threads number of threads to run in parallel [default: 1]
-   -d delta [default: 0.02]
+   -d delta [default: -1]
    -m mult [default: 0.5]
    --util1 PATH to nearest_neighbours_parallel.R [default: utility/nearest_neighbours_parallel.R]
 
@@ -57,6 +57,12 @@ cutoffs <- bestThresh$minThreshold
 names(cutoffs) <- bestThresh$Level
 ### Add species multiplier
 cutoffs["Species"] <- cutoffs["Species"] * as.numeric(opts$m)
+
+
+#if delta is left to default change to 0.5 times the species multiper
+if(delta==-1){
+   delta <- cutoffs["Species"]*0.5
+}
 
 ## Index through query sequences to add taxonomy
 # might beable to speed this up using foreach/ vectorized code

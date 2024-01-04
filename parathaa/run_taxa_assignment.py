@@ -66,7 +66,7 @@ workflow.add_argument(
 workflow.add_argument(
     name="delta",
     desc="Second thresholding value for Species that looks at neighbouring tips",
-    default="0.005"
+    default="-1"
 
 )
 
