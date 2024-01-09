@@ -1,7 +1,7 @@
 #!/usr/bin/env Rscript
 require(docopt)
 'Usage:
-   tax.assign.R [-j <jplace file> -o <output> -t <tree> -s <optimal_scores> --threads <threads> -d <delta> -m <mult> --util1 <nearest_neighbor_PATH>]
+   tax.assign.R [-j <jplace file> -o <output> -t <tree> -s <optimal_scores> --threads <threads> -d <delta> -m <mult> -md <mult_delta> --util1 <nearest_neighbor_PATH>]
 
 Options:
    -j jplace file with queries placed into reference tree
@@ -11,6 +11,7 @@ Options:
    --threads number of threads to run in parallel [default: 1]
    -d delta [default: 999]
    -m mult [default: 0.5]
+   --md [default: 0.5]
    --util1 PATH to nearest_neighbours_parallel.R [default: utility/nearest_neighbours_parallel.R]
 
  ]' -> doc
@@ -61,7 +62,7 @@ cutoffs["Species"] <- cutoffs["Species"] * as.numeric(opts$m)
 
 #if delta is left to default change to 0.5 times the species multiper
 if(delta==999){
-   delta <- cutoffs["Species"]*0.5
+   delta <- cutoffs["Species"]*opts$md
 }
 
 ## Index through query sequences to add taxonomy

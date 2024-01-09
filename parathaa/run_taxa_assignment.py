@@ -82,6 +82,12 @@ workflow.add_argument(
    default="true"
 )
 
+workflow.add_argument(
+    name="deltamult",
+    desc="Mutlipler for delta value if delta is not set",
+    default="0.5"
+)
+
 # Parsing the workflow arguments
 args = workflow.parse_args()
 
@@ -205,10 +211,10 @@ def main():
     tax_assign_parallel = get_package_file("tax.assign_parallel", "Rscript")
     nearest_neighbour = get_package_file("nearest_neighbours_parallel", "Rscript")
     workflow.add_task(
-        tax_assign_parallel+"  -j [depends[0]] -o [args[0]] -t [depends[1]] -s [depends[2]] --threads [args[1]] -d [args[2]] -m [args[3]] --util1 [args[4]]",
+        tax_assign_parallel+"  -j [depends[0]] -o [args[0]] -t [depends[1]] -s [depends[2]] --threads [args[1]] -d [args[2]] -m [args[3]] --util1 [args[4]] --md [args[5]]",
         depends=[os.path.join(args.output, "merged_sub.jplace"), args.namedTree, args.thresholds],
         targets=final_out,
-        args=[args.output, args.threads, args.delta, args.mult, nearest_neighbour],
+        args=[args.output, args.threads, args.delta, args.mult, nearest_neighbour, args.deltamult],
         name="Assigning taxonomy to queries"
     )
 
