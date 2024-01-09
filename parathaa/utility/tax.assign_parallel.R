@@ -1,7 +1,7 @@
 #!/usr/bin/env Rscript
 require(docopt)
 'Usage:
-   tax.assign.R [-j <jplace file> -o <output> -t <tree> -s <optimal_scores> --threads <threads> -d <delta> -m <mult> -md <mult_delta> --util1 <nearest_neighbor_PATH>]
+   tax.assign.R [-j <jplace file> -o <output> -t <tree> -s <optimal_scores> --threads <threads> -d <delta> -m <mult> --md <mult_delta> --util1 <nearest_neighbor_PATH>]
 
 Options:
    -j jplace file with queries placed into reference tree
