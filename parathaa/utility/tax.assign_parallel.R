@@ -62,7 +62,7 @@ cutoffs["Species"] <- cutoffs["Species"] * as.numeric(opts$m)
 
 #if delta is left to default change to 0.5 times the species multiper
 if(delta==999){
-   delta <- cutoffs["Species"]*opts$md
+   delta <- cutoffs["Species"]* as.numeric(opts$md)
 }
 
 ## Index through query sequences to add taxonomy
