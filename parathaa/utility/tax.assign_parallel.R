@@ -121,12 +121,9 @@ result <- foreach(i=1:length(query.names), .combine = bind_rows,
   #if there is a placement that is identical to the query just use those for assignment.
   if(min(maxDistPlacements) < 0.00001){
     maxDistPlacements <- maxDistPlacements[which(maxDistPlacements < 0.00001)]
-  }
-  
-  #what does this do?
-  if(length(maxDistPlacements)==1) ## If only one placement, maxDistPlacements isn't named, so add name
+  }else if(length(maxDistPlacements)==1){ ## If only one placement, maxDistPlacements isn't named, so add name
     names(maxDistPlacements) <- query.place.data$node
-  
+  }
   ## Load thresholds for levels
 
   
