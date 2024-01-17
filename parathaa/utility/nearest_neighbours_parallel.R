@@ -29,7 +29,7 @@ nearest.neighbor.distances <- function(tax.df, placement.object, reference.tree,
   plotTree <- as.phylo(reference.tree)
   ## Extract placements
   plc <- placement.object@placements[which(placement.object@placements$name==query),] %>% arrange(desc(like_weight_ratio))
-  plc <- plc %>% filter(like_weight_ratio > 0.5*max(like_weight_ratio))
+  plc <- plc %>% filter(like_weight_ratio == max(like_weight_ratio))
     
     
     #go through each placement for that query sequence

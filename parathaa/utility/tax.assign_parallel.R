@@ -81,7 +81,7 @@ result <- foreach(i=1:length(query.names), .combine = bind_rows,
   ind <- query.names[i]
   setTxtProgressBar(pb,i)
   ## Read in data, filter to most likely placement(s) and make various useful formats of it
-  query.place.data <- in.jplace@placements %>% filter(name==ind)  %>% filter(like_weight_ratio > 0.5*max(like_weight_ratio))
+  query.place.data <- in.jplace@placements %>% filter(name==ind)  %>% filter(like_weight_ratio == max(like_weight_ratio))
   tree.w.placements <- left_join(in.tree, query.place.data, by="node")
   class(tree.w.placements) <- c("tbl_tree", class(tree.w.placements))
   tree.w.placements.phy <- tidytree::as.phylo(tree.w.placements)
@@ -119,13 +119,17 @@ result <- foreach(i=1:length(query.names), .combine = bind_rows,
   maxDistPlacements <- maxNodeHeights-tree.w.placements.tib$nodeHeight[query.place.data$node] + tree.w.placements.tib$distal_length[query.place.data$node] + tree.w.placements.tib$pendant_length[query.place.data$node]
   
   #if there is a placement that is identical to the query just use those for assignment.
-  if(min(maxDistPlacements) < 0.00001){
-    maxDistPlacements <- maxDistPlacements[which(maxDistPlacements < 0.00001)]
-  }else if(length(maxDistPlacements)==1){ ## If only one placement, maxDistPlacements isn't named, so add name
-    names(maxDistPlacements) <- query.place.data$node
-  }
+  #if(min(maxDistPlacements) < 0.00001){
+   # maxDistPlacements <- maxDistPlacements[which(maxDistPlacements < 0.00001)]
+  #}else if(length(maxDistPlacements)==1){ ## If only one placement, maxDistPlacements isn't named, so add name
+   # names(maxDistPlacements) <- query.place.data$node
+  #}
+  
+  
   ## Load thresholds for levels
 
+  if(length(maxDistPlacements)==1)## If only one placement, maxDistPlacements isn't named, so add name
+    names(maxDistPlacements) <- query.place.data$node
   
   ## Find lowest justifiable taxonomic classification of placement 
   ## Using max of distances across placements to be conservative, for now
