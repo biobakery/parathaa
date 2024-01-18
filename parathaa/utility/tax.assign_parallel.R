@@ -81,7 +81,7 @@ result <- foreach(i=1:length(query.names), .combine = bind_rows,
   ind <- query.names[i]
   setTxtProgressBar(pb,i)
   ## Read in data, filter to most likely placement(s) and make various useful formats of it
-  query.place.data <- in.jplace@placements %>% filter(name==ind)  %>% filter(like_weight_ratio == max(like_weight_ratio))
+  query.place.data <- in.jplace@placements %>% filter(name==ind)  %>% filter(like_weight_ratio >= 0.5*max(like_weight_ratio))
   tree.w.placements <- left_join(in.tree, query.place.data, by="node")
   class(tree.w.placements) <- c("tbl_tree", class(tree.w.placements))
   tree.w.placements.phy <- tidytree::as.phylo(tree.w.placements)
