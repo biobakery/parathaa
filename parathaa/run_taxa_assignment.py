@@ -66,14 +66,14 @@ workflow.add_argument(
 workflow.add_argument(
     name="delta",
     desc="Second thresholding value for Species that looks at neighbouring tips",
-    default="999"
+    default="0"
 
 )
 
 workflow.add_argument(
     name="mult",
     desc="Species threshold multiplier",
-    default="0.5"
+    default="0.1"
 )
 
 workflow.add_argument(
@@ -88,8 +88,19 @@ workflow.add_argument(
     default="0.5"
 )
 
+workflow.add_argument(
+    "sensitive", 
+    desc="Run parathaa in sensitive mode using a non reduced optimal threshold", 
+    action="store_true"
+)
+
+
 # Parsing the workflow arguments
 args = workflow.parse_args()
+
+if(args.sensitive):
+    print("Parathaa is running in sensitive mode setting delta to 0 and species threshold multipler to 1")
+    args.mult=1
 
 def get_package_file(basename, type="template"):
     """ Get the full path to a file included in the installed python package.

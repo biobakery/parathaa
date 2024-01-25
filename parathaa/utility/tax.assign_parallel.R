@@ -9,8 +9,8 @@ Options:
    -t reference tree with named internal nodes
    -s Optimal threshold scores
    --threads number of threads to run in parallel [default: 1]
-   -d delta [default: 999]
-   -m mult [default: 0.5]
+   -d delta [default: 0]
+   -m mult [default: 0.1]
    --md [default: 0.5]
    --util1 PATH to nearest_neighbours_parallel.R [default: utility/nearest_neighbours_parallel.R]
 
@@ -178,6 +178,23 @@ tax_parathaa <- result %>%
             Family = pick.taxon(Family),
             Genus = pick.taxon(Genus),
             Species = pick.taxon(Species))
+
+levels <- c("Kingdom", "Phylum", "Class", "Order", "Family", "Genus", "Species")
+for (i in 1:nrow(tax_parathaa)) {
+  if(grepl(";", tax_parathaa[i,"Kingdom"])){
+    tax_parathaa[i,levels[-1]] <- NA
+  }else if(grepl(";", tax_parathaa[i, "Phylum"])){
+    tax_parathaa[i, levels[-c(1,2)]] <- NA
+  }else if(grepl(";", tax_parathaa[i, "Class"])){
+    tax_parathaa[i, levels[-c(1,2,3)]] <- NA
+  }else if(grepl(";", tax_parathaa[i, "Order"])){
+    tax_parathaa[i, levels[-c(1,2,3,4)]] <- NA
+  }else if(grepl(";", tax_parathaa[i, "Family"])){
+    tax_parathaa[i, levels[-c(1,2,3,4,5)]] <- NA
+  }else if(grepl(";", tax_parathaa[i, "Genus"])){
+    tax_parathaa[i, levels[-c(1,2,3,4,5,6)]] <- NA
+  }
+}
 
 
 ## nearest.neighbor.distance code is extremely slow need to fix this at somepoint
