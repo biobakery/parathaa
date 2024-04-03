@@ -62,7 +62,7 @@ plot_placement <- function(ids, in.tree.data, in.jplace, level="Genus", outputDi
       labelInfo <- in.tree.data %>% select(label, Kingdom, Phylum, Class, Order, Family, Genus, Species)
       plotTree2 <- left_join(as_tibble(test.tree), labelInfo)
       ## Get real taxonomy and assigned taxonomy for query
-      parName <- assignments[ids,-8]
+      parName <- assignments[nm,-8]
       Name <- paste(unlist(parName), collapse=";")
       
       levels <- c("Kingdom", "Phylum", "Class", "Order", "Family", "Genus", "Species")
