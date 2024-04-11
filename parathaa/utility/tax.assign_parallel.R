@@ -1,7 +1,7 @@
 #!/usr/bin/env Rscript
 require(docopt)
 'Usage:
-   tax.assign.R [-j <jplace file> -o <output> -t <tree> -s <optimal_scores> --threads <threads> -d <delta> -m <mult> --md <mult_delta> --util1 <nearest_neighbor_PATH>]
+   tax.assign.R [-j <jplace file> -o <output> -t <tree> -s <optimal_scores> --threads <threads> -d <delta> -m <mult> --md <mult_delta> --util1 <nearest_neighbor_PATH> --genus_mult <genus_multi> ]
 
 Options:
    -j jplace file with queries placed into reference tree
@@ -13,6 +13,7 @@ Options:
    -m mult [default: 0.1]
    --md [default: 0.5]
    --util1 PATH to nearest_neighbours_parallel.R [default: utility/nearest_neighbours_parallel.R]
+   --genus_mult [default: 1]
 
  ]' -> doc
 opts <- docopt(doc)
@@ -56,12 +57,17 @@ delta <- as.numeric(opts$d)
 bestThresh <- plotData2 %>% group_by(Level) %>% summarise(minThreshold = mean(minThreshold))
 cutoffs <- bestThresh$minThreshold
 names(cutoffs) <- bestThresh$Level
-### Add species multiplier
+
+
+
+### Add species multiplier default is 0.1 in "sensitive mode"
 cutoffs["Species"] <- cutoffs["Species"] * as.numeric(opts$m)
 
+### Add genus threshold multipler default is 1 in all modes
+cutoffs["Genus"] <- cutoffs["Genus"]*as.numeric(opts$genus_mult)
 
-#if delta is left to default change to 0.5 times the species multiper
-if(delta==999){
+#if delta multiplier is not left to default (0) change the delta nultipler value (default 0.5)
+if(delta!=0){
    delta <- cutoffs["Species"]* as.numeric(opts$md)
 }
 
@@ -151,7 +157,10 @@ result <- foreach(i=1:length(query.names), .combine = bind_rows,
 
   
   assignment$query.name <- ind
-  assignment$maxDist <- max(maxDistPlacements)
+  
+  rm_dist_index <- which(is.na(assignment[,names(cutoffs[numLevels])]))
+  assignment$maxDist <- max(maxDistPlacements[-rm_dist_index])
+  
   #assignment$same_testing <- maxNodeHeights == tree.w.placements.tib$nodeHeight[query.place.data$node]
   #I think it both cases the calculations are only correct for tips and not internal node placements.
   return(assignment)

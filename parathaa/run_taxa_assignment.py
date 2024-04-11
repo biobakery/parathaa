@@ -94,6 +94,12 @@ workflow.add_argument(
     action="store_true"
 )
 
+workflow.add_argument(
+    name="genusmult",
+    desc="mutlipler that can be applied to the genus level thresholding",
+    default="1"
+)
+
 
 # Parsing the workflow arguments
 args = workflow.parse_args()
@@ -222,10 +228,10 @@ def main():
     tax_assign_parallel = get_package_file("tax.assign_parallel", "Rscript")
     nearest_neighbour = get_package_file("nearest_neighbours_parallel", "Rscript")
     workflow.add_task(
-        tax_assign_parallel+"  -j [depends[0]] -o [args[0]] -t [depends[1]] -s [depends[2]] --threads [args[1]] -d [args[2]] -m [args[3]] --util1 [args[4]] --md [args[5]]",
+        tax_assign_parallel+"  -j [depends[0]] -o [args[0]] -t [depends[1]] -s [depends[2]] --threads [args[1]] -d [args[2]] -m [args[3]] --util1 [args[4]] --md [args[5]] --genus_mult [args[6]]",
         depends=[os.path.join(args.output, "merged_sub.jplace"), args.namedTree, args.thresholds],
         targets=final_out,
-        args=[args.output, args.threads, args.delta, args.mult, nearest_neighbour, args.deltamult],
+        args=[args.output, args.threads, args.delta, args.mult, nearest_neighbour, args.deltamult, args.genusmult],
         name="Assigning taxonomy to queries"
     )
 

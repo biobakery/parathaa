@@ -21,8 +21,8 @@ workflow = Workflow(
 
 workflow.add_argument(
     name="primers",
-    desc="File with primer oligos [default: input/EMPV4.oligos]",
-    default="input/EMPV4.oligos")
+    desc="File with primer oligos [default: none]",
+    default="none")
     
 workflow.add_argument(
     name="database",
@@ -132,12 +132,19 @@ def main():
     os.environ["OMP_NUM_THREADS"]=args.threads
 
     ## Trim the aligned 16S database to the primer inputs
-    workflow.add_task(
-        "mothur -q '#set.dir(output=[args[0]]);pcr.seqs(fasta = [depends[0]], oligos=[depends[1]], pdiffs=3, rdiffs=3, keepdots=t)'",
-        depends=[args.database, args.primers],
-        targets=[args.trimmedDatabase],
-        args=args.output,
-        name="Trimming database")
+    if(args.primers!="none"):
+        workflow.add_task(
+            "mothur -q '#set.dir(output=[args[0]]);pcr.seqs(fasta = [depends[0]], oligos=[depends[1]], pdiffs=3, rdiffs=3, keepdots=t)'",
+            depends=[args.database, args.primers],
+            targets=[args.trimmedDatabase],
+            args=args.output,
+            name="Trimming database")
+    else:
+        workflow.add_task(
+            "cp [args[0]] [targets[0]]",
+            args=args.database,
+            targets=args.trimmedDatabase
+        )
 
     ## Create tree from region-specific alignment, save log file for use by pplacer
     workflow.add_task(
