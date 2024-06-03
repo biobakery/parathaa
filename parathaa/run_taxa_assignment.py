@@ -79,7 +79,7 @@ workflow.add_argument(
 workflow.add_argument(
    "clean",
    desc="Clean intermediate files",
-   default="store_true"
+   action="store_true"
 )
 
 workflow.add_argument(
