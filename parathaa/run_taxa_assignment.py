@@ -236,7 +236,7 @@ def main():
     )
 
     ## Clean working directory
-    if args.clean:
+    if (args.clean):
         workflow.add_task(
             "rm [args[0]]/merged.fasta; rm [args[0]]/merged_sub.fasta; rm mothur.*.logfile",
             depends=final_out,
