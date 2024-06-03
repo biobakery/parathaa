@@ -79,7 +79,7 @@ workflow.add_argument(
 workflow.add_argument(
    name="clean",
    desc="Clean intermediate files",
-   default="true"
+   default="store_true"
 )
 
 workflow.add_argument(
@@ -236,7 +236,7 @@ def main():
     )
 
     ## Clean working directory
-    if args.clean == "true":
+    if args.clean:
         workflow.add_task(
             "rm [args[0]]/merged.fasta; rm [args[0]]/merged_sub.fasta; rm mothur.*.logfile",
             depends=final_out,

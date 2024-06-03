@@ -134,7 +134,7 @@ def main():
     ## Trim the aligned 16S database to the primer inputs
     if(args.primers!="none"):
         workflow.add_task(
-            "mothur -q '#set.dir(output=[args[0]]);pcr.seqs(fasta = [depends[0]], oligos=[depends[1]], pdiffs=3, rdiffs=3, keepdots=t)'",
+            "mothur -q '#set.dir(output=[args[0]]);pcr.seqs(fasta = [depends[0]], oligos=[depends[1]], pdiffs=3, rdiffs=3, keepdots=t, checkorient=false)'",
             depends=[args.database, args.primers],
             targets=[args.trimmedDatabase],
             args=args.output,
