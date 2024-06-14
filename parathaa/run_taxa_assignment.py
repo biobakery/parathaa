@@ -100,6 +100,12 @@ workflow.add_argument(
     default="1"
 )
 
+workflow.add_argument(
+    name="skipExact",
+    desc="Should we first assign taxonomy based on exact matches",
+    action="store_true"
+)
+
 
 # Parsing the workflow arguments
 args = workflow.parse_args()
@@ -169,7 +175,8 @@ def main():
 
     queryName = Path(args.query).stem
     alignName = os.path.join(args.output, queryName + '.align')
-
+    alignName_filt=os.path.join(args.output, 'query_alignment_filt.fasta')
+    
     final_out = os.path.join(args.output, "taxonomic_assignments.tsv")
     ## Align query reads to trimmed seed alignment
     workflow.add_task(
@@ -179,13 +186,32 @@ def main():
         args=args.output,
         name="Aligning queries to trimmed db"
     )
+    
+    
+
+    exact_match_script = get_package_file("Exact_match", "Rscript")
+    species_edit=get_package_file("SILVA.species.editor.dev", "Rscript")
+    if(not args.skipExact):
+        workflow.add_task(
+            exact_match_script+" -q [depends[0]] -o [args[0]] --threads [args[1]] -r [depends[1]] -t [depends[2]] -p [args[2]]",
+            depends=[alignName, args.trimmedDatabase, args.namedTree],
+            targets=alignName_filt,
+            args=[args.output, args.threads, species_edit]
+        )
+    ### if we want to skip Exact
+    ### we just copy the name of alignName and move it to where it expects alignName_filt    
+    
+    if(args.skipExact):
+        alignName_filt=alignName
+    
+    
 
     merged = os.path.join(args.output, "merged.fasta")
 
     ## Merge Files
     workflow.add_task(
         "cat [depends[0]]  [depends[1]]  > [targets[0]] ",
-        depends=[alignName, args.trimmedDatabase],
+        depends=[alignName_filt, args.trimmedDatabase],
         targets=[merged],
         name="Concatenting db with queries"
     )
@@ -243,6 +269,9 @@ def main():
             args=[args.output],
             name="Cleaning up intermediate files"
        )
+
+    #we need to combined the exact taxonomy with the taxonomy file with a simple R script
+    #test this at the end
 
     # Run the workflow
     workflow.go()

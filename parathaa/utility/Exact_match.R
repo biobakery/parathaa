@@ -1,15 +1,15 @@
 #!/usr/bin/env Rscript
 require(docopt)
 'Usage:
-   Exact_match.R [-q <query alignment file> -o <output directory> --threads <cores> -r <reference alighment file> -t <taxonomy file>]
+   Exact_match.R [-q <query alignment file> -o <output directory> --threads <cores> -r <reference alighment file> -t <named tree file> --util1 <file containing species editor function>]
 
 Options:
    -q query alignment file
    -o output directory
    --threads number of threads to run on
    -r reference alignment
-   -t taxonomy file
-   -p parathaa directory
+   -t tree file
+   --util1 script for species editting
 
  ]' -> doc
 opts <- docopt(doc)
@@ -18,7 +18,7 @@ library(seqinr)
 library(dplyr)
 library(doSNOW)
 parathaaDir <- (opts$p)
-source(file.path(parathaaDir, "parathaa/utility/SILVA.species.editor.dev.R"))
+source(opts$util1)
 taxa_levels <- c("Kingdom", "Phylum", "Class", "Order", "Family", "Genus", "Species")
 
 
@@ -49,25 +49,11 @@ query_alignment[[3]] <- gsub("\\.", "-", query_alignment[[3]])
 ref_alignment[[3]] <- gsub("\\.", "-", ref_alignment[[3]])
 
 #fix ref names
-ref_alignment[[2]] <- gsub("\\..*", "", ref_alignment[[2]])
+ref_alignment[[2]] <- gsub("\t.*", "", ref_alignment[[2]])
 
 #Get reference taxdata from SILVA:
-taxdata <- read.table(opts$t , header=T, fill=TRUE,sep='\t', quote="")
-taxdata <- taxdata %>%
-  unite("AccID", c("primaryAccession", "start", "stop"), sep=".", remove=F)
-taxdata <- taxdata %>%
-  mutate(taxonomy=paste0(path, organism_name))
-
-#remove Eukaryota Kingdom as they have taxonomy that we are not handling here.
-taxdata <- taxdata %>% filter(!grepl("^Eukaryota;", path))
-
-taxdata <- taxdata %>%
-  select(AccID, primaryAccession, start, stop, taxonomy) %>%
-  separate(col=taxonomy, into=c("Kingdom", "Phylum", "Class", "Order", "Family", "Genus", "Species"), sep=";", fill="right")
-
-## Fix up remaining silva taxonomy by removing sub species and 'uncultured' species
-taxdata <- SILVA.species.editor(taxdata)
-
+load(opts$t)
+tree <- resultData$tax_bestcuts
 
 query_with_exact <- c()
 #assignments <- data.frame(matrix(ncol=10, nrow=0))
@@ -77,8 +63,7 @@ cl <- makeCluster(as.numeric(opts$threads))
 registerDoSNOW(cl)
 
 
-start.time <- Sys.time()
-assignments <- foreach(i=1:length(query_alignment[[2]]), .combine=bind_rows, .packages = c("dplyr", "seqinr")) %dopar% {
+assignments <- foreach(i=1:length(query_alignment[[2]]), .combine=bind_rows, .packages = c("dplyr", "seqinr")) %do% {
   query <- query_alignment[[3]][[i]]
   query_name <- query_alignment[[2]][[i]]
   
@@ -88,7 +73,7 @@ assignments <- foreach(i=1:length(query_alignment[[2]]), .combine=bind_rows, .pa
     ref_hit_id <- ref_alignment[[2]][matches]
     query_with_exact <- c(query_with_exact, query_name)
     
-    ref_taxonomy <- taxdata %>% filter(primaryAccession %in% ref_hit_id) %>%
+    ref_taxonomy <- tree %>% filter(label %in% ref_hit_id) %>%
       select(c("Kingdom", "Phylum", "Class", "Order", "Family", "Genus", "Species"))
     
     #get number of unique assignments
@@ -112,7 +97,8 @@ assignments <- foreach(i=1:length(query_alignment[[2]]), .combine=bind_rows, .pa
                                       Genus=ret_taxa[6],
                                       Species=ret_taxa[7],
                                       maxDist=0,
-                                      ref_matches=paste0(ref_hit_id, collapse = ";"))
+                                      ref_matches=paste0(ref_hit_id, collapse = ";"),
+                                      row.names = "query.name")
       }
     }else{
       temp_assignment <- data.frame(query.name=query_name,
@@ -124,15 +110,12 @@ assignments <- foreach(i=1:length(query_alignment[[2]]), .combine=bind_rows, .pa
                                     Genus=ref_taxonomy$Genus,
                                     Species=ref_taxonomy$Species,
                                     maxDist=0,
-                                    ref_matches=paste0(ref_hit_id, collapse = ";"))
+                                    ref_matches=paste0(ref_hit_id, collapse = ";"),
+                                    row.names="query.name")
     }
     return(temp_assignment)
   }
 }
-end.time <- Sys.time()
-time.taken <- end.time - start.time
-time.taken
-
 
 ## okay we need to remove lower level amibigious stuff if there is one in higher level.
 
