@@ -283,7 +283,7 @@ def main():
     #test this at the end
 
     if(not args.skipExact):
-        bind_out=get_package_file("bind_tax_out.R", "Rscript")
+        bind_out=get_package_file("bind_tax_out", "Rscript")
         workflow.add_task(
             bind_out+" -e [depends[0]] -t [depends[1]]",
             depends=[exact_taxonomy, final_out],
