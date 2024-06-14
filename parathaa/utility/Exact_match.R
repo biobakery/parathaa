@@ -17,7 +17,6 @@ opts <- docopt(doc)
 library(seqinr)
 library(dplyr)
 library(doSNOW)
-parathaaDir <- (opts$p)
 source(opts$util1)
 taxa_levels <- c("Kingdom", "Phylum", "Class", "Order", "Family", "Genus", "Species")
 
@@ -143,7 +142,7 @@ query_alignment_filt_seqs <- query_alignment[[3]][match(query_alignment_filt_nam
 
 #write out the filtered alignment file that can be passed into parathaa's main algo.
 
-write.fasta(sequences = query_alignment_filt_seqs, names=query_alignment_filt_names, file.out = paste0(opts$o, "/query_alignment_filt.fasta"))
+write.fasta(sequences = as.list(query_alignment_filt_seqs), names=query_alignment_filt_names, file.out = paste0(opts$o, "/query_alignment_filt.fasta"))
 
 ## write assignments
 write.table(assignments, file=file.path(opts$o, "taxonomic_assignments_exact.tsv"),sep = '\t', quote = F, row.names=F)

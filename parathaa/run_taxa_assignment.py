@@ -196,16 +196,23 @@ def main():
             exact_match_script+" -q [depends[0]] -o [args[0]] --threads [args[1]] -r [depends[1]] -t [depends[2]] --util1 [args[2]]",
             depends=[alignName, args.trimmedDatabase, args.namedTree],
             targets=alignName_filt,
-            args=[args.output, args.threads, species_edit]
+            args=[args.output, args.threads, species_edit],
+            name="finding queries with exact matches to the reference data"
         )
+        
+        
+
+            
+        ### Need to check if the alignment file is empty (i.e. all were exact matches and if so need to deal with this in someway..)
     ### if we want to skip Exact
     ### we just copy the name of alignName and move it to where it expects alignName_filt    
     
+    
+    
     if(args.skipExact):
         alignName_filt=alignName
-    
-    
 
+    ## need to add code to check if the new alignment file is empty
     merged = os.path.join(args.output, "merged.fasta")
 
     ## Merge Files
