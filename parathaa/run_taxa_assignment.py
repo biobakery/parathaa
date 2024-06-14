@@ -193,7 +193,7 @@ def main():
     species_edit=get_package_file("SILVA.species.editor.dev", "Rscript")
     if(not args.skipExact):
         workflow.add_task(
-            exact_match_script+" -q [depends[0]] -o [args[0]] --threads [args[1]] -r [depends[1]] -t [depends[2]] -p [args[2]]",
+            exact_match_script+" -q [depends[0]] -o [args[0]] --threads [args[1]] -r [depends[1]] -t [depends[2]] -util1 [args[2]]",
             depends=[alignName, args.trimmedDatabase, args.namedTree],
             targets=alignName_filt,
             args=[args.output, args.threads, species_edit]
