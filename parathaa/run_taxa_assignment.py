@@ -191,7 +191,9 @@ def main():
 
     exact_match_script = get_package_file("Exact_match", "Rscript")
     species_edit=get_package_file("SILVA.species.editor.dev", "Rscript")
+    
     if(not args.skipExact):
+        exact_taxonomy=os.path.join(args.output, "taxonomic_assignments_exact.tsv")
         workflow.add_task(
             exact_match_script+" -q [depends[0]] -o [args[0]] --threads [args[1]] -r [depends[1]] -t [depends[2]] --util1 [args[2]]",
             depends=[alignName, args.trimmedDatabase, args.namedTree],
@@ -280,6 +282,14 @@ def main():
     #we need to combined the exact taxonomy with the taxonomy file with a simple R script
     #test this at the end
 
+    if(not args.skipExact):
+        bind_out=get_package_file("bind_tax_out.R", "Rscript")
+        workflow.add_task(
+            bind_out+" -e [depends[0]] -t [depends[1]]",
+            depends=[exact_taxonomy, final_out],
+            name="Binding taxonomy output"
+        )
+    
     # Run the workflow
     workflow.go()
 

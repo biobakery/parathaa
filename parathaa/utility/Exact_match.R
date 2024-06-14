@@ -62,6 +62,9 @@ cl <- makeCluster(as.numeric(opts$threads))
 registerDoSNOW(cl)
 
 
+assignments <- data.frame(matrix(nrow=0, ncol=10))
+colnames(assignments) <- c("query.name", taxa_levels, "maxDist", "ref_matches")
+
 assignments <- foreach(i=1:length(query_alignment[[2]]), .combine=bind_rows, .packages = c("dplyr", "seqinr")) %do% {
   query <- query_alignment[[3]][[i]]
   query_name <- query_alignment[[2]][[i]]
@@ -145,4 +148,6 @@ query_alignment_filt_seqs <- query_alignment[[3]][match(query_alignment_filt_nam
 write.fasta(sequences = as.list(query_alignment_filt_seqs), names=query_alignment_filt_names, file.out = paste0(opts$o, "/query_alignment_filt.fasta"))
 
 ## write assignments
+
+### need to update this so if there are no exact matches it just outputs an empty file
 write.table(assignments, file=file.path(opts$o, "taxonomic_assignments_exact.tsv"),sep = '\t', quote = F, row.names=F)
