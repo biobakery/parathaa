@@ -159,7 +159,12 @@ result <- foreach(i=1:length(query.names), .combine = bind_rows,
   assignment$query.name <- ind
   
   rm_dist_index <- which(is.na(assignment[,names(cutoffs[numLevels])]))
-  assignment$maxDist <- max(maxDistPlacements[-rm_dist_index])
+  if(length(rm_dist_index)==0){
+    assignment$maxDist <- max(maxDistPlacements)
+  }else{
+    assignment$maxDist <- max(maxDistPlacements[-rm_dist_index])
+  }
+
   
   #assignment$same_testing <- maxNodeHeights == tree.w.placements.tib$nodeHeight[query.place.data$node]
   #I think it both cases the calculations are only correct for tips and not internal node placements.
