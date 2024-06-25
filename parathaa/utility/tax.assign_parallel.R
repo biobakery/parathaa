@@ -124,12 +124,6 @@ result <- foreach(i=1:length(query.names), .combine = bind_rows,
   #it seems like maxNodeHeights
   maxDistPlacements <- maxNodeHeights-tree.w.placements.tib$nodeHeight[query.place.data$node] + tree.w.placements.tib$distal_length[query.place.data$node] + tree.w.placements.tib$pendant_length[query.place.data$node]
   
-  #if there is a placement that is identical to the query just use those for assignment.
-  #if(min(maxDistPlacements) < 0.00001){
-   # maxDistPlacements <- maxDistPlacements[which(maxDistPlacements < 0.00001)]
-  #}else if(length(maxDistPlacements)==1){ ## If only one placement, maxDistPlacements isn't named, so add name
-   # names(maxDistPlacements) <- query.place.data$node
-  #}
   
   
   ## Load thresholds for levels
@@ -138,10 +132,10 @@ result <- foreach(i=1:length(query.names), .combine = bind_rows,
     names(maxDistPlacements) <- query.place.data$node
   
   ## Find lowest justifiable taxonomic classification of placement 
-  ## Using max of distances across placements to be conservative, for now
+  ## Using mode of distances across placements to be conservative, for now
   numLevels <- lapply(maxDistPlacements, FUN=function(x) names(which(cutoffs>x))) %>% lapply(length) %>% getmode %>% unlist
   if(numLevels != 0){
-    assignmentLevels <- names(cutoffs[1:numLevels]) ### LEFT OFF HERE
+    assignmentLevels <- names(cutoffs[1:numLevels])
   }else
     assignmentLevels <- NULL
 
@@ -158,8 +152,27 @@ result <- foreach(i=1:length(query.names), .combine = bind_rows,
   
   assignment$query.name <- ind
   
-  rm_dist_index <- which(is.na(assignment[,names(cutoffs[numLevels])]))
-  assignment$maxDist <- max(maxDistPlacements[-rm_dist_index])
+  ### this is the part of the code that becomes problematic b/c it returns nothing if the index node doesn;t have an assignment
+  ### how to deal with this...
+  ### I guess the best way to deal with this is to figure out what 
+  
+  #rm_dist_index <- which(is.na(assignment[,names(cutoffs[numLevels])]))
+  #so assignment will have a number of rows equal to the number of index nodes 
+  #the assignments fron that index node will only go to the mode of the maxdistances 
+  #we then want to return the maxdist so that it represents what is actually be assigned 
+  #maybe we just change the name of the column from maxDist to median_distance
+  #which represents the median distance of all potentially placements from the furthest child tip
+  #this might be more interpretable 
+  #in cases where there are multiple it should often represent the mode better
+  #the other option is to select the nodes that are the mode cutoff and then return that
+  #optionally we could keep the maxdist and retun the inidivaul distances for each assignment
+  if(nrow(assignment)==1){
+    assignment$maxDist <- max(maxDistPlacements)
+  }else{
+    maxDist_possible <- which(lapply(maxDistPlacements, FUN=function(x) names(which(cutoffs>x))) %>% lapply(length)==numLevels)
+    assignment$maxDist <- max(maxDistPlacements[maxDist_possible])
+  }
+
   
   #assignment$same_testing <- maxNodeHeights == tree.w.placements.tib$nodeHeight[query.place.data$node]
   #I think it both cases the calculations are only correct for tips and not internal node placements.
@@ -176,6 +189,14 @@ pick.taxon <- function(x){
     x3 <- paste(x2, collapse = ";")
   }
   return(x3)
+}
+
+## potentially you could end up with cases where result is missing a column if no sequences are assigned at a particular level
+taxa_levels <- c("Kingdom", "Phylum", "Class", "Order", "Family", "Genus", "Species")
+missing_levels <- which(!taxa_levels %in% colnames(result))
+
+for(i in missing_levels){
+  result[,taxa_levels[i]] <- NA
 }
 
 tax_parathaa <- result %>%
@@ -206,8 +227,6 @@ for (i in 1:nrow(tax_parathaa)) {
 }
 
 
-## nearest.neighbor.distance code is extremely slow need to fix this at somepoint
-## not a prority issue though.
 if(delta>0){
   
   
