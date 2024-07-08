@@ -34,6 +34,7 @@ source(opts$util1)
 source(opts$util2)
 
 
+hierachry <- c("Kingdom", "Phylum", "Class", "Order", "Family", "Genus", "Species")
 ## Bring in taxonomy file
 inFileTaxdata <- opts$d
 
@@ -106,9 +107,17 @@ in.tree.data$isTip <- isTip(in.tree.data, in.tree.data$node)
 ## Fix species names
 
 # there are a lot of species names that are inconsistent and needed to be cleaned up!
+
+
+### so at this point we remove all the species labels that say unknown and leave them blank which is what is causing the bug in the first place..
+### if we allow unkowns then it wouldn't be an issue of having unknowns i don't think... but what other issues might this generate
+### on the back end?
+
 if(isSILVA){
   in.tree.data <- SILVA.species.editor(in.tree.data)
 }
+
+
 
 in.tree.data <- in.tree.data %>% mutate(Kingdom = na_if(Kingdom, ""),
                                         Phylum = na_if(Phylum, ""),
@@ -116,7 +125,8 @@ in.tree.data <- in.tree.data %>% mutate(Kingdom = na_if(Kingdom, ""),
                                         Order = na_if(Order, ""),
                                         Family = na_if(Family, ""),
                                         Genus = na_if(Genus, ""),
-                                        Species = na_if(Species, ""))  
+                                        Species = na_if(Species, "")) 
+
 
 
 # parameters from the binomModel
@@ -161,35 +171,80 @@ for (i in 1:length(internal_node_stats)){
 
   # cutoffs represent distances on the tree from tip to tip
   
-  # do a correlation plot from distances to ANI would be nice!
-  
   resultData[["tax_bestcuts"]][intNode, "maxDists"] <- maxDist
   
-  #check that atleast one child node has been assigned at this taxonomy level
-  # if(length(table(ch[["Kingdom"]]))!=0){
-  #   #maximum name
-  #   resultData[["tax_bestcuts"]][intNode, "Kingdom"] <- names(table(ch[["Kingdom"]]))[which(table(ch[["Kingdom"]])==max(table(ch[["Kingdom"]])))][[1]]
-  # }
-  #it seems the below line of code is run in the same manner but on each level of taxonomy
-  #this would be a good place to convert it into a function (with good documentation)
-  #and use the level of taxonomy as part of the input for that function!
+
   
-  for(level in c("Kingdom", "Phylum", "Class", "Order", "Family", "Genus", "Species")){
+  lastlabel <- ""
+  for(level in hierachry){
     cutoff <- cutoffs[level]
-    nodeGroups <- table(ch[[level]]) ## this is done here rather than inside the function single.tax 
-    ## because we only want to calculate ch once for a node (it is time-consuming)
-  
-    resultData[["tax_bestcuts"]][intNode, level] <- single.tax(intNode=intNode,
-                                                               level=level, 
-                                                               maxDist=maxDist, 
-                                                               cutoff=cutoff, 
-                                                               nodeGroups=nodeGroups, 
-                                                               falseNegRate=falseNegRate, 
-                                                               acceptableProb=acceptableProb
-                                                               )
+    
+    #should we treat this in the same way so we commit to this genus so we only consider things under that genus
+    #if so we do something like this:
+    
+    
+    ## here check if there is an ambiguous label
+    if(grepl(";", lastlabel)){
+      choosen_taxon <- str_split(lastlabel, ";")
+      choosen_labels <- c()
+      for(taxon in choosen_taxon[[1]]){
+        #remove unclassified from the previous label if it exists for search purposes within the tree
+        taxon_search <- gsub(" Unclassified", "", taxon)
+        #grab the previous level in taxonomy
+        previous_level <- hierachry[which(hierachry==level)-1]
+        #filter to only tips of the chosen taxon
+        taxon_filt_tab <- ch %>% filter(!!sym(previous_level)==taxon_search)
+        #apply binomial error model
+        nodeGroups <- table(taxon_filt_tab[[level]])
+        ## apply binomial error model code
+        label <- single.tax(intNode=intNode,
+                            level=level, 
+                            maxDist=maxDist, 
+                            cutoff=cutoff, 
+                            nodeGroups=nodeGroups, 
+                            falseNegRate=falseNegRate, 
+                            acceptableProb=acceptableProb)
+        ##need to think about how to deal with unclassified...
+        if(!is.na(label)){
+         if(label=="Unclassified"){
+           label <- paste(taxon_search, label, sep=" ")
+         } 
+        }
+        choosen_labels <- c(choosen_labels, label)
+      }
+      ## if it fails for all then the final label should be NA
+      if(length(which(is.na(choosen_labels)))==length(choosen_labels)){
+        final_lab <- NA
+      }else{
+        final_lab <- paste0(choosen_labels, collapse=";")
+      }
+      
+      resultData[["tax_bestcuts"]][intNode, level] <- final_lab
+      lastlabel <- final_lab
+    }else{
+      #then we need to use the information from the last accepted assignment
+      nodeGroups <- table(ch[[level]]) ## this is done here rather than inside the function single.tax 
+      ## because we only want to calculate ch once for a node (it is time-consuming)
+      
+      label  <- single.tax(intNode=intNode,
+                                                                 level=level, 
+                                                                 maxDist=maxDist, 
+                                                                 cutoff=cutoff, 
+                                                                 nodeGroups=nodeGroups, 
+                                                                 falseNegRate=falseNegRate, 
+                                                                 acceptableProb=acceptableProb)
+      if(!is.na(label)){
+        if(label=="Unclassified"){
+          label <- paste0(gsub(" Unclassified", "", lastlabel)," Unclassified")
+        }
+      }
+      resultData[["tax_bestcuts"]][intNode, level] <- label
+      #keep track of the last label we assigned
+      lastlabel <- resultData[["tax_bestcuts"]][intNode, level]
+    }
+    
   }
 }
-#close(pb)
 
 #check if its assigned at X level
 # check if its parent is not
@@ -202,6 +257,30 @@ resultData[["tax_bestcuts"]]$isFamilyNode <- is.na(resultData[["tax_bestcuts"]]$
 resultData[["tax_bestcuts"]]$isGenusNode <- is.na(resultData[["tax_bestcuts"]]$Genus[resultData[["tax_bestcuts"]]$parent]) & !is.na(resultData[["tax_bestcuts"]]$Genus)
 resultData[["tax_bestcuts"]]$isSpeciesNode <- is.na(resultData[["tax_bestcuts"]]$Species[resultData[["tax_bestcuts"]]$parent]) & !is.na(resultData[["tax_bestcuts"]]$Species)
 
+## also need to propagate unclassified labels to tips but we do this after internal label assignment
+## this is because we don't want to consider unclassified as a label at the assigned level...
+
+## fix taxonomy within ch but this adds a ton of run time... (but we don't really want to fix them for distance testing purposes...)
+resultData$tax_bestcuts <- resultData$tax_bestcuts %>% mutate(Kingdom = ifelse(is.na(Kingdom) & isTip, "Unclassified", Kingdom),
+                    Phylum = ifelse(is.na(Phylum) & isTip, paste0(Kingdom, "Unclassified", sep=" "), Phylum))
+
+resultData$tax_bestcuts <- resultData$tax_bestcuts %>% mutate(Class = ifelse(is.na(Class) & isTip, paste(Phylum,"Unclassified", sep=" "), Class))
+
+#Fix Order
+resultData$tax_bestcuts <- resultData$tax_bestcuts %>% mutate(Order = ifelse(grepl("Unclassified", Class) & isTip, Class, Order))
+resultData$tax_bestcuts <- resultData$tax_bestcuts %>% mutate(Order = ifelse(is.na(Order) & isTip, paste(Class,"Unclassified", sep=" "), Order))
+
+#Fix Family
+resultData$tax_bestcuts <- resultData$tax_bestcuts %>% mutate(Family = ifelse(grepl("Unclassified", Order) & isTip, Order, Family))
+resultData$tax_bestcuts <- resultData$tax_bestcuts %>% mutate(Family = ifelse(is.na(Family) & isTip, paste(Order,"Unclassified", sep=" "), Family))
+
+#Fix Genus
+resultData$tax_bestcuts <- resultData$tax_bestcuts %>% mutate(Genus = ifelse(grepl("Unclassified", Family) & isTip, Family, Genus))
+resultData$tax_bestcuts <- resultData$tax_bestcuts %>% mutate(Genus = ifelse(is.na(Genus) & isTip, paste(Family,"Unclassified", sep=" "), Genus))
+
+#Fix Species
+resultData$tax_bestcuts <- resultData$tax_bestcuts %>% mutate(Species = ifelse(grepl("Unclassified", Genus) & isTip, Genus, Species))
+resultData$tax_bestcuts <- resultData$tax_bestcuts %>% mutate(Species = ifelse(is.na(Species) & isTip, paste(Genus,"Unclassified", sep=" "), Species))
 
 ## Save output
 save(resultData, file = file.path(opts$o, "resultTree_bestThresholds.RData"))

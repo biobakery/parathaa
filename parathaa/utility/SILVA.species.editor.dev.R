@@ -245,4 +245,3 @@ SILVA.species.editor.DADA <- function(dataf, colname){
   cat(length(binom), "sequences with genus/species binomial annotation output.\n")
   return(dataf)
 }
-
