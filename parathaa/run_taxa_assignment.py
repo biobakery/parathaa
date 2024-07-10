@@ -214,7 +214,7 @@ def main():
 
     ## run pplacer
     workflow.add_task(
-        "pplacer --out-dir [args[0]] -c [depends[0]]  \
+        "pplacer --out-dir [args[0]] -c [depends[0]] --keep-at-most 25 \
         [depends[1]]",
         depends=[args.ref, mergedSub],
         targets=[os.path.join(args.output, "merged_sub.jplace")],
