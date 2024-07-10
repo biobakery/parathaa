@@ -173,10 +173,10 @@ def main():
     final_out = os.path.join(args.output, "taxonomic_assignments.tsv")
     ## Align query reads to trimmed seed alignment
     workflow.add_task(
-        "mothur '#set.dir(output=[args[0]]);set.dir(debug=[args[0]]);align.seqs(candidate=[depends[0]], template=[depends[1]])'",
+        "mothur '#set.dir(output=[args[0]]);set.dir(debug=[args[0]]);align.seqs(candidate=[depends[0]], template=[depends[1]], processors=[args[1]])'",
         depends=[args.query,args.trimmedDatabase],
         targets=alignName,
-        args=args.output,
+        args=[args.output, args.threads],
         name="Aligning queries to trimmed db"
     )
 
