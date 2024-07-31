@@ -182,6 +182,12 @@ def main():
 
     merged = os.path.join(args.output, "merged.fasta")
 
+    
+
+    
+
+    
+
     ## Merge Files
     workflow.add_task(
         "cat [depends[0]]  [depends[1]]  > [targets[0]] ",
@@ -189,11 +195,33 @@ def main():
         targets=[merged],
         name="Concatenting db with queries"
     )
+    
+    
+    ### remove poorly aligned sequences based on query length and alignment length
+    poor_alignments = os.path.join(args.output, "poor_query_alignments.txt")
+    
+    workflow.add_task(
+        "awk -F'\t' '{ second_col = $2 + 0 ; twelfth_col = $12 + 0 ; if (twelfth_col < 0.9 * second_col || twelfth_col > 1.1 * second_col) { print $1 } }' [depends[0]] > [targets[0]]",
+        depends=merged,
+        targets=poor_alignments,
+        name="Searching for sequences that aligned poorly"
+    )
+    
+    
+    merged_filt = os.path.join(args.output, "merged_filt.fasta")
+    ##remove poorly aligned sequences
+    workflow.add_task(
+        "faSomeRecords -exclude [depends[0]] [depends[1]] [targets[0]]",
+        depends=[merged, poor_alignments],
+        targets=merged_filt,
+        name="Filtering out poor query sequences from alignment"
+    )
+    
     mergedSub = os.path.join(args.output, "merged_sub.fasta")
     ## Replace end gap characters ('.') with '-'
     workflow.add_task(
         "sed  '/^>/! s/\./-/g' [depends[0]] > [targets[0]]",
-        depends=[merged],
+        depends=[merged_filt],
         targets=[mergedSub],
         name="Replacing query end gap characters"
     )
