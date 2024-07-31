@@ -200,9 +200,11 @@ def main():
     ### remove poorly aligned sequences based on query length and alignment length
     poor_alignments = os.path.join(args.output, "poor_query_alignments.txt")
     
+    ### grab the report which is what i actually want to do...
+    alignment_report=os.path.join(args.output, queryName + '.align_report')
     workflow.add_task(
         "awk -F'\t' '{ second_col = $2 + 0 ; twelfth_col = $12 + 0 ; if (twelfth_col < 0.9 * second_col || twelfth_col > 1.1 * second_col) { print $1 } }' [depends[0]] > [targets[0]]",
-        depends=merged,
+        depends=alignment_report,
         targets=poor_alignments,
         name="Searching for sequences that aligned poorly"
     )
