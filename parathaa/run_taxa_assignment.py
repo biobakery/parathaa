@@ -171,11 +171,12 @@ def main():
     alignName = os.path.join(args.output, queryName + '.align')
 
     final_out = os.path.join(args.output, "taxonomic_assignments.tsv")
+    alignment_report=os.path.join(args.output, queryName + '.align_report')
     ## Align query reads to trimmed seed alignment
     workflow.add_task(
         "mothur '#set.dir(output=[args[0]]);set.dir(debug=[args[0]]);align.seqs(candidate=[depends[0]], template=[depends[1]], processors=[args[1]])'",
         depends=[args.query,args.trimmedDatabase],
-        targets=alignName,
+        targets=[alignName, alignment_report],
         args=[args.output, args.threads],
         name="Aligning queries to trimmed db"
     )
@@ -201,7 +202,8 @@ def main():
     poor_alignments = os.path.join(args.output, "poor_query_alignments.txt")
     
     ### grab the report which is what i actually want to do...
-    alignment_report=os.path.join(args.output, queryName + '.align_report')
+ 
+    
     workflow.add_task(
         "awk -F'\t' '{ second_col = $2 + 0 ; twelfth_col = $12 + 0 ; if (twelfth_col < 0.9 * second_col || twelfth_col > 1.1 * second_col) { print $1 } }' [depends[0]] > [targets[0]]",
         depends=alignment_report,
