@@ -101,6 +101,13 @@ workflow.add_argument(
 )
 
 
+workflow.add_argument(
+    name="minAlignLen",
+    desc="The minimum length an alignment must be to pass the filter. If not set the default 20% of query length will be used",
+    default="0"
+)
+
+
 # Parsing the workflow arguments
 args = workflow.parse_args()
 
@@ -203,13 +210,23 @@ def main():
     
     ### grab the report which is what i actually want to do...
  
-    
-    workflow.add_task(
-        "awk -F'\t' '{ second_col = $2 + 0 ; twelfth_col = $12 + 0 ; if (twelfth_col < 0.9 * second_col || twelfth_col > 1.1 * second_col) { print $1 } }' [depends[0]] > [targets[0]]",
-        depends=alignment_report,
-        targets=poor_alignments,
-        name="Searching for sequences that aligned poorly"
-    )
+    if not(args.minAlignLen==0):
+        
+        workflow.add_task(
+            "awk -F'\t' '{ second_col = $2 + 0 ; twelfth_col = $12 + 0 ; if (twelfth_col < 0.8 * second_col || twelfth_col > 1.2 * second_col) { print $1 } }' [depends[0]] > [targets[0]]",
+            depends=alignment_report,
+            targets=poor_alignments,
+            name="Filtering out query sequences with alignment lengths that are not within 20% of the query sequences length"
+        )
+        
+    else:
+        workflow.add_task(
+            "awk -F'\t' 'NR > 1 {twelfth_col=$12 + 0; if(twelfth_col < [args[0]]) { print $1} }' [depends[0]] > [targets[0]]",
+            args=args.minAlignLen,
+            depends=alignment_report,
+            targets=poor_alignments,
+            name="Filtering out query sequences with alignment lengths less than the minimum specificed by minAlignLen"
+        )
     
     
     merged_filt = os.path.join(args.output, "merged_filt.fasta")
