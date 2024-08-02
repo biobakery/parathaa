@@ -276,6 +276,7 @@ def install_fasttree(mac_os,install_scripts, replace_install=None):
                 print("WARNING: Errors installing FastTree.")
         else: 
             download(fastTree_url,download_file)
+            os.chmod(download_file, 0o755)
         print("Installing FastTree.")
     else:
         print("Found FastTree install.")
@@ -323,7 +324,7 @@ def install_pplacer(mac_os,install_scripts, replace_install=None):
     pplacer_installed=find_exe_in_path("pplacer")      
     pplacer_exe = "pplacer"
     pplacer_file="pplacer-linux-v1.1.alpha19.zip"
-    pplacer_filename="pplacer-linux-v1.1.alpha19"
+    pplacer_filename="pplacer-Linux-v1.1.alpha19"
     pplacer_url ="https://github.com/matsen/pplacer/releases/download/v1.1.alpha19/pplacer-linux-v1.1.alpha19.zip"
     
 	# install pplacer if not already installed
