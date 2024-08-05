@@ -8,10 +8,10 @@
 single.tax <- function(intNode, level, maxDist, cutoff, nodeGroups, falseNegRate, acceptableProb){
   ## Initialize:
   result <- NA
-  ## if the maximum distance among the child (tip) nodes is less than the cutoff for the taxonomic level,
-  ## (and if there is at least one child node; aka the node is not a tip)
-  ## then 
+
+  #if its below the cutoff and there is assigned taxonomy to the tips do the following:
   if(maxDist < cutoff & length(nodeGroups)!=0){
+    #check if there is only 1 dominant taxon and if so just return that label
     if(pbinom(sum(nodeGroups)-max(nodeGroups)-1,
               sum(nodeGroups),falseNegRate, lower.tail = F) > acceptableProb){
       # if that is correct we then assign the int node to that phylum
@@ -22,6 +22,13 @@ single.tax <- function(intNode, level, maxDist, cutoff, nodeGroups, falseNegRate
     else {result <- paste(
       names(which(nodeGroups >
                     qbinom(acceptableProb , sum(nodeGroups),falseNegRate, lower.tail = F))), collapse=";")}
+    
+    if(length(result)==0){
+      result <- names(nodeGroups)
+    }
+  #if its below the maxDist and the below nodes don't have taxonomy then we can return "Unclassified"  
+  }else if(maxDist < cutoff & length(nodeGroups)==0){
+    result <- "Unclassified"
   }
   return(result)
 }

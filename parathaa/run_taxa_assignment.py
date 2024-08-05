@@ -101,6 +101,13 @@ workflow.add_argument(
 )
 
 
+workflow.add_argument(
+    name="minAlignLen",
+    desc="The minimum length an alignment must be to pass the filter. If not set the default 20% of query length will be used",
+    default="0"
+)
+
+
 # Parsing the workflow arguments
 args = workflow.parse_args()
 
@@ -171,16 +178,23 @@ def main():
     alignName = os.path.join(args.output, queryName + '.align')
 
     final_out = os.path.join(args.output, "taxonomic_assignments.tsv")
+    alignment_report=os.path.join(args.output, queryName + '.align_report')
     ## Align query reads to trimmed seed alignment
     workflow.add_task(
-        "mothur '#set.dir(output=[args[0]]);set.dir(debug=[args[0]]);align.seqs(candidate=[depends[0]], template=[depends[1]])'",
+        "mothur '#set.dir(output=[args[0]]);set.dir(debug=[args[0]]);align.seqs(candidate=[depends[0]], template=[depends[1]], processors=[args[1]])'",
         depends=[args.query,args.trimmedDatabase],
-        targets=alignName,
-        args=args.output,
+        targets=[alignName, alignment_report],
+        args=[args.output, args.threads],
         name="Aligning queries to trimmed db"
     )
 
     merged = os.path.join(args.output, "merged.fasta")
+
+    
+
+    
+
+    
 
     ## Merge Files
     workflow.add_task(
@@ -189,11 +203,46 @@ def main():
         targets=[merged],
         name="Concatenting db with queries"
     )
+    
+    
+    ### remove poorly aligned sequences based on query length and alignment length
+    poor_alignments = os.path.join(args.output, "poor_query_alignments.txt")
+    
+    ### grab the report which is what i actually want to do...
+ 
+    if not(args.minAlignLen==0):
+        
+        workflow.add_task(
+            "awk -F'\t' '{ second_col = $2 + 0 ; twelfth_col = $12 + 0 ; if (twelfth_col < 0.8 * second_col || twelfth_col > 1.2 * second_col) { print $1 } }' [depends[0]] > [targets[0]]",
+            depends=alignment_report,
+            targets=poor_alignments,
+            name="Filtering out query sequences with alignment lengths that are not within 20% of the query sequences length"
+        )
+        
+    else:
+        workflow.add_task(
+            "awk -F'\t' 'NR > 1 {twelfth_col=$12 + 0; if(twelfth_col < [args[0]]) { print $1} }' [depends[0]] > [targets[0]]",
+            args=args.minAlignLen,
+            depends=alignment_report,
+            targets=poor_alignments,
+            name="Filtering out query sequences with alignment lengths less than the minimum specificed by minAlignLen"
+        )
+    
+    
+    merged_filt = os.path.join(args.output, "merged_filt.fasta")
+    ##remove poorly aligned sequences
+    workflow.add_task(
+        "faSomeRecords -exclude [depends[0]] [depends[1]] [targets[0]]",
+        depends=[merged, poor_alignments],
+        targets=merged_filt,
+        name="Filtering out poor query sequences from alignment"
+    )
+    
     mergedSub = os.path.join(args.output, "merged_sub.fasta")
     ## Replace end gap characters ('.') with '-'
     workflow.add_task(
         "sed  '/^>/! s/\./-/g' [depends[0]] > [targets[0]]",
-        depends=[merged],
+        depends=[merged_filt],
         targets=[mergedSub],
         name="Replacing query end gap characters"
     )
@@ -214,7 +263,7 @@ def main():
 
     ## run pplacer
     workflow.add_task(
-        "pplacer --out-dir [args[0]] -c [depends[0]]  \
+        "pplacer --out-dir [args[0]] -c [depends[0]] --keep-at-most 99999  \
         [depends[1]]",
         depends=[args.ref, mergedSub],
         targets=[os.path.join(args.output, "merged_sub.jplace")],
