@@ -301,24 +301,6 @@ parathaa_run_taxa_assignment --treeFiles SILVA_V4V5/ \
 
 ### PARATHAA Diagnostic Scripts
 
-PARATHAA also contains a few different diagnostic scripts that can be run on the primer-specific tree with internally labeled nodes.
-
-- find_ambigious_tips.R
-
-This script given a PARATHAA processed tree will output a list of taxon within the tree that have tips with atleast one differing taxonomic label within the given distance radius. 
-
-```
-Rscript find_ambigious_tips.R -t <labeled tree RData file ( often named: resultTree_bestThresholds.RData)> -o <output dir> -l <taxonomic level> -d <distance threshold> -s <summarize results into .tsv file (TRUE/FALSE)>
-```
-
-- ID.tip.disagreement.R
-
-This script will search through a PARATHAA processed tree to identify tips that have parent nodes that do not agree with the tips taxonomic assignment. This script is useful for finding potential mislabelings (when using full length trees) or taxa that perform particularly poorly for the given variable region.
-
-```
-Rscript ID.tip.disagreement.R -t <labeled tree RData file ( often named: resultTree_bestThresholds.RData)> -o <output dir> -l <taxonomic level> -p <plot tip disagreements (TRUE/FALSE)>
-```
-
 
 - plot_placement.R
 
@@ -326,18 +308,6 @@ This script contains a useful function for plotting placements. The function is 
 
 ```
 in.tree$label <- make.unique(in.tree$label)
-```
-
-
-- taxonomy_radius_center_node_approach.R
-
-This script identifies the optimal taxonomic radius for each unique label within a taxonomic level. This is accomplished by:
-1. Selecting the central tip for each unique label. The central tip is defined by the tip with the lowest maximum distance to all other tips with that label.
-2. Identifying the optimal tip radius from the central tip that maximizes the number of tips with the same label as the central tip while also minmizing the number of tips within the radius that have alternative labels from the central tip.
-3. The script will then save a plot of the optimal radius plotted with the taxonomic tree.
-
-```
-Rscript taxonomy_radius_center_node_approach.R -t <labeled tree RData file ( often named: resultTree_bestThresholds.RData)> -l <taxonomic level> -o <output dir>
 ```
 
 
