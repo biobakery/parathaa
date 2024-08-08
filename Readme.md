@@ -43,8 +43,13 @@ Below are the required dependencies to run Parathaa, you should be running linux
 For our next release we plan to create a conda package that will cover all of these dependencies automatically.
 
 - Conda (we suggest miniconda https://docs.conda.io/projects/miniconda/en/latest/ although any flavor should work)
-- Python >=3.7
 - R > 4.0.0
+- Python >=3.7
+  - AnADAMA2: https://pypi.org/project/anadama2/
+  - taxtastic: https://pypi.org/project/taxtastic/
+- mothur: https://anaconda.org/bioconda/mothur
+- fasttree: http://www.microbesonline.org/fasttree/#Install
+- pplacer: https://anaconda.org/bioconda/pplacer
 
 #### Create conda environment and set up R and python
 
@@ -94,45 +99,13 @@ BiocManager::install(c("ggtree",
 quit()
 ```
 
-- AnADAMA2: https://pypi.org/project/anadama2/
+### Installation of PARATHAA through PyPi/PIP
 
 ```
-pip install anadama2
+pip install parathaa 
 ```
-
-- mothur: https://anaconda.org/bioconda/mothur
-
-```
-conda install -c bioconda mothur
-```
-
-- taxtastic: https://pypi.org/project/taxtastic/
-
-```
-pip install taxtastic
-```
-
-- fasttree: http://www.microbesonline.org/fasttree/#Install
-
-```
-conda install -c bioconda fasttree
-```
-
-Or install via their website. We recommend using the multithreaded executable which is supported by parathaa. After downloading the executable please add it to PATH within your computing environment.
- 
-- pplacer: https://anaconda.org/bioconda/pplacer
-
-**If using linux:**
-
-```
-conda install -c bioconda pplacer
-```
-
-**If using macOS please install SEPP which includes a recent compiled version of pplacer for macOSX. (we will package this up into its own conda environemnt in the future)**
-
-```
-conda install -c bioconda sepp
-```
+**NOTE:**
+If you do not have write permissions to '/usr/lib/', then add the option "--user" to the PARATHAA install command. This will install the python package into subdirectories of '~/.local' on Linux. Please note when using the "--user" install option on some platforms, you might need to add '~/.local/bin/' to your $PATH as it might not be included by default. You will know if it needs to be added if you see the following message PARATHAA: command not found when trying to run PARATHAA after installing with the "--user" option.
 
 
 ###  Manual Installation of PARATHAA
@@ -146,17 +119,6 @@ or using the "**Clone or Download**" button.
 
 ```
 python setup.py install 
-```
-
-### Installation of PARATHAA through pip
-
-```
-pip install parathaa 
-```
-**NOTE:**
-If you do not have write permissions to '/usr/lib/', then add the option "--prefix=<CUSTOM_PYTHON_LIBS_PATH>" to the parathaa install command. This will install the python package into subdirectories of '<CUSTOM_PYTHON_LIBS_PATH>' on Linux. Please note when using the "--prefix" install option on some platforms, you might need to add 'CUSTOM_PYTHON_LIBS_PATH' to your $PYTHONPATH as it might not be included by default. 
-```
-export PYTHONPATH=$PYTHONPATH:<CUSTOM_PYTHON_LIBS_PATH>
 ```
 
 
