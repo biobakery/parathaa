@@ -26,9 +26,9 @@ single.tax <- function(intNode, level, maxDist, cutoff, nodeGroups, falseNegRate
     if(length(result)==0){
       result <- names(nodeGroups)
     }
-  #if its below the maxDist and the below nodes don't have taxonomy then we can return "Unclassified"  
+  #if its below the maxDist and the below nodes don't have taxonomy then we can return "unclassified"  
   }else if(maxDist < cutoff & length(nodeGroups)==0){
-    result <- "Unclassified"
+    result <- "unclassified"
   }
   return(result)
 }

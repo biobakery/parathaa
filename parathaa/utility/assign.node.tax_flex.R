@@ -189,7 +189,7 @@ for (i in 1:length(internal_node_stats)){
       choosen_labels <- c()
       for(taxon in choosen_taxon[[1]]){
         #remove unclassified from the previous label if it exists for search purposes within the tree
-        taxon_search <- gsub(" Unclassified", "", taxon)
+        taxon_search <- gsub(" unclassified", "", taxon)
         #grab the previous level in taxonomy
         previous_level <- hierachry[which(hierachry==level)-1]
         #filter to only tips of the chosen taxon
@@ -206,7 +206,7 @@ for (i in 1:length(internal_node_stats)){
                             acceptableProb=acceptableProb)
         ##need to think about how to deal with unclassified...
         if(!is.na(label)){
-         if(label=="Unclassified"){
+         if(label=="unclassified"){
            label <- paste(taxon_search, label, sep=" ")
          } 
         }
@@ -234,8 +234,8 @@ for (i in 1:length(internal_node_stats)){
                                                                  falseNegRate=falseNegRate, 
                                                                  acceptableProb=acceptableProb)
       if(!is.na(label)){
-        if(label=="Unclassified"){
-          label <- paste0(gsub(" Unclassified", "", lastlabel)," Unclassified")
+        if(label=="unclassified"){
+          label <- paste0(gsub(" unclassified", "", lastlabel)," unclassified")
         }
       }
       resultData[["tax_bestcuts"]][intNode, level] <- label
@@ -261,26 +261,26 @@ resultData[["tax_bestcuts"]]$isSpeciesNode <- is.na(resultData[["tax_bestcuts"]]
 ## this is because we don't want to consider unclassified as a label at the assigned level...
 
 ## fix taxonomy within ch but this adds a ton of run time... (but we don't really want to fix them for distance testing purposes...)
-resultData$tax_bestcuts <- resultData$tax_bestcuts %>% mutate(Kingdom = ifelse(is.na(Kingdom) & isTip, "Unclassified", Kingdom),
-                    Phylum = ifelse(is.na(Phylum) & isTip, paste0(Kingdom, "Unclassified", sep=" "), Phylum))
+resultData$tax_bestcuts <- resultData$tax_bestcuts %>% mutate(Kingdom = ifelse(is.na(Kingdom) & isTip, "unclassified", Kingdom),
+                    Phylum = ifelse(is.na(Phylum) & isTip, paste0(Kingdom, "unclassified", sep=" "), Phylum))
 
-resultData$tax_bestcuts <- resultData$tax_bestcuts %>% mutate(Class = ifelse(is.na(Class) & isTip, paste(Phylum,"Unclassified", sep=" "), Class))
+resultData$tax_bestcuts <- resultData$tax_bestcuts %>% mutate(Class = ifelse(is.na(Class) & isTip, paste(Phylum,"unclassified", sep=" "), Class))
 
 #Fix Order
-resultData$tax_bestcuts <- resultData$tax_bestcuts %>% mutate(Order = ifelse(grepl("Unclassified", Class) & isTip, Class, Order))
-resultData$tax_bestcuts <- resultData$tax_bestcuts %>% mutate(Order = ifelse(is.na(Order) & isTip, paste(Class,"Unclassified", sep=" "), Order))
+resultData$tax_bestcuts <- resultData$tax_bestcuts %>% mutate(Order = ifelse(grepl("unclassified", Class) & isTip, Class, Order))
+resultData$tax_bestcuts <- resultData$tax_bestcuts %>% mutate(Order = ifelse(is.na(Order) & isTip, paste(Class,"unclassified", sep=" "), Order))
 
 #Fix Family
-resultData$tax_bestcuts <- resultData$tax_bestcuts %>% mutate(Family = ifelse(grepl("Unclassified", Order) & isTip, Order, Family))
-resultData$tax_bestcuts <- resultData$tax_bestcuts %>% mutate(Family = ifelse(is.na(Family) & isTip, paste(Order,"Unclassified", sep=" "), Family))
+resultData$tax_bestcuts <- resultData$tax_bestcuts %>% mutate(Family = ifelse(grepl("unclassified", Order) & isTip, Order, Family))
+resultData$tax_bestcuts <- resultData$tax_bestcuts %>% mutate(Family = ifelse(is.na(Family) & isTip, paste(Order,"unclassified", sep=" "), Family))
 
 #Fix Genus
-resultData$tax_bestcuts <- resultData$tax_bestcuts %>% mutate(Genus = ifelse(grepl("Unclassified", Family) & isTip, Family, Genus))
-resultData$tax_bestcuts <- resultData$tax_bestcuts %>% mutate(Genus = ifelse(is.na(Genus) & isTip, paste(Family,"Unclassified", sep=" "), Genus))
+resultData$tax_bestcuts <- resultData$tax_bestcuts %>% mutate(Genus = ifelse(grepl("unclassified", Family) & isTip, Family, Genus))
+resultData$tax_bestcuts <- resultData$tax_bestcuts %>% mutate(Genus = ifelse(is.na(Genus) & isTip, paste(Family,"unclassified", sep=" "), Genus))
 
 #Fix Species
-resultData$tax_bestcuts <- resultData$tax_bestcuts %>% mutate(Species = ifelse(grepl("Unclassified", Genus) & isTip, Genus, Species))
-resultData$tax_bestcuts <- resultData$tax_bestcuts %>% mutate(Species = ifelse(is.na(Species) & isTip, paste(Genus,"Unclassified", sep=" "), Species))
+resultData$tax_bestcuts <- resultData$tax_bestcuts %>% mutate(Species = ifelse(grepl("unclassified", Genus) & isTip, Genus, Species))
+resultData$tax_bestcuts <- resultData$tax_bestcuts %>% mutate(Species = ifelse(is.na(Species) & isTip, paste(Genus,"unclassified", sep=" "), Species))
 
 ## Save output
 save(resultData, file = file.path(opts$o, "resultTree_bestThresholds.RData"))
