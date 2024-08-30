@@ -129,4 +129,4 @@ plot_placement <- function(ids, in.tree.data, in.jplace, level="Genus", outputDi
 }
 
 
-plot_placement(ids = query, in.tree.data = in.tree, in.jplace = in.jplace, level = opts$level, outputDir = opts$o, levels_back = opts$steps_back, assignments = assignments)
+plot_placement(ids = query, in.tree.data = in.tree, in.jplace = in.jplace, level = opts$level, outputDir = opts$o, levels_back = as.numeric(opts$steps_back), assignments = assignments)

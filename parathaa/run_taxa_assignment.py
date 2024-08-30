@@ -17,57 +17,50 @@ workflow = Workflow(
 #this will take in a directory and then create all the rest of the arguments..
 workflow.add_argument(
     name="treeFiles",
-    desc="The output directory generated from run_tree_analysis.py",
-    default=""
+    desc="The output directory generated from run_tree_analysis.py"
 )
 
 #Setting additional custom arguments for workflow - run.py
 workflow.add_argument(
     name="trimmedDatabase",
-    desc="",
-    default=""
+    desc="The trimmed alignment file produced during tree analysis"
 )
     
 workflow.add_argument(
     name="trimmedTree",
-    desc="Database for taxonomy [default: input/silva.seed_v138_1/silva.seed_v138_1.align]",
-    default="Pre-computed-trees/Silva_v138/silva.seed_v138_1.align"
+    desc="The primer specific phylogenetic tree in newick format produced during tree analysis"
 )
 
 workflow.add_argument(
     name="treeLog",
-    desc="Log file for generated tree",
-    default=""
+    desc="Log file for generated primer specific phylogenetic tree"
 )
 
 workflow.add_argument(
     name="query",
-    desc="Reads to be taxonomically classified [default: input/test_reads_V4.fasta]",
-    default="input/test_reads_V4.fasta")
+    desc="Reads to be taxonomically classified"
+)
 
 workflow.add_argument(
     name="thresholds",
-    desc="Rdata file that contains information on the optimal distance threshold for taxonomic level assignment",
-    default=""
+    desc="Rdata file that contains information on the optimal distance threshold for taxonomic level assignment"
 )
 
 workflow.add_argument(
     name="namedTree",
-    desc="Rdata file containing the formatted tree with taxonomic labels",
-    default=""
+    desc="Rdata file containing the formatted tree with taxonomic labels"
 )
 
 workflow.add_argument(
     name="threads",
-    desc="Number of threads to run job",
-    default="1"
+    desc="Number of threads to run local jobs",
+    default=1
 )
 
 workflow.add_argument(
     name="delta",
-    desc="Second thresholding value for Species that looks at neighbouring tips",
+    desc="Second thresholding value for Species that looks at neighbouring tips. Users may be intersted in this setting if they are looking for more conservative species assignments",
     default="0"
-
 )
 
 workflow.add_argument(
@@ -103,7 +96,7 @@ workflow.add_argument(
 
 workflow.add_argument(
     name="minAlignLen",
-    desc="The minimum length an alignment must be to pass the filter. If not set the default 20% of query length will be used",
+    desc="The minimum length an alignment must be to pass the filter. If not set the default option will remove query alignments with lengths not within 20%% of their original sequence length",
     default="0"
 )
 

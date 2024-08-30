@@ -21,56 +21,56 @@ workflow = Workflow(
 
 workflow.add_argument(
     name="primers",
-    desc="File with primer oligos [default: none]",
-    default="none")
+    desc="File with primer oligos",
+    default="none"
+    )
     
 workflow.add_argument(
     name="database",
-    desc="Database for taxonomy which is represented by aligned 16S sequences [default: input/silva.seed_v138_1/silva.seed_v138_1.align]",
-    default="input/silva.seed_v138_1/silva.seed_v138_1.align")
+    desc="Database for taxonomy which is represented by aligned 16S sequences"
+    )
 
 workflow.add_argument(
     name="taxonomy",
-    desc="File that contains taxonomy for the input database [defualt: input/taxmap_slv_ssu_ref_138.1.txt]",
-    default="input/taxmap_slv_ssu_ref_138.1.txt"
+    desc="File that contains taxonomy for the input database"
 )
 
 workflow.add_argument(
     name="sweight",
-    desc="penalty weight for over-splitting errors when identifying optimal distance thresholds [default: 1]",
+    desc="penalty weight for over-splitting errors when identifying optimal distance thresholds",
     default=1
 )
 
 workflow.add_argument(
     name="mweight",
-    desc="penalty weight for over-merging errors when identifying optimal distance thresholds [default: 1]",
+    desc="penalty weight for over-merging errors when identifying optimal distance thresholds",
     default=1
 )
 
 workflow.add_argument(
     name="errorRate",
-    desc="The assumed error rate for the binomial model for ambigious taxonomic assignment [default: 0.05]",
+    desc="The assumed error rate for the binomial model for ambigious taxonomic assignment",
     default=0.05
 )
 
 workflow.add_argument(
     name="binoThreshold",
-    desc="Critial p-value (threshold) for the binomial error model for ambigious taxonomic assignment [default: 0.20]",
+    desc="Critial p-value (threshold) for the binomial error model for ambigious taxonomic assignment",
     default=0.20
 )
 
 
 workflow.add_argument(
     name="threads",
-    desc="Number of threads to run multi-threaded processes [default: 1]",
+    desc="Number of threads to run multi-threaded processes",
     default="1"
 
 )
 
 workflow.add_argument(
-    name="clean",
-    desc="Clean out intermediate files [default: true]",
-    default="true"
+    name="keepIntermediate",
+    desc="Keep intermediate files",
+    action="store_true"
 )
 
 # Parsing the workflow arguments
@@ -180,7 +180,7 @@ def main():
         name="Assigning taxonomy to internal nodes of ref tree"
         )
 
-    if args.clean == "true":
+    if not args.keepIntermediate:
         workflow.add_task(
             "rm [args[0]]/internal_node_stats.RData; rm [args[0]]/*.bad.accnos; rm [args[0]]/*.pcr.8mer; rm [args[0]]/*.scrap.pcr.align; rm mothur.*.logfile",
             depends=final_out,
