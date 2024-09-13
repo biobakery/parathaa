@@ -1,7 +1,8 @@
+#!/usr/bin/env Rscript
 require(docopt)
 
 'Usage:
-  plot_assignment.R [--parathaa_db_tree <parathaa_db> --level <taxonomic level> --steps_back <integer> --assignments <parathaa_assignments> --jplace <jplace_file> -o <output_dir> --id <query_id>]
+  parathaa_plot_assignment.R [--parathaa_db_tree <parathaa_db> --level <taxonomic level> --steps_back <integer> --assignments <parathaa_assignments> --jplace <jplace_file> -o <output_dir> --id <query_id>]
   
   
 Options:
