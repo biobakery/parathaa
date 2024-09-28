@@ -338,7 +338,6 @@ def install_pplacer(mac_os,install_scripts, replace_install=None):
         tempfolder=tempfile.mkdtemp(prefix="pplacer_download_",dir=parathaa_source_folder)	
         download_wget_unpack_zip(pplacer_url,pplacer_file, tempfolder,pplacer_exe)
         pplacer_exe_full_path=os.path.join(tempfolder,pplacer_filename, pplacer_exe) 
-        print("test"+pplacer_exe_full_path)
                
         # copy the installed software to the final bin location
         try:
@@ -402,5 +401,6 @@ setuptools.setup(
 			'utility/*',
 			'data/*',
 		]},
+	scripts=['parathaa/parathaa_plot_assignment.R'],
 	zip_safe=False
 )
