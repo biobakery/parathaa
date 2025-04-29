@@ -42,6 +42,8 @@ assignments <- read.table(opts$assignments, sep="\t", header=T, row.names=1)
 
 
 plot_placement <- function(ids, in.tree.data, in.jplace, level="Genus", outputDir="output", levels_back=3, assignments){
+
+  if (!dir.exists(outputDir)) dir.create(outputDir)
   
   for(nm in ids){ 
     plotTree <- as.phylo(in.tree.data, branch.length=branch.length, label=label)
