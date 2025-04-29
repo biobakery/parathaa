@@ -22,6 +22,7 @@ library(dplyr)
 library(phytools)
 library(ggtree)
 library(ggplot2)
+library(tidytree)
 
 if(!interactive()) pdf(NULL)
 
