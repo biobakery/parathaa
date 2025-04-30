@@ -75,7 +75,7 @@ plot_placement <- function(ids, in.tree.data, in.jplace, level="Genus", outputDi
         plevel <- levels[which(levels=="Genus")-1]
       plots.out[[paste0(nm, "_placement", pind)]] <-  ggtree(as.treedata(plotTree2), aes_string(color=plevel)) + geom_tippoint() + geom_nodepoint() + geom_tiplab(show.legend = FALSE) + 
         labs(title=paste0("Assignment: ", Name)) +
-        scale_size_manual(values=c(1, 5)) + geom_treescale()
+        scale_size_manual(values=c(1, 5)) + geom_treescale() + scale_x_continuous(expand = expansion(mult=c(0.1, 0.3)))
       ggsave(paste0(outputDir, "/", nm, "_placement", pind, ".png"), 
              plot=plots.out[[paste0(nm, "_placement", pind)]] ,
              width = 12, height=12, units = "in")
@@ -124,7 +124,7 @@ plot_placement <- function(ids, in.tree.data, in.jplace, level="Genus", outputDi
     
     plots.out[[paste0(nm, "_placement", "_all")]] <-  ggtree(as.treedata(plotTree2), aes_string(color=plevel)) + geom_tippoint() + geom_nodepoint() + geom_tiplab(show.legend = FALSE) + 
       labs(title=paste0("Assignment: ", Name)) +
-      scale_size_manual(values=c(1, 5)) + geom_treescale()
+      scale_size_manual(values=c(1, 5)) + geom_treescale() + scale_x_continuous(expand = expansion(mult=c(0.1, 0.3)))
     ggsave(paste0(outputDir, "/", nm, "_placement", "_all", ".png"), 
            plot=plots.out[[paste0(nm, "_placement", "_all")]] ,
            width = 12, height=12, units = "in")
