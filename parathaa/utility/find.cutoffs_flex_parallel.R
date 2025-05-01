@@ -260,7 +260,7 @@ plotData2$Level <- factor(plotData2$Level, levels=c("Kingdom","Phylum", "Class",
                                                     "Species"))
 mins<- plotData2 %>% 
   group_by(Level) %>% 
-  summarize(minScores = min(Scores))
+  summarize(minScores = min(Scores, na.rm = TRUE))
 
 
 plotData2 <- plotData2 %>% 
