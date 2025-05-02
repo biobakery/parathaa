@@ -270,7 +270,7 @@ plotData2 <- plotData2 %>%
 
 ggplot(plotData2 , aes(x=Threshold, y=Scores, color=Level)) + geom_point() + 
   geom_vline(aes(xintercept = minThreshold, color=Level, linetype=Level)) + 
-  theme(text = element_text(size = 14)) 
+  theme(text = element_text(size = 14)) + ylim(0, 1)
 
 save(plotData2, file = file.path(opts$o, "optimal_scores.RData")) ## This is used in future steps
 ggsave(filename = file.path(opts$o, "optimal_scores.png"), height = 4, width=5, units = "in")
