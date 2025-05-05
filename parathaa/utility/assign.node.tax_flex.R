@@ -95,7 +95,7 @@ if(grepl("\\|M", in.tree.data$label[1])){
 
 
 #in.tree.data is from the FAstTree... and taxdata is the silva taxonomy database
-in.tree.data <- left_join(in.tree.data, taxdata, by="primaryAccession", multiple="all") %>%
+in.tree.data <- left_join(in.tree.data, taxdata, by="primaryAccession", multiple="all", relationship="many-to-many") %>%
   distinct(node, .keep_all=T) 
 
 #some functions won't work unless its a specific type of class of data
