@@ -182,7 +182,7 @@ def main():
 
     if not args.keepIntermediate:
         workflow.add_task(
-            "rm [args[0]]/internal_node_stats.RData; rm [args[0]]/*.bad.accnos; rm [args[0]]/*.pcr.8mer; rm [args[0]]/*.scrap.pcr.align; rm mothur.*.logfile",
+            "rm -f -- [args[0]]/internal_node_stats.RData; rm -f -- [args[0]]/*.bad.accnos; rm -f -- [args[0]]/*.pcr.8mer; rm -f -- [args[0]]/*.scrap.pcr.align; rm -f -- mothur.*.logfile",
             depends=final_out,
             args=args.output,
             name="Cleaning intermediate files"

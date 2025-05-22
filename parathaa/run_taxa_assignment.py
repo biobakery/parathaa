@@ -281,7 +281,7 @@ def main():
     ## Clean working directory
     if (args.clean):
         workflow.add_task(
-            "rm [args[0]]/merged.fasta; rm [args[0]]/merged_sub.fasta; rm mothur.*.logfile",
+            "rm -f -- [args[0]]/merged.fasta; rm -f -- [args[0]]/merged_sub.fasta; rm -f -- mothur.*.logfile",
             depends=final_out,
             args=[args.output],
             name="Cleaning up intermediate files"
