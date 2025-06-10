@@ -51,64 +51,16 @@ For our next release we plan to create a conda package that will cover all of th
 - fasttree: http://www.microbesonline.org/fasttree/#Install
 - pplacer: https://anaconda.org/bioconda/pplacer
 
-#### Create conda environment and set up R and python
-
-Create a new conda environment and activate it:
-
-```
-conda create -n parathaa.0.1 python=3.9
-
-conda activate parathaa.0.1
-```
-
-Setup conda with R
-
-```
-conda install -c conda-forge r-base=4.2.3
-conda install -c r r-openssl
-```
-
-Load R, install packages, quit:
-
-```
-R
-```
-
-```
-
-options(timeout=600)
-install.packages(c("ape", 
-                   "castor",
-                   "stringr", 
-                   "docopt",
-                   "tidytree",
-                   "dplyr",
-                   "phytools",
-                   "doSNOW",
-                   "tidyr",
-                   "TDbook",
-                   "ggplot2",
-                   "reshape2")) # add Ncpus = 4 to go faster
-
-if (!require("BiocManager", quietly = TRUE))
-    install.packages("BiocManager")
-
-BiocManager::install(c("ggtree",
-                       "treeio"))
-
-quit()
-```
-
-### Installation of PARATHAA through PyPi/PIP
-
+----
+### Install using PyPi/Pip
 ```
 pip install parathaa 
 ```
 **NOTE:**
 If you do not have write permissions to '/usr/lib/', then add the option "--user" to the PARATHAA install command. This will install the python package into subdirectories of '~/.local' on Linux. Please note when using the "--user" install option on some platforms, you might need to add '~/.local/bin/' to your $PATH as it might not be included by default. You will know if it needs to be added if you see the following message PARATHAA: command not found when trying to run PARATHAA after installing with the "--user" option.
 
-
-###  Manual Installation of PARATHAA
+----
+### Manual Installation
 - Clone your recently created repository in your local development environment either using:
 ```
 git clone https://github.com/biobakery/parathaa
@@ -118,52 +70,83 @@ or using the "**Clone or Download**" button.
 - install scripts to your bin directory of choice
 
 ```
-python setup.py install 
+python3 setup.py install 
 ```
-
-
+----
+### Install with Conda  
+Create a new PARATHAA conda environment and activate it:
+```
+conda create -n parathaa_env parathaa==0.2.1 
+conda activate parathaa_env
+```
+----
 ### Databases
 
-As part of PARATHAA we provide pre-computed databases for commonly used 16S variable regions on a SEED database of SILVA (provided by the mothur team here: https://mothur.org/wiki/silva_reference_files/)
+##### SILVA Databases
+As part of PARATHAA we provide pre-computed databases for commonly used 16S variable regions on a SEED database of SILVA (provided by the mothur team here: https://mothur.org/wiki/silva_reference_files/).  
 
-We are currently working with version 138.1
+Use the following command to download the **Pre-computed SILVA** databases:  
 
-Use the following command to download the Pre-computed databases:
-
-
-16S Full Length - SILVA SEED 138.1
-
+**16S Full Length - SILVA SEED 138.1**
 ```
-wget  http://huttenhower.sph.harvard.edu/parathaa_db/SILVA_FL.tar.gz
-tar -xvf SILVA_FL.tar.gz
-rm SILVA_FL.tar.gz
+wget  http://huttenhower.sph.harvard.edu/parathaa_db/SILVA_FL_May25.tar.gz 
+tar -xvf SILVA_FL_May25.tar.gz 
+rm SILVA_FL_May25.tar.gz 
 ```
 
-16S V1V2 - SILVA SEED 138.1
-
+**16S V1V2 - SILVA SEED 138.1**
 ```
-wget  http://huttenhower.sph.harvard.edu/parathaa_db/SILVA_V1V2.tar.gz
-tar -xvf SILVA_V1V2.tar.gz
-rm SILVA_V1V2.tar.gz
-```
-
-16S V3V4 - SILVA SEED 138.1
-
-```
-wget  http://huttenhower.sph.harvard.edu/parathaa_db/SILVA_V3V4.tar.gz
-tar -xvf SILVA_V3V4.tar.gz
-rm SILVA_V3V4.tar.gz
+wget  http://huttenhower.sph.harvard.edu/parathaa_db/SILVA_V1V2_May25.tar.gz 
+tar -xvf SILVA_V1V2_May25.tar.gz 
+rm SILVA_V1V2_May25.tar.gz 
 ```
 
-16S V4V5 - SILVA SEED 138.1
+**16S V1V3 - SILVA SEED 138.1**
+```
+wget  http://huttenhower.sph.harvard.edu/parathaa_db/SILVA_V1V3_May25.tar.gz 
+tar -xvf SILVA_V1V3_May25.tar.gz 
+rm SILVA_V1V3_May25.tar.gz 
+```
 
+**16S V4V5 - SILVA SEED 138.1**
 ```
 wget  http://huttenhower.sph.harvard.edu/parathaa_db/SILVA_V4V5.tar.gz
 tar -xvf SILVA_V4V5.tar.gz
 rm SILVA_V4V5.tar.gz
 ```
+----
+##### GTDB Databases
+GTDB source files: https://data.gtdb.ecogenomic.org/releases/release220/220.0/
+Use the following command to download the **Pre-computed GTDB** databases:  
 
+**Full Length - GTDB**
+```
+wget  http://huttenhower.sph.harvard.edu/parathaa_db/GTDB_R220_FL_May25.tar.gz
+tar -xvf GTDB_R220_FL_May25.tar.gz
+rm GTDB_R220_FL_May25.tar.gz
+```
 
+**V1V2 - GTDB**
+```
+wget  http://huttenhower.sph.harvard.edu/parathaa_db/GTDB_R220_V1V2_May25.tar.gz 
+tar -xvf GTDB_R220_V1V2_May25.tar.gz 
+rm GTDB_R220_V1V2_May25.tar.gz 
+```
+
+**V1V3 - GTDB**
+```
+wget  http://huttenhower.sph.harvard.edu/parathaa_db/GTDB_R220_V1V3_May25.tar.gz 
+tar -xvf GTDB_R220_V1V3_May25.tar.gz 
+rm GTDB_R220_V1V3_May25.tar.gz 
+```
+
+**V4V5 - GTDB**
+```
+wget  http://huttenhower.sph.harvard.edu/parathaa_db/GTDB_R220_V4V5_May25.tar.gz 
+tar -xvf GTDB_R220_V4V5_May25.tar.gz 
+rm GTDB_R220_V4V5_May25.tar.gz 
+```
+----
 ### Workflow:
 - Parathaa is seperated into two seperate workflows that are used in conjunction with one another. In general most users will only use step 2 with already pre-computed files from step 1. However users able to adjust the reference database parathaa uses for taxonomic assignment using the commands in step 1.
 
@@ -260,7 +243,7 @@ parathaa_run_taxa_assignment --treeFiles SILVA_V4V5/ \
 --query input/testing/taxa_assignment/SRR3225703_V4V5_subset.fasta \
 --output output_taxa_test
 ```
-
+----
 ### PARATHAA Diagnostic Scripts
 
 
@@ -272,4 +255,4 @@ This script contains a useful function for plotting placements. The function is 
 in.tree$label <- make.unique(in.tree$label)
 ```
 
-
+----
