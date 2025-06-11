@@ -57,7 +57,7 @@ For our next release we plan to create a conda package that will cover all of th
 pip install parathaa 
 ```
 **NOTE:**
-If you do not have write permissions to '/usr/lib/', then add the option "--user" to the PARATHAA install command. This will install the python package into subdirectories of '~/.local' on Linux. Please note when using the "--user" install option on some platforms, you might need to add '~/.local/bin/' to your $PATH as it might not be included by default. You will know if it needs to be added if you see the following message PARATHAA: command not found when trying to run PARATHAA after installing with the "--user" option.
+If you do not have write permissions to '/usr/lib/', then add the option "--user" to the PARATHAA install command. This will install the python package into subdirectories of 'home/.local' on Linux. Please note when using the "--user" install option on some platforms, you might need to add '~/.local/bin/' to your $PATH as it might not be included by default. You will know if it needs to be added if you see the following message PARATHAA: command not found when trying to run PARATHAA after installing with the "--user" option.
 
 ----
 ### Manual Installation
@@ -247,12 +247,17 @@ parathaa_run_taxa_assignment --treeFiles SILVA_V4V5/ \
 ### PARATHAA Diagnostic Scripts
 
 
-- plot_placement.R
+- parathaa_plot_assignment.R
 
-This script contains a useful function for plotting placements. The function is called by other diagnostic scripts. Its important that the input tree has unique labels for all tips and nodes. This can be accomplished with the following R code:
+This script allows you to plot query sequences that are placed into the primer trimmed phylogenetic tree that Parathaa uses for sequence assignment. 
 
 ```
-in.tree$label <- make.unique(in.tree$label)
+parathaa_plot_assignment.R --parathaa_db_tree SILVA_V4V5/resultTree_bestThresholds.RData \ 
+ --assignments output_taxa_test/taxonomic_assignments.tsv \
+ --jplace output_taxa_test/merged_sub.jplace \
+ --level "Species" \
+ --steps_back 3 \
+ -o output_visualization \
+ --id SRR3225703.105.1
 ```
-
 ----
