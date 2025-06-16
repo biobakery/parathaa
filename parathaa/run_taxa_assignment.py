@@ -202,7 +202,7 @@ def main():
     ### remove poorly aligned sequences based on query length and alignment length
     poor_alignments = os.path.join(args.output, "poor_query_alignments.txt")
     
-    ### grab the report which is what i actually want to do...
+    ### grab the report
  
     if not(args.minAlignLen==0):
         

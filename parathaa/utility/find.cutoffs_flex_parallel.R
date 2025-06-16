@@ -136,9 +136,8 @@ iterations <- length(which(inputData$isTip==F))
 pb <- txtProgressBar(max=iterations, style=3)
 progress <- function(n) setTxtProgressBar(pb, n)
 pb_opts <- list(progress=progress)
-#eventually we should write code that doesn't run it in parallel with "1" worker if the threads is set to 1...
-#get the maxdist of each internal node and the its tips
 
+#get the maxdist of each internal node and the its tips
 internal_node_stats <- foreach(i=1:length(which(inputData$isTip==F))) %dopar% {
   tmp_list <- list()
   
@@ -158,6 +157,7 @@ internal_node_stats <- foreach(i=1:length(which(inputData$isTip==F))) %dopar% {
   return(tmp_list)
 }
 save(internal_node_stats, file= file.path(opts$o, "internal_node_stats.RData")) ## used in next step
+
 #set internal node names back on each cutoff distance
 iterations <- length(cutoffs)
 pb <- txtProgressBar(max=iterations, style=3)
@@ -200,8 +200,8 @@ resultData <- foreach(i=1:length(cutoffs)) %dopar% {
 }
 names(resultData) <- paste0("tax",cutoffs)
 save(resultData, file= file.path(opts$o, "resultData.RData")) ## used in next step
-# get the scores for each cutoff
 
+# get the scores for each cutoff
 iterations <- length(cutoffs)
 pb <- txtProgressBar(max=iterations, style=3)
 progress <- function(n) setTxtProgressBar(pb, n)

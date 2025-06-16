@@ -16,13 +16,8 @@ Options:
    
  ]' -> doc
 
-#To add as arguments: binom error params
 
 opts <- docopt(doc)
-
-# If we wanted we could add a loop that tries to install these packages within R?
-# Although it might be nice to have this as a seperate R script 
-# that runs on anadama workflow start up
 
 library(ggtree)
 library(treeio)
@@ -35,6 +30,7 @@ source(opts$util2)
 
 
 hierachry <- c("Kingdom", "Phylum", "Class", "Order", "Family", "Genus", "Species")
+
 ## Bring in taxonomy file
 inFileTaxdata <- opts$d
 
@@ -54,7 +50,6 @@ in.tree.data <- as_tibble(in.tree)
 # (below three lines run fairly slowly...)
 
 
-## we need to update this to read in a flexible taxonomy file...
 
 taxdata <- read.table(inFileTaxdata , header=T, fill=TRUE,sep='\t', quote="", check.names = FALSE)
 
@@ -101,17 +96,11 @@ in.tree.data <- left_join(in.tree.data, taxdata, by="primaryAccession", multiple
 #some functions won't work unless its a specific type of class of data
 class(in.tree.data) <- c("tbl_tree", class(in.tree.data))
 
-#Check if each node is a tip or not!
+#Check if each node is a tip or not
 in.tree.data$isTip <- isTip(in.tree.data, in.tree.data$node)
 
 ## Fix species names
 
-# there are a lot of species names that are inconsistent and needed to be cleaned up!
-
-
-### so at this point we remove all the species labels that say unknown and leave them blank which is what is causing the bug in the first place..
-### if we allow unkowns then it wouldn't be an issue of having unknowns i don't think... but what other issues might this generate
-### on the back end?
 
 if(isSILVA){
   in.tree.data <- SILVA.species.editor(in.tree.data)
@@ -160,7 +149,6 @@ resultData[["tax_bestcuts"]] <- inputData
 
 for (i in 1:length(internal_node_stats)){
   #setTxtProgressBar(pb,i)
-  #progress bar?
   intNode <- which(inputData$isTip==F)[i]
   
   maxDist <- internal_node_stats[[i]][[1]]
@@ -178,11 +166,7 @@ for (i in 1:length(internal_node_stats)){
   lastlabel <- ""
   for(level in hierachry){
     cutoff <- cutoffs[level]
-    
-    #should we treat this in the same way so we commit to this genus so we only consider things under that genus
-    #if so we do something like this:
-    
-    
+     
     ## here check if there is an ambiguous label
     if(grepl(";", lastlabel)){
       choosen_taxon <- str_split(lastlabel, ";")
@@ -204,7 +188,6 @@ for (i in 1:length(internal_node_stats)){
                             nodeGroups=nodeGroups, 
                             falseNegRate=falseNegRate, 
                             acceptableProb=acceptableProb)
-        ##need to think about how to deal with unclassified...
         if(!is.na(label)){
          if(label=="unclassified"){
            label <- paste(taxon_search, label, sep=" ")
@@ -260,7 +243,6 @@ resultData[["tax_bestcuts"]]$isSpeciesNode <- is.na(resultData[["tax_bestcuts"]]
 ## also need to propagate unclassified labels to tips but we do this after internal label assignment
 ## this is because we don't want to consider unclassified as a label at the assigned level...
 
-## fix taxonomy within ch but this adds a ton of run time... (but we don't really want to fix them for distance testing purposes...)
 resultData$tax_bestcuts <- resultData$tax_bestcuts %>% mutate(Kingdom = ifelse(is.na(Kingdom) & isTip, "unclassified", Kingdom),
                     Phylum = ifelse(is.na(Phylum) & isTip, paste0(Kingdom, "unclassified", sep=" "), Phylum))
 

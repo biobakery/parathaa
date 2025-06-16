@@ -72,7 +72,6 @@ if(delta!=0){
 }
 
 ## Index through query sequences to add taxonomy
-# might beable to speed this up using foreach/ vectorized code
 iterations <- length(query.names)
 pb <- txtProgressBar(max=iterations, style=3)
 progress <- function(n) setTxtProgressBar(pb, n)
@@ -105,9 +104,7 @@ result <- foreach(i=1:length(query.names), .combine = bind_rows,
   
   
   # check for tied placements
-  # check for tied placements
   if(length(query.place.data$node)==1){
-    ##maxNodeHeights <- tree.w.placements.tib %>% filter(node == query.place.data$node) %>% summarize(max(nodeHeight)) %>% as.numeric ## old
     maxNodeHeights <- tree.w.placements.tib %>% filter(node %in% ind.offs) %>% summarize(max(nodeHeight)) %>% as.numeric ## new
   } else {
     maxNodeHeights <- sapply(ind.offs, FUN= function(x) tree.w.placements.tib %>% filter(node %in% x) %>% summarize(max(nodeHeight)) %>% as.numeric)
@@ -115,11 +112,6 @@ result <- foreach(i=1:length(query.names), .combine = bind_rows,
   
   # calculate the distance from the query node to any other child node
   #maxNodeHeights is distance from the root to the tip
-  ## shouldn't this really be the distance from the furthest child node and the root? 
-  ## I don't think this is being calculated correctly when sequences are placed on internal nodes which is messy up
-  ## the assignment algorithim.
-  #tree.w.placements.tin$nodeHeight[query.place.data$node]
-  ## this is the distance from the root to the query node
   
   #it seems like maxNodeHeights
   maxDistPlacements <- maxNodeHeights-tree.w.placements.tib$nodeHeight[query.place.data$node] + tree.w.placements.tib$distal_length[query.place.data$node] + tree.w.placements.tib$pendant_length[query.place.data$node]
@@ -152,20 +144,7 @@ result <- foreach(i=1:length(query.names), .combine = bind_rows,
   
   assignment$query.name <- ind
   
-  ### this is the part of the code that becomes problematic b/c it returns nothing if the index node doesn;t have an assignment
-  ### how to deal with this...
-  ### I guess the best way to deal with this is to figure out what 
   
-  #rm_dist_index <- which(is.na(assignment[,names(cutoffs[numLevels])]))
-  #so assignment will have a number of rows equal to the number of index nodes 
-  #the assignments fron that index node will only go to the mode of the maxdistances 
-  #we then want to return the maxdist so that it represents what is actually be assigned 
-  #maybe we just change the name of the column from maxDist to median_distance
-  #which represents the median distance of all potentially placements from the furthest child tip
-  #this might be more interpretable 
-  #in cases where there are multiple it should often represent the mode better
-  #the other option is to select the nodes that are the mode cutoff and then return that
-  #optionally we could keep the maxdist and retun the inidivaul distances for each assignment
   if(nrow(assignment)==1){
     assignment$maxDist <- max(maxDistPlacements)
   }else{
@@ -174,12 +153,8 @@ result <- foreach(i=1:length(query.names), .combine = bind_rows,
   }
 
   
-  #assignment$same_testing <- maxNodeHeights == tree.w.placements.tib$nodeHeight[query.place.data$node]
-  #I think it both cases the calculations are only correct for tips and not internal node placements.
   return(assignment)
 }
-## what is the point of this function??
-## oh is this for when there is multiple assignments?
 
 pick.taxon <- function(x){
   if(sum(!is.na(x))==0){
@@ -191,7 +166,6 @@ pick.taxon <- function(x){
   return(x3)
 }
 
-## potentially you could end up with cases where result is missing a column if no sequences are assigned at a particular level
 taxa_levels <- c("Kingdom", "Phylum", "Class", "Order", "Family", "Genus", "Species")
 missing_levels <- which(!taxa_levels %in% colnames(result))
 
@@ -209,6 +183,7 @@ tax_parathaa <- result %>%
             Genus = pick.taxon(Genus),
             Species = pick.taxon(Species))
 
+  #currently commented out but this code would remove any further assignments under something ambigious
 levels <- c("Kingdom", "Phylum", "Class", "Order", "Family", "Genus", "Species")
 # for (i in 1:nrow(tax_parathaa)) {
 #   if(grepl(";", tax_parathaa[i,"Kingdom"])){
@@ -226,7 +201,7 @@ levels <- c("Kingdom", "Phylum", "Class", "Order", "Family", "Genus", "Species")
 #   }
 # }
 
-
+# delta is 0 by default
 if(delta>0){
   
   

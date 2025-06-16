@@ -1,9 +1,8 @@
-## Function to identify and remove Species assigqueryents for queries with close neighbors from different Species
+## Function to identify and remove Species assignments for queries with close neighbors from different Species
 
 ## I think we can alter this function to work at any taxonomic level 
-## and to work on the original reference tree tips...
-## would be a better way to identify potentially ambigious tips than the current method I am using.
 
+## THIS FUNCTION IS NOT RUN BY DEFAULT AND ITS ONLY USED IF DELTA IS SET
 
 library(castor)
 library(stringr)
