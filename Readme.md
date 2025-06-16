@@ -215,8 +215,12 @@ This command takes the following inputs:
 - `namedTree` an RData file containing the annotated trimmed phylogenetic tree
 
 There are two optional commands as well, related to species-level classifications:
-- ```delta``` which controls which species assignments are removed due to nearby reference sequences from different species. Default value is 0 and we recommend only turn this one if you want to increase the specificity of assignments at the cost of sensitivity.
-- ```mult``` which shrinks the species threshold for better performance. Default value is 0.1, which is recommended.
+- ```mult``` which shrinks the species threshold for better performance. Default value is 0.1, which is recommended, and represents the "specific" mode represented in the manuscript.
+- ```delta``` which controls which species assignments are removed due to nearby reference sequences from different species. Default value is 0. Can be turned on by setting this parameter to any value except 0 (i.e. 1). We recommend only turning this on if you want to increase the specificity of assignments at the cost of sensitivity.
+- ```deltamult``` When delta is turned on with the above parameter ```delta```, it will set the threshold for removing species assignments from query sequences based on the species level thresholding (after calculating applying mult). By default ```deltamult``` is set to 0.5 so any query sequence that has a differing species assignment within 0.5 of the species threshold will lose its species level assignment.
+- ```sensitive``` turns on sensitive mode which adjusts the parameter ```mult``` to 1.
+- ```genusmult``` the same as ```mult``` but at the genus level. The default value is 1.
+- ```minAlignLen``` the minimum length a query alignment needs to be allow for taxonomic assignment. Be default this is set to 0 (off) and instead will remove query alignments with less then 80% coverage. This removes queries that are unlikely to be from the same region as the input reference alignment database.
 
 ##### Demo Run Step 2:
 
