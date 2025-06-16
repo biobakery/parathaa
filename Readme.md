@@ -215,8 +215,8 @@ This command takes the following inputs:
 - `namedTree` an RData file containing the annotated trimmed phylogenetic tree
 
 There are two optional commands as well, related to species-level classifications:
-- ```delta``` which controls which species assignments are removed due to nearby reference sequences from different species. Default value is 0.005; we recommend setting this to 0.5 * the species threshold identified by Parathaa for your region in step 1.
-- ```mult``` which shrinks the species threshold for better performance. Default value is 0.5, which is recommended.
+- ```delta``` which controls which species assignments are removed due to nearby reference sequences from different species. Default value is 0 and we recommend only turn this one if you want to increase the specificity of assignments at the cost of sensitivity.
+- ```mult``` which shrinks the species threshold for better performance. Default value is 0.1, which is recommended.
 
 ##### Demo Run Step 2:
 
