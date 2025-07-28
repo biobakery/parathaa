@@ -9,7 +9,7 @@ from pathlib import Path
 
 # Setting the version of the workflow and short description
 workflow = Workflow(
-    version="0.2.1",
+    version="1.0.0",
     description=("Preserving Primer-Induced Taxonomic Ambiguities for Amplicons: This script given an aligned 16S file, an accompanying taxonomy file "
                  " and a primer pair will output a phylogenetic tree with taxonomically labeled internal nodes based on the amplified region using optimal "
                  "distance thresholds for taxonomic assignment." 

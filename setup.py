@@ -11,7 +11,7 @@ import re
 import time
 
 
-VERSION = "0.2.1"
+VERSION = "1.0.0"
 AUTHOR = "PARATHAA Development Team"
 MAINTAINER = "Jacob Nearing"
 MAINTAINER_EMAIL = "jnearing@hsph.harvard.edu" 

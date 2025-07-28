@@ -76,7 +76,7 @@ python3 setup.py install
 ### Install with Conda  
 Create a new PARATHAA conda environment and activate it:
 ```
-conda create -n parathaa_env parathaa==0.2.1 
+conda create -n parathaa_env parathaa
 conda activate parathaa_env
 ```
 ----

@@ -10,7 +10,7 @@ from pathlib import Path
 
 # Setting the version of the workflow and short description
 workflow = Workflow(
-    version="0.2.1",                    #Update the version as needed
+    version="1.0.0",                    #Update the version as needed
     description="Preserving Primer-Induced Taxonomic Ambiguities for Amplicons"     #Update the description as needed
     ) 
 

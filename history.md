@@ -1,3 +1,6 @@
+Changes in version 0.2.1 (2025-07-25)
++
+
 Changes in version 0.2.1 (2023-11-16)
 + Added nearest neighbor code to improve the specificity of species assignments
 + Began splitting up software pipeline from analysis in paper 
