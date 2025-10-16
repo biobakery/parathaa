@@ -47,7 +47,7 @@ For our next release we plan to create a conda package that will cover all of th
 - Python >=3.7
   - AnADAMA2: https://pypi.org/project/anadama2/
   - taxtastic: https://pypi.org/project/taxtastic/
-- mothur: https://anaconda.org/bioconda/mothur
+- mothur: https://mothur.org/wiki/installation/
 - fasttree: http://www.microbesonline.org/fasttree/#Install
 - pplacer: https://anaconda.org/bioconda/pplacer
 
@@ -110,7 +110,7 @@ rm SILVA_V1V3_May25.tar.gz
 
 **16S V4V5 - SILVA SEED 138.1**
 ```
-wget  http://huttenhower.sph.harvard.edu/parathaa_db/SILVA_V4V5.tar.gz
+wget  http://huttenhower.sph.harvard.edu/parathaa_db/SILVA_V4V5_May25.tar.gz
 tar -xvf SILVA_V4V5.tar.gz
 rm SILVA_V4V5.tar.gz
 ```
@@ -228,14 +228,14 @@ There are two optional commands as well, related to species-level classification
 For this demo we will first need to download the Pre-computed V4V5 database.
 
 ```
-wget  http://huttenhower.sph.harvard.edu/parathaa_db/SILVA_V4V5.tar.gz
-tar -xvf SILVA_V4V5.tar.gz
-rm SILVA_V4V5.tar.gz
+wget  http://huttenhower.sph.harvard.edu/parathaa_db/SILVA_V4V5_May25.tar.gz
+tar -xvf SILVA_V4V5_May25.tar.gz
+rm SILVA_V4V5_May25.tar.gz
 ```
 
 
 ```
-parathaa_run_taxa_assignment --trimmedDatabase SILVA_V4V5/silva.seed_v138_1.pcr.align --treeLog SILVA_V4V5/treelog.txt --query /input/testing/taxa_assignment/SRR3225703_V4V5_subset.fasta --thresholds SILVA_V4V5/optimal_scores.RData --namedTree SILVA_V4V5/resultTree_bestThresholds.RData --output test --trimmedTree SILVA_V4V5/region_specific.tree
+parathaa_run_taxa_assignment --trimmedDatabase SILVA_V4V5/silva.seed_v138_1.pcr.align --treeLog SILVA_V4V5/treelog.txt --query input/testing/taxa_assignment/SRR3225703_V4V5_subset.fasta --thresholds SILVA_V4V5/optimal_scores.RData --namedTree SILVA_V4V5/resultTree_bestThresholds.RData --output test --trimmedTree SILVA_V4V5/region_specific.tree
 ```
 
 OR
