@@ -40,9 +40,6 @@ PARATHAA (Preserving and Assimilating Region-specific Ambiguities in Taxonomic H
 
 Below are the required dependencies to run Parathaa, you should be running linux/macOS (note if running macOS follow special instructions for pplacer install). We have included installation commands for various dependencies  If the user wants to install outside of conda please check out each tool's main page for other installation instructions.
 
-For our next release we plan to create a conda package that will cover all of these dependencies automatically.
-
-- Conda (we suggest miniconda https://docs.conda.io/projects/miniconda/en/latest/ although any flavor should work)
 - R > 4.0.0
 - Python >=3.7
   - AnADAMA2: https://pypi.org/project/anadama2/
