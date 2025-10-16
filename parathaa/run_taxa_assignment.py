@@ -18,7 +18,7 @@ workflow = Workflow(
 workflow.add_argument(
     name="treeFiles",
     desc="The output directory generated from run_tree_analysis.py",
-    default="0"
+    default=""
 )
 
 #Setting additional custom arguments for workflow - run.py
