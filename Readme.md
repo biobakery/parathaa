@@ -40,8 +40,8 @@ PARATHAA (Preserving and Assimilating Region-specific Ambiguities in Taxonomic H
 
 Below are the required dependencies to run Parathaa, you should be running linux/macOS (note if running macOS follow special instructions for pplacer install). We have included installation commands for various dependencies  If the user wants to install outside of conda please check out each tool's main page for other installation instructions.
 
-- R > 4.0.0
-- Python >=3.7
+- R > 4.0.0 < 4.5.0>
+- Python >=3.7 < 3.12
   - AnADAMA2: https://pypi.org/project/anadama2/
   - taxtastic: https://pypi.org/project/taxtastic/
 - mothur: https://mothur.org/wiki/installation/
@@ -51,10 +51,19 @@ Below are the required dependencies to run Parathaa, you should be running linux
 ----
 ### Install using PyPi/Pip
 ```
-pip install parathaa 
+pip install --no-binary parathaa parathaa
 ```
 **NOTE:**
 If you do not have write permissions to '/usr/lib/', then add the option "--user" to the PARATHAA install command. This will install the python package into subdirectories of 'home/.local' on Linux. Please note when using the "--user" install option on some platforms, you might need to add '~/.local/bin/' to your $PATH as it might not be included by default. You will know if it needs to be added if you see the following message PARATHAA: command not found when trying to run PARATHAA after installing with the "--user" option.
+
+#### Install R dependencies
+```
+install.packages(”reshape2”,"BiocManager","docopt”)
+BiocManager::install("ggtree")
+BiocManager::install("TDbook")
+BiocManager::install("castor")
+BiocManager::install("doSNOW")
+```
 
 ----
 ### Manual Installation
