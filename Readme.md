@@ -79,13 +79,6 @@ or using the "**Clone or Download**" button.
 python3 setup.py install 
 ```
 ----
-### Install with Conda  
-Create a new PARATHAA conda environment and activate it:
-```
-conda create -n parathaa_env parathaa
-conda activate parathaa_env
-```
-----
 ### Databases
 
 ##### SILVA Databases
